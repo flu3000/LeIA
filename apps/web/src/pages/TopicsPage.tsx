@@ -1,113 +1,14 @@
 import { useState } from 'react'
-import { BookOpen, Star, Search } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { BookOpen, Star, Search, ChevronRight } from 'lucide-react'
 import Input from '../components/ui/Input'
-
-interface Reference {
-  titulo: string
-  autor: string
-  tipo: 'livro' | 'video' | 'podcast' | 'artigo' | 'curso'
-}
-
-interface Topic {
-  id: string
-  tema: string
-  descricao: string
-  emoji: string
-  accentClass: string
-  referencias: Reference[]
-}
-
-const topics: Topic[] = [
-  {
-    id: '1', tema: 'Filosofia', emoji: '🏛️',
-    descricao: 'Da lógica aristotélica ao existencialismo moderno.',
-    accentClass: 'border-l-4 border-l-purple-400',
-    referencias: [
-      { titulo: 'A República', autor: 'Platão', tipo: 'livro' },
-      { titulo: 'Além do Bem e do Mal', autor: 'Friedrich Nietzsche', tipo: 'livro' },
-      { titulo: 'Filosofia em 90 Minutos', autor: 'Paul Strathern', tipo: 'livro' },
-    ],
-  },
-  {
-    id: '2', tema: 'Matemática', emoji: '∑',
-    descricao: 'Fundamentos, cálculo e matemática aplicada.',
-    accentClass: 'border-l-4 border-l-brand-accent',
-    referencias: [
-      { titulo: 'O Homem que Calculava', autor: 'Malba Tahan', tipo: 'livro' },
-      { titulo: '3Blue1Brown', autor: 'Grant Sanderson', tipo: 'video' },
-      { titulo: 'MIT OpenCourseWare — Cálculo', autor: 'MIT', tipo: 'curso' },
-    ],
-  },
-  {
-    id: '3', tema: 'Programação', emoji: '💻',
-    descricao: 'Algoritmos, arquitetura e engenharia de software.',
-    accentClass: 'border-l-4 border-l-emerald-400',
-    referencias: [
-      { titulo: 'Clean Code', autor: 'Robert C. Martin', tipo: 'livro' },
-      { titulo: 'The Pragmatic Programmer', autor: 'Hunt & Thomas', tipo: 'livro' },
-      { titulo: 'CS50', autor: 'Harvard / David Malan', tipo: 'curso' },
-    ],
-  },
-  {
-    id: '4', tema: 'Neurociência', emoji: '🧠',
-    descricao: 'Como o cérebro aprende, memoriza e processa informações.',
-    accentClass: 'border-l-4 border-l-pink-400',
-    referencias: [
-      { titulo: 'O Cérebro que se Transforma', autor: 'Norman Doidge', tipo: 'livro' },
-      { titulo: 'Huberman Lab', autor: 'Andrew Huberman', tipo: 'podcast' },
-      { titulo: 'Learning How to Learn', autor: 'Barbara Oakley', tipo: 'curso' },
-    ],
-  },
-  {
-    id: '5', tema: 'História', emoji: '📜',
-    descricao: 'Civilizações, impérios e os eventos que moldaram o mundo.',
-    accentClass: 'border-l-4 border-l-amber-400',
-    referencias: [
-      { titulo: 'Sapiens', autor: 'Yuval Noah Harari', tipo: 'livro' },
-      { titulo: 'Guns, Germs, and Steel', autor: 'Jared Diamond', tipo: 'livro' },
-    ],
-  },
-  {
-    id: '6', tema: 'Física', emoji: '⚛️',
-    descricao: 'Do newtoniano ao quântico: como o universo funciona.',
-    accentClass: 'border-l-4 border-l-cyan-400',
-    referencias: [
-      { titulo: 'Uma Breve História do Tempo', autor: 'Stephen Hawking', tipo: 'livro' },
-      { titulo: 'The Feynman Lectures', autor: 'Richard Feynman', tipo: 'livro' },
-    ],
-  },
-  {
-    id: '7', tema: 'Economia', emoji: '📈',
-    descricao: 'Macroeconomia, finanças comportamentais e mercados.',
-    accentClass: 'border-l-4 border-l-pomodoro-break',
-    referencias: [
-      { titulo: 'O Capital no Século XXI', autor: 'Thomas Piketty', tipo: 'livro' },
-      { titulo: 'Freakonomics', autor: 'Levitt & Dubner', tipo: 'livro' },
-      { titulo: 'Planet Money', autor: 'NPR', tipo: 'podcast' },
-    ],
-  },
-  {
-    id: '8', tema: 'Linguística', emoji: '🗣️',
-    descricao: 'Linguagem, cognição e a estrutura das línguas humanas.',
-    accentClass: 'border-l-4 border-l-rose-400',
-    referencias: [
-      { titulo: 'The Language Instinct', autor: 'Steven Pinker', tipo: 'livro' },
-      { titulo: 'Stuff You Missed in History', autor: 'iHeartPodcasts', tipo: 'podcast' },
-    ],
-  },
-]
-
-const tipoStyle: Record<string, string> = {
-  livro:   'text-sky-400   bg-sky-400/10   border border-sky-400/20',
-  video:   'text-blue-400  bg-blue-400/10  border border-blue-400/20',
-  podcast: 'text-purple-400 bg-purple-400/10 border border-purple-400/20',
-  artigo:  'text-teal-400  bg-teal-400/10  border border-teal-400/20',
-  curso:   'text-emerald-400 bg-emerald-400/10 border border-emerald-400/20',
-}
+import { topics, tipoStyle } from '../data/topics'
+import { useUserContent } from '../hooks/useUserContent'
 
 export default function TopicsPage() {
   const [search, setSearch] = useState('')
-  const [favorites, setFavorites] = useState<Set<string>>(new Set())
+  const navigate = useNavigate()
+  const { isFavourite, isSaved, toggleSave } = useUserContent()
 
   const filtered = topics.filter(
     (t) =>
@@ -115,12 +16,9 @@ export default function TopicsPage() {
       t.descricao.toLowerCase().includes(search.toLowerCase())
   )
 
-  const toggleFavorite = (id: string) => {
-    setFavorites((prev) => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
+  const handleToggleSave = (e: React.MouseEvent, id: string, tema: string) => {
+    e.stopPropagation()
+    toggleSave({ card_id: id, title: tema, category: 'Tema' })
   }
 
   return (
@@ -148,23 +46,38 @@ export default function TopicsPage() {
         {filtered.map((topic) => (
           <div
             key={topic.id}
-            className={`bg-brand-primary border border-slate-700 hover:border-slate-600 rounded-2xl p-5 transition-all hover:shadow-lg hover:shadow-black/20 ${topic.accentClass}`}
+            onClick={() => navigate(`/topics/${topic.id}`)}
+            className={`bg-brand-primary border border-slate-700 hover:border-slate-600 rounded-2xl p-5 transition-all hover:shadow-lg hover:shadow-black/20 cursor-pointer group ${topic.accentClass}`}
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <span className="text-3xl">{topic.emoji}</span>
                 <div>
-                  <h2 className="font-semibold text-slate-100">{topic.tema}</h2>
+                  <h2 className="font-semibold text-slate-100 group-hover:text-white transition-colors">
+                    {topic.tema}
+                  </h2>
                   <p className="text-xs text-brand-text leading-relaxed">{topic.descricao}</p>
                 </div>
               </div>
-              <button
-                onClick={() => toggleFavorite(topic.id)}
-                className="text-slate-600 hover:text-amber-400 transition-colors shrink-0"
-                aria-label="Favoritar tema"
-              >
-                <Star className={`w-4 h-4 ${favorites.has(topic.id) ? 'fill-amber-400 text-amber-400' : ''}`} />
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={(e) => handleToggleSave(e, topic.id, topic.tema)}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-lg transition-all duration-150 active:scale-95 border border-transparent hover:border-slate-600 hover:bg-slate-800"
+                  aria-label={isSaved(topic.id) ? 'Remover dos salvos' : 'Salvar tema'}
+                  title={isSaved(topic.id) ? 'Remover dos salvos' : 'Salvar na biblioteca'}
+                >
+                  <Star
+                    className={`w-4 h-4 transition-colors ${
+                      isFavourite(topic.id)
+                        ? 'fill-brand-accent text-brand-accent'
+                        : 'text-slate-500 hover:text-brand-accent'
+                    }`}
+                  />
+                  {isSaved(topic.id) && (
+                    <span className="text-xs text-brand-accent font-medium">Salvo</span>
+                  )}
+                </button>
+              </div>
             </div>
 
             <div className="border-t border-slate-700 pt-3 mt-3">
@@ -184,6 +97,16 @@ export default function TopicsPage() {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Ver mais */}
+            <div className="mt-3 pt-3 border-t border-slate-700 flex items-center justify-between">
+              <span className="text-xs text-brand-text">
+                {topic.todasReferencias.length} referências no total
+              </span>
+              <span className="text-xs text-brand-accent flex items-center gap-0.5 group-hover:gap-1 transition-all">
+                Ver detalhes <ChevronRight className="w-3 h-3" />
+              </span>
             </div>
           </div>
         ))}

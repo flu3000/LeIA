@@ -2,61 +2,136 @@ import axios from 'axios';
 import { supabase } from '../lib/supabase.js';
 import { SYSTEM_PROMPT } from '../prompts/bibliotecario.js';
 
-export const conversarComBibliotecario = async (userId, novaMensagem) => {
-  // 1. Buscar histórico (últimas 6 mensagens para não gastar muitos tokens)
-  const { data: historico } = await supabase
+// Remove citações numéricas do tipo [1][2][3] geradas pela Perplexity
+function limparCitacoes(texto) {
+  return texto.replace(/\[\d+\]/g, '').replace(/\s{2,}/g, ' ').trim();
+}
+
+// Palavras-chave que indicam mudança de assunto pelo usuário
+const KEYWORDS_QUEBRA_TEMA = [
+  'mudar de tema', 'mudar de assunto', 'outro assunto', 'outra coisa',
+  'agora sobre', 'agora quero', 'falar sobre', 'novo tema', 'novo assunto',
+  'esqueça isso', 'esquece isso', 'deixa isso', 'mudando de assunto',
+  'pode mudar', 'vamos mudar', 'quero falar de', 'quero aprender sobre',
+];
+
+function detectaQuebraDeTema(mensagem) {
+  const lower = mensagem.toLowerCase();
+  return KEYWORDS_QUEBRA_TEMA.some((kw) => lower.includes(kw));
+}
+
+export const conversarComBibliotecario = async (userId, novaMensagem, historicoFrontend = []) => {
+  // 1. Histórico do Supabase; usa o do frontend como fallback
+  // Busca apenas as últimas 4 mensagens (2 pares user/assistant) para evitar poluição de contexto
+  const { data: historicoDb } = await supabase
     .from('chat_messages')
     .select('role, content')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
-    .limit(6);
+    .limit(4);
 
-  // Inverter para ficar na ordem cronológica
-  const mensagensFormatadas = historico ? historico.reverse() : [];
+  // Inverte para ordem cronológica
+  const historicoDbOrdenado = (historicoDb ?? []).reverse();
 
-  // 2. Montar o array de mensagens para a API
-  const todasAsMensagens = [
-    { role: "system", content: SYSTEM_PROMPT },
-    ...mensagensFormatadas,
-    { role: "user", content: novaMensagem }
-  ];
+  const mensagensBase = (historicoDbOrdenado?.length ?? 0) > 0 ? historicoDbOrdenado : historicoFrontend.slice(-4);
 
+  // Se o usuário sinaliza mudança de tema, descarta o histórico para aqueste payload
+  const quebraDeTema = detectaQuebraDeTema(novaMensagem);
+
+  // Garante alternância estrita user → assistant (Perplexity rejeita sequências inválidas)
+  const mensagensFormatadas = [];
+  if (!quebraDeTema) {
+    let expectedRole = 'user';
+    for (const msg of (mensagensBase ?? [])) {
+      if (msg.role === expectedRole) {
+        mensagensFormatadas.push({ role: msg.role, content: msg.content });
+        expectedRole = expectedRole === 'user' ? 'assistant' : 'user';
+      }
+    }
+    // Histórico deve terminar com 'assistant' antes de acrescentar o novo user
+    while (mensagensFormatadas.length > 0 && mensagensFormatadas.at(-1)?.role !== 'assistant') {
+      mensagensFormatadas.pop();
+    }
+  }
+
+  // 2. Verificar cache de cards relevantes
   const { data: cardsExistentes } = await supabase
     .from('cards')
     .select('*')
-    .textSearch('titulo', mensagem, { config: 'portuguese', type: 'websearch' })
+    .textSearch('titulo', novaMensagem, { config: 'portuguese', type: 'websearch' })
     .limit(5);
 
-  // 3. Se acharmos cards relevantes, podemos retornar direto (ou perguntar se quer mais)
   if (cardsExistentes && cardsExistentes.length >= 5) {
     return {
       origem: 'cache_db',
-      guia_contextual: "Já encontrei algumas referências excelentes na nossa biblioteca sobre isso!",
-      cards: cardsExistentes
+      guia_contextual: 'Encontrei referências excelentes na nossa biblioteca sobre isso!',
+      fontes: cardsExistentes,
+      citations: [],
     };
   }
 
-  // 4. Chamada para Perplexity
-  const response = await axios.post('https://api.perplexity.ai/chat/completions', {
-    model: "sonar",
-    messages: todasAsMensagens,
-    response_format: { type: "json_object" }
-  }, {
-    headers: { Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}` }
-  });
+  // 3. Chamar a API da Perplexity
+  const body = {
+    model: 'sonar',
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...mensagensFormatadas,
+      { role: 'user', content: novaMensagem },
+    ],
+    stream: false,
+  };
 
-  const respostaIA = JSON.parse(response.data.choices[0].message.content);
+  console.log('Enviando para Perplexity:', JSON.stringify(body));
 
-  // 4. Salvar no banco (Pergunta do Usuário e Resposta da IA)
-  await supabase.from('chat_messages').insert([
-    { user_id: userId, role: 'user', content: novaMensagem },
-    { user_id: userId, role: 'assistant', content: JSON.stringify(respostaIA) }
-  ]);
+  const response = await axios.post(
+    'https://api.perplexity.ai/chat/completions',
+    body,
+    {
+      headers: { Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}` },
+    }
+  );
 
-  // 5. Opcional: Salvar os cards (fontes) se houver algum novo
-  if (respostaIA.fontes && respostaIA.fontes.length > 0) {
+  // citations vem no nível raiz da resposta Perplexity (lista de URLs)
+  const citations = response.data.citations ?? [];
+  const rawContent = response.data.choices[0].message.content;
+
+  // Extrai o bloco ```json-materials``` do Markdown e converte para o schema de fontes
+  const MATERIALS_RE = /```json-materials\n([\s\S]*?)\n```/;
+  const materialsMatch = rawContent.match(MATERIALS_RE);
+
+  let fontes = [];
+  if (materialsMatch) {
+    try {
+      fontes = JSON.parse(materialsMatch[1]).map((m) => ({
+        id_externo:     m.id,
+        titulo:         m.title,
+        tipo:           m.type,
+        link:           m.url,
+        dificuldade:    m.difficulty,
+        autor_canal:    m.author ?? '',
+        por_que_estudar: m.por_que_estudar ?? '',
+      }));
+    } catch { /* mantém vazio */ }
+  }
+
+  const guia_contextual = limparCitacoes(rawContent.replace(MATERIALS_RE, '').trim());
+  const temaMatch = guia_contextual.match(/\*\*Tema identificado:\*\*\s*(.+)/);
+
+  const respostaIA = {
+    tema_identificado: temaMatch?.[1]?.trim() ?? 'Geral',
+    guia_contextual,
+    fontes,
+  };
+
+  // 4. Persistir conversa — armazena só o texto (guia_contextual) como conteúdo do assistente
+  //    para que o histórico enviado à IA seja Markdown limpo, não JSON bruto.
+  await supabase.from('chat_messages').insert({ user_id: userId, role: 'user', content: novaMensagem });
+  await supabase.from('chat_messages').insert({ user_id: userId, role: 'assistant', content: respostaIA.guia_contextual });
+
+  // 5. Upsert dos cards (fontes)
+  if (respostaIA.fontes?.length > 0) {
     await supabase.from('cards').upsert(respostaIA.fontes, { onConflict: 'link' });
   }
 
-  return respostaIA;
+  return { ...respostaIA, citations };
 };

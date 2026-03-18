@@ -1,18 +1,20 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, BookMarked } from 'lucide-react'
+import { Send, BookMarked, Plus, Loader2 } from 'lucide-react'
 import ChatMessage from '../components/chat/ChatMessage'
 import ReferenceOfTheDay from '../components/ReferenceOfTheDay'
 import Button from '../components/ui/Button'
 import { useChat } from '../hooks/useChat'
+import { useUserContent } from '../hooks/useUserContent'
 
 export default function ChatPage() {
-  const { messages, loading, sendMessage } = useChat()
+  const { messages, isTyping, isClearing, sendMessage, clearHistory } = useChat()
+  const { isFavourite, toggleSave } = useUserContent()
   const [input, setInput] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, loading])
+  }, [messages, isTyping])
 
   const handleSend = async () => {
     const text = input.trim()
@@ -35,7 +37,19 @@ export default function ChatPage() {
             </h1>
             <p className="text-xs text-brand-text">Curadoria de conhecimento com IA</p>
           </div>
-          <div className="ml-auto flex items-center gap-1.5">
+          <div className="ml-auto flex items-center gap-3">
+            <button
+              onClick={clearHistory}
+              disabled={isClearing || isTyping}
+              title="Nova Conversa"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-brand-text border border-slate-700 hover:border-brand-accent hover:text-brand-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isClearing
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : <Plus className="w-3.5 h-3.5" />
+              }
+              Nova Conversa
+            </button>
             <span className="w-2 h-2 rounded-full bg-pomodoro-break"></span>
             <span className="text-xs text-brand-text">Online</span>
           </div>
@@ -44,12 +58,17 @@ export default function ChatPage() {
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-6 py-4 bg-brand-secondary">
           {messages.map((msg) => (
-            <ChatMessage key={msg.id} message={msg} />
+            <ChatMessage
+              key={msg.id}
+              message={msg}
+              isFavourite={isFavourite}
+              onToggleSave={toggleSave}
+            />
           ))}
 
-          {loading && (
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-full bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center shrink-0">
+          {isTyping && (
+            <div className="flex items-start gap-2 mb-6">
+              <div className="w-8 h-8 rounded-full bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center shrink-0 mt-0.5">
                 <span className="flex gap-0.5">
                   {[0, 150, 300].map((delay) => (
                     <span
@@ -60,7 +79,18 @@ export default function ChatPage() {
                   ))}
                 </span>
               </div>
-              <span className="text-xs text-brand-text">O Bibliotecário está pesquisando...</span>
+              <div className="bg-brand-primary border border-slate-700 rounded-2xl rounded-tl-sm px-4 py-3">
+                <p className="text-xs text-brand-text">LeIA está consultando o acervo...</p>
+                <div className="flex gap-1.5 mt-2">
+                  {[0, 1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="h-2 bg-slate-700 rounded animate-pulse"
+                      style={{ width: `${[48, 64, 40, 56][i]}px`, animationDelay: `${i * 150}ms` }}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 
@@ -77,12 +107,12 @@ export default function ChatPage() {
                 if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
               }}
               placeholder="Sobre qual tema você quer aprender hoje?"
-              disabled={loading}
+              disabled={isTyping}
               className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 transition-colors disabled:opacity-60"
             />
             <Button
               onClick={handleSend}
-              disabled={!input.trim() || loading}
+              disabled={!input.trim() || isTyping}
               className="rounded-xl px-4"
             >
               <Send className="w-4 h-4" />

@@ -1,8 +1,8 @@
 import fastify from 'fastify';
 import cors from '@fastify/cors';
 import 'dotenv/config';
-import { bibliotecaRoutes } from './src/routes/bibliotecaRoutes.js';
-import { userRoutes } from './src/routes/userRoutes.js';
+import { bibliotecaRoutes } from './routes/bibliotecaRoutes.js';
+import { userRoutes } from './routes/userRoutes.js';
 
 const app = fastify({ logger: true });
 

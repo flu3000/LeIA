@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Play, Pause, RotateCcw, Coffee, Brain, CheckCircle2, Info, Settings2, Minus, Plus } from 'lucide-react'
+import { Play, Pause, RotateCcw, Coffee, Brain, CheckCircle2, Info, Settings2, Minus, Plus, Loader2, AlertCircle, Cloud } from 'lucide-react'
 import Button from '../components/ui/Button'
 import { usePomodoro, type PomodoroMode } from '../hooks/usePomodoro'
+import { usePomodoroSettings } from '../hooks/usePomodoroSettings'
 
 const CIRCLE_RADIUS = 90
 const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS
@@ -81,12 +82,25 @@ function DurationStepper({
 
 // ──────────────────────────────────────────────────────────
 export default function PomodoroPage() {
+  const { initialDurations, isLoadingSettings, saveStatus, saveDurations } = usePomodoroSettings()
   const {
     mode, durations, minutes, seconds, isRunning,
-    sessions, progress, start, pause, reset, switchMode, setDuration,
+    sessions, progress, start, pause, reset, switchMode, setDuration, loadDurations,
   } = usePomodoro()
 
   const [showSettings, setShowSettings] = useState(false)
+
+  // Apply saved durations once they're loaded from Supabase
+  useEffect(() => {
+    if (!isLoadingSettings) loadDurations(initialDurations)
+  }, [isLoadingSettings]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Wrapper: update timer + persist to Supabase
+  const handleSetDuration = (m: PomodoroMode, v: number) => {
+    setDuration(m, v)
+    const clamped = Math.max(1, Math.min(90, v))
+    saveDurations({ ...durations, [m]: clamped })
+  }
   const isFocus = mode === 'focus'
 
   // Dynamic colors tied to palette tokens
@@ -126,15 +140,33 @@ export default function PomodoroPage() {
         {showSettings && (
           <div className="mb-6 animate-in fade-in slide-in-from-top-2 duration-150">
             <div className="bg-brand-primary border border-slate-700 rounded-2xl p-4">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                Configurar duração
-              </p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  Configurar duração
+                </p>
+                {/* Save status indicator */}
+                {saveStatus === 'saving' && (
+                  <span className="flex items-center gap-1 text-xs text-brand-text">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Salvando...
+                  </span>
+                )}
+                {saveStatus === 'saved' && (
+                  <span className="flex items-center gap-1 text-xs text-pomodoro-break">
+                    <Cloud className="w-3 h-3" /> Salvo na nuvem
+                  </span>
+                )}
+                {saveStatus === 'error' && (
+                  <span className="flex items-center gap-1 text-xs text-red-400">
+                    <AlertCircle className="w-3 h-3" /> Erro ao salvar
+                  </span>
+                )}
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <DurationStepper
                   label="Foco"
                   icon={<Brain className="w-3.5 h-3.5" />}
                   value={durations.focus}
-                  onChange={(v) => setDuration('focus', v)}
+                  onChange={(v) => handleSetDuration('focus', v)}
                   accentClass="text-pomodoro-focus"
                   disabled={isRunning && mode === 'focus'}
                 />
@@ -142,7 +174,7 @@ export default function PomodoroPage() {
                   label="Pausa"
                   icon={<Coffee className="w-3.5 h-3.5" />}
                   value={durations.break}
-                  onChange={(v) => setDuration('break', v)}
+                  onChange={(v) => handleSetDuration('break', v)}
                   accentClass="text-pomodoro-break"
                   disabled={isRunning && mode === 'break'}
                 />

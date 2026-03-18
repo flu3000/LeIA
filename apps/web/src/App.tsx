@@ -6,6 +6,7 @@ import LibraryPage from './pages/LibraryPage'
 import PomodoroPage from './pages/PomodoroPage'
 import ProfilePage from './pages/ProfilePage'
 import LoginPage from './pages/LoginPage'
+import TopicDetailPage from './pages/TopicDetailPage'
 import { useAuth } from './context/AuthContext'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -37,6 +38,7 @@ export default function App() {
         >
           <Route index element={<ChatPage />} />
           <Route path="topics" element={<TopicsPage />} />
+          <Route path="topics/:id" element={<TopicDetailPage />} />
           <Route path="library" element={<LibraryPage />} />
           <Route path="pomodoro" element={<PomodoroPage />} />
           <Route path="profile" element={<ProfilePage />} />

@@ -66,10 +66,10 @@ export default function LoginPage() {
     setLoadingOAuth(provider)
     try {
       await loginWithOAuth(provider)
-      navigate('/', { replace: true })
+      // Supabase redireciona para o provider — o browser sai da página
+      // onAuthStateChange cuida da sessão no retorno
     } catch {
       setError('Não foi possível conectar. Tente novamente.')
-    } finally {
       setLoadingOAuth(null)
     }
   }
@@ -124,7 +124,7 @@ export default function LoginPage() {
               type="button"
               onClick={() => handleOAuth('google')}
               disabled={anyLoading}
-              className="w-full flex items-center justify-center gap-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm py-2.5 px-4 rounded-xl border border-slate-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-3 bg-brand-primary hover:bg-slate-700 text-slate-200 font-medium text-sm py-2.5 px-4 rounded-xl border border-slate-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loadingOAuth === 'google'
                 ? <Loader2 className="w-5 h-5 animate-spin text-brand-text" />
@@ -136,7 +136,7 @@ export default function LoginPage() {
               type="button"
               onClick={() => handleOAuth('apple')}
               disabled={anyLoading}
-              className="w-full flex items-center justify-center gap-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm py-2.5 px-4 rounded-xl border border-slate-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-3 bg-brand-primary hover:bg-slate-700 text-slate-200 font-medium text-sm py-2.5 px-4 rounded-xl border border-slate-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loadingOAuth === 'apple'
                 ? <Loader2 className="w-5 h-5 animate-spin" />

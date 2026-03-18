@@ -67,7 +67,7 @@ export default function ProfilePage() {
   const favoritesCount = savedCards.filter((c) => c.isFavorite).length
   const readCount      = savedCards.filter((c) => c.isRead).length
 
-  const handleLogout = () => { logout(); navigate('/login', { replace: true }) }
+  const handleLogout = async () => { await logout(); navigate('/login', { replace: true }) }
 
   return (
     <div className="p-6 max-w-2xl mx-auto">

@@ -73,6 +73,14 @@ export function usePomodoro() {
     })
   }, [])
 
+  // Apply durations loaded from an external source (e.g. Supabase) before the timer starts
+  const loadDurations = useCallback((d: PomodoroDurations) => {
+    setIsRunning(false)
+    setMode('focus')
+    setDurationsState(d)
+    setTimeLeft(d.focus * 60)
+  }, [])
+
   // Update a single duration; resets the timer for that mode if it's currently active
   const setDuration = useCallback((m: PomodoroMode, minutes: number) => {
     const clamped = Math.max(1, Math.min(90, minutes))
@@ -110,5 +118,6 @@ export function usePomodoro() {
     reset,
     switchMode,
     setDuration,
+    loadDurations,
   }
 }
