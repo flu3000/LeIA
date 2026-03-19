@@ -2,10 +2,10 @@
 
 /* ─── Oxford Modern — Dark Theme ────────────────────────── */
 @theme {
-  --color-brand-primary:   #1E293B;
-  --color-brand-secondary: #0F172A;
+  --color-brand-primary:   #131f24;
+  --color-brand-secondary: #1B2C33;
   --color-brand-accent:    #0EA5E9;
-  --color-brand-text:      #94A3B8;
+  --color-brand-text:      #F0EEE6;
   --color-pomodoro-focus:  #E11D48;
   --color-pomodoro-break:  #10B981;
   --font-serif: 'Lora', Georgia, 'Times New Roman', serif;

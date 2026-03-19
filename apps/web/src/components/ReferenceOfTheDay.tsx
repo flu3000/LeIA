@@ -7,7 +7,7 @@ const reference = {
   recommendation: {
     titulo: 'Como Ler Livros',
     autor: 'Mortimer J. Adler',
-    link: 'https://www.amazon.com.br/Como-Ler-Livros-Mortimer-Adler/dp/8562409030',
+    link: 'https://www.amazon.com.br/Como-ler-livros-cl%C3%A1ssico-inteligente/dp/8594090781',
     descricao:
       'O guia definitivo para extrair o máximo de qualquer leitura — do iniciante ao leitor avançado.',
   },

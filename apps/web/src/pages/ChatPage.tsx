@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, BookMarked, Plus, Loader2 } from 'lucide-react'
+import { Send, Plus, Loader2 } from 'lucide-react'
 import ChatMessage from '../components/chat/ChatMessage'
 import ReferenceOfTheDay from '../components/ReferenceOfTheDay'
 import Button from '../components/ui/Button'
@@ -27,36 +27,9 @@ export default function ChatPage() {
     <div className="flex h-full">
       {/* Chat column */}
       <div className="flex flex-col flex-1 min-w-0">
-        <header className="px-6 py-4 bg-brand-primary border-b border-slate-700 flex items-center gap-3 shrink-0">
-          <div className="w-9 h-9 rounded-xl bg-brand-secondary flex items-center justify-center">
-            <BookMarked className="w-4 h-4 text-brand-accent" />
-          </div>
-          <div>
-            <h1 className="text-base font-semibold text-slate-100 leading-tight">
-              Bibliotecário Virtual
-            </h1>
-            <p className="text-xs text-brand-text">Curadoria de conhecimento com IA</p>
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            <button
-              onClick={clearHistory}
-              disabled={isClearing || isTyping}
-              title="Nova Conversa"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-brand-text border border-slate-700 hover:border-brand-accent hover:text-brand-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isClearing
-                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                : <Plus className="w-3.5 h-3.5" />
-              }
-              Nova Conversa
-            </button>
-            <span className="w-2 h-2 rounded-full bg-pomodoro-break"></span>
-            <span className="text-xs text-brand-text">Online</span>
-          </div>
-        </header>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 bg-brand-secondary">
+        <div className="flex-1 overflow-y-auto px-6 py-4 bg-brand-secondary mx-[2.5%]">
           {messages.map((msg) => (
             <ChatMessage
               key={msg.id}
@@ -98,7 +71,7 @@ export default function ChatPage() {
         </div>
 
         {/* Input */}
-        <div className="px-6 py-4 bg-brand-primary border-t border-slate-700 shrink-0">
+        <div className="px-6 py-4 bg-brand-primary shrink-0 mx-[2.5%] my-2 rounded-xl">
           <div className="flex gap-2">
             <input
               value={input}
@@ -108,7 +81,7 @@ export default function ChatPage() {
               }}
               placeholder="Sobre qual tema você quer aprender hoje?"
               disabled={isTyping}
-              className="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 transition-colors disabled:opacity-60"
+              className="flex-1 bg-brand-secondary border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/20 transition-colors disabled:opacity-60"
             />
             <Button
               onClick={handleSend}
@@ -121,6 +94,18 @@ export default function ChatPage() {
           <p className="text-xs text-slate-600 mt-2 text-center">
             Enter para enviar · Shift+Enter para nova linha
           </p>
+          <button
+            onClick={clearHistory}
+            disabled={isClearing || isTyping}
+            title="Nova Conversa"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-brand-text border border-slate-700 hover:border-brand-accent hover:text-brand-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isClearing
+              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              : <Plus className="w-3.5 h-3.5" />
+            }
+            Nova Conversa
+          </button>
         </div>
       </div>
 

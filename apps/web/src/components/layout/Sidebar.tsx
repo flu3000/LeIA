@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { MessageSquare, BookOpen, Library, Timer, BookMarked, ChevronLeft } from 'lucide-react'
+import { MessageSquare, BookOpen, Library, Timer, ChevronLeft } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const navItems = [
@@ -29,23 +29,44 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
 
   // Labels fade-in/out alongside the width transition
-  const labelClass = `overflow-hidden whitespace-nowrap transition-all duration-300 ${
-    collapsed ? 'opacity-0 max-w-0' : 'opacity-100 max-w-xs'
+  const labelClass = `overflow-hidden whitespace-nowrap transition-all duration-200 ${
+    collapsed ? 'opacity-0 max-w-xs' : 'opacity-100 max-w-xs'
   }`
 
   return (
     <aside
-      className={`hidden md:flex flex-col bg-brand-primary shrink-0 transition-all duration-300 overflow-hidden ${
+      className={`hidden md:flex flex-col bg-brand-primary shrink-0 transition-all duration-200 overflow-hidden ${
         collapsed ? 'w-16 cursor-pointer' : 'w-60'
       }`}
       onClick={collapsed ? () => setCollapsed(false) : undefined}
     >
       {/* Logo */}
-      <div className="flex items-center justify-between px-3 py-5 border-b border-white/10 min-w-0">
-        <div className="flex items-center gap-2.5 min-w-0 overflow-hidden">
-          <BookMarked className="w-6 h-6 text-brand-accent shrink-0" />
-          <span className={`text-sm font-semibold text-white leading-tight ${labelClass}`}>
-            Portal do Conhecimento
+      <div className="flex items-center justify-between px-3 py-3 min-w-8">
+        <div className="flex items-center gap-2.5 min-w-10 overflow-hidden w-100 h-8 px-1">
+          <svg 
+            viewBox="0 0 24 28" 
+            fill="none" 
+            xmlns="http://www.w3.org/2000/svg" 
+            className="w-8 h-8 text-brand-accent shrink-0 bg-transparent"
+          >
+            <path d="M11.5173 16.7831L21.5173 11.1829" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            <path d="M12.3173 8.05552L15.2208 7.30087" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            <path d="M11.5173 10.9537L12.5526 7.20595" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            <path d="M21.5173 20.483V11.483" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            <path d="M11.5173 26.483L11.5173 16.483" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            <path d="M11.5173 26.483L21.5173 20.8828" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            <path d="M11.5173 16.7831L1.51729 11.1829" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            <path d="M10.7173 8.05552L7.81374 7.30087" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            <path d="M11.5173 10.9537L10.482 7.20595" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            <path d="M1.51728 20.483L1.51728 11.483" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            <path d="M11.5173 26.483L1.51729 20.8828" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            <path d="M11.5173 7.08325L21.5173 1.48302" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            <path d="M11.5173 7.08325L1.51729 1.48302" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            <path d="M21.4875 11.0344L18.5461 3.1956" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+            <path d="M1.54708 11.0344L4.48845 3.1956" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+          </svg>
+          <span className={`text-xl font-semibold text-brand-text leading-tight w-full ${labelClass}`}>
+            LeIA
           </span>
         </div>
         <div className={`shrink-0 ${labelClass}`}>
@@ -69,7 +90,7 @@ export default function Sidebar() {
             end={to === '/'}
             title={collapsed ? label : undefined}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+              `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors ${
                 isActive
                   ? 'bg-brand-accent/15 text-brand-accent font-medium'
                   : 'text-slate-400 hover:text-white hover:bg-white/8'
@@ -89,7 +110,7 @@ export default function Sidebar() {
             to="/profile"
             title={collapsed ? user.name : undefined}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
+              `flex items-center gap-3 px-2 py-2.5 rounded-lg transition-colors ${
                 isActive
                   ? 'bg-brand-accent/15 text-brand-accent'
                   : 'text-slate-400 hover:text-white hover:bg-white/8'
