@@ -110,9 +110,7 @@ export default function ChatMessage({ message, isFavourite, onToggleSave }: Chat
     <div className="flex justify-start mb-6">
       <div className="flex items-start gap-2 max-w-2xl w-full">
         {/* Avatar */}
-        <div className="w-8 h-8 rounded-full bg-brand-accent/10 border border-brand-accent/20 flex items-center justify-center shrink-0 mt-0.5">
-          <BookMarked className="w-4 h-4 text-brand-accent" />
-        </div>
+        
 
         <div className="flex-1 min-w-0">
           {/* Guia contextual */}

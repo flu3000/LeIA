@@ -7,6 +7,8 @@ import PomodoroPage from './pages/PomodoroPage'
 import ProfilePage from './pages/ProfilePage'
 import LoginPage from './pages/LoginPage'
 import TopicDetailPage from './pages/TopicDetailPage'
+import SocialPage from './pages/SocialPage'
+import InsightsPage from './pages/InsightsPage'
 import { useAuth } from './context/AuthContext'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -42,6 +44,8 @@ export default function App() {
           <Route path="library" element={<LibraryPage />} />
           <Route path="pomodoro" element={<PomodoroPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="social" element={<SocialPage />} />
+          <Route path="insights" element={<InsightsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

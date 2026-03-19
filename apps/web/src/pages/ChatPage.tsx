@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, Plus, Loader2 } from 'lucide-react'
 import ChatMessage from '../components/chat/ChatMessage'
-import ReferenceOfTheDay from '../components/ReferenceOfTheDay'
+import DailyInfoBox from '../components/DailyInfoBox'
 import Button from '../components/ui/Button'
 import { useChat } from '../hooks/useChat'
 import { useUserContent } from '../hooks/useUserContent'
@@ -25,11 +25,13 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-full">
-      {/* Chat column */}
+      <DailyInfoBox />
+
+      {/* Chat column — full width */}
       <div className="flex flex-col flex-1 min-w-0">
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 bg-brand-secondary mx-[2.5%]">
+        <div className="flex-1 overflow-y-auto px-6 py-4 bg-brand-secondary mx-[5%]">
           {messages.map((msg) => (
             <ChatMessage
               key={msg.id}
@@ -71,7 +73,7 @@ export default function ChatPage() {
         </div>
 
         {/* Input */}
-        <div className="px-6 py-4 bg-brand-primary shrink-0 mx-[2.5%] my-2 rounded-xl">
+        <div className="px-6 py-4 bg-brand-primary shrink-0 mx-[5%] my-2 rounded-xl">
           <div className="flex gap-2">
             <input
               value={input}
@@ -108,11 +110,6 @@ export default function ChatPage() {
           </button>
         </div>
       </div>
-
-      {/* Reference sidebar */}
-      <aside className="hidden lg:block w-80 border-l border-slate-700 bg-brand-secondary p-5 overflow-y-auto shrink-0">
-        <ReferenceOfTheDay />
-      </aside>
     </div>
   )
 }

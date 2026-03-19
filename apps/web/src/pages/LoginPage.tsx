@@ -94,7 +94,7 @@ export default function LoginPage() {
           <div className="w-14 h-14 rounded-2xl bg-brand-primary border border-slate-700 flex items-center justify-center mb-4">
             <BookMarked className="w-7 h-7 text-brand-accent" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-100">Portal do Conhecimento</h1>
+          <h1 className="text-2xl font-bold text-slate-100">LeIA</h1>
           <p className="text-sm text-brand-text mt-1">Seu guia de curadoria com IA</p>
         </div>
 

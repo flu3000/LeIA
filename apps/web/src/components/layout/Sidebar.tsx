@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { MessageSquare, BookOpen, Library, Timer, ChevronLeft } from 'lucide-react'
+import { MessageSquare, BookOpen, Library, Timer, PanelLeft, Users, Sparkles } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const navItems = [
@@ -8,6 +8,8 @@ const navItems = [
   { to: '/topics', icon: BookOpen, label: 'Temas' },
   { to: '/library', icon: Library, label: 'Biblioteca' },
   { to: '/pomodoro', icon: Timer, label: 'Estudo Focado' },
+  { to: '/insights', icon: Sparkles, label: 'Insights' },
+  { to: '/social', icon: Users, label: 'Social' },
 ]
 
 function UserAvatar({ name }: { name: string }) {
@@ -65,7 +67,7 @@ export default function Sidebar() {
             <path d="M21.4875 11.0344L18.5461 3.1956" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
             <path d="M1.54708 11.0344L4.48845 3.1956" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
           </svg>
-          <span className={`text-xl font-semibold text-brand-text leading-tight w-full ${labelClass}`}>
+          <span className={`text-xl font-serif font-semibold text-brand-text leading-tight w-full ${labelClass}`}>
             LeIA
           </span>
         </div>
@@ -76,7 +78,7 @@ export default function Sidebar() {
             aria-label="Recolher menu"
             className="w-6 h-6 flex items-center justify-center rounded-md text-slate-400 hover:text-white hover:bg-white/8 transition-colors"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <PanelLeft className="w-4 h-4" />
           </button>
         </div>
       </div>

@@ -11,6 +11,32 @@
   --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
 }
 
+/* ─── Oxford Modern — Light Theme ───────────────────────── */
+:root.light {
+  --color-brand-primary:   #FFFFFF;
+  --color-brand-secondary: #F1F5F9;
+  --color-brand-accent:    #0284C7;
+  --color-brand-text:      #64748B;
+}
+
+/* Slate overrides in light mode (unlayered = higher priority than Tailwind layers) */
+:root.light .text-slate-100 { color: #1E293B; }
+:root.light .text-slate-200 { color: #334155; }
+:root.light .text-slate-300 { color: #475569; }
+:root.light .text-slate-400 { color: #64748B; }
+:root.light .text-slate-500 { color: #94A3B8; }
+:root.light .text-slate-600 { color: #CBD5E1; }
+:root.light .bg-slate-700   { background-color: #E2E8F0; }
+:root.light .bg-slate-800   { background-color: #F8FAFC; }
+:root.light .border-slate-700 { border-color: #E2E8F0; }
+:root.light .border-slate-600 { border-color: #CBD5E1; }
+:root.light .ring-slate-700   { --tw-ring-color: #E2E8F0; }
+:root.light .divide-slate-700\/60 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(226, 232, 240, 0.6);
+}
+:root.light .hover\:bg-slate-700\/50:hover { background-color: rgba(226, 232, 240, 0.6); }
+:root.light .hover\:border-slate-600:hover { border-color: #CBD5E1; }
+
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -26,6 +52,50 @@ body {
   color: #94A3B8;
 }
 
+:root.light body {
+  background-color: #F1F5F9;
+  color: #334155;
+}
+
 #root {
   height: 100vh;
+}
+
+/* ─── Medal glow keyframe ────────────────────────────────── */
+@keyframes medalPulse {
+  0%, 100% { box-shadow: 0 0 8px 2px var(--glow-color, rgba(251,191,36,0.3)); }
+  50%       { box-shadow: 0 0 18px 6px var(--glow-color, rgba(251,191,36,0.5)); }
+}
+.medal-glow-raro     { --glow-color: rgba(14,165,233,0.35); animation: medalPulse 3s ease-in-out infinite; }
+.medal-glow-épico    { --glow-color: rgba(192,132,252,0.35); animation: medalPulse 2.5s ease-in-out infinite; }
+.medal-glow-lendário { --glow-color: rgba(251,191,36,0.45); animation: medalPulse 2s ease-in-out infinite; }
+
+/* ─── Scrollbar — minimalista ────────────────────────────── */
+:root {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.10) transparent;
+}
+:root.light {
+  scrollbar-color: rgba(0,0,0,0.15) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.10);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+:root.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+:root.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.28);
 }

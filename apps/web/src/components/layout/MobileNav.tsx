@@ -1,11 +1,11 @@
 import { NavLink } from 'react-router-dom'
-import { MessageSquare, BookOpen, Library, Timer, UserCircle } from 'lucide-react'
+import { MessageSquare, Library, Timer, UserCircle, Sparkles } from 'lucide-react'
 
 const navItems = [
   { to: '/', icon: MessageSquare, label: 'Chat' },
-  { to: '/topics', icon: BookOpen, label: 'Temas' },
   { to: '/library', icon: Library, label: 'Biblioteca' },
   { to: '/pomodoro', icon: Timer, label: 'Pomodoro' },
+  { to: '/insights', icon: Sparkles, label: 'Insights' },
   { to: '/profile', icon: UserCircle, label: 'Perfil' },
 ]
 

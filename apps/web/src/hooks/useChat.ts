@@ -11,7 +11,7 @@ const WELCOME: Message = {
   id: '0',
   role: 'assistant',
   content:
-    'Olá! Sou o **Bibliotecário Virtual** do Portal do Conhecimento.\n\n' +
+    'Olá!\n\n' +
     'Qual tema você gostaria de explorar hoje? Posso indicar livros, vídeos, podcasts e artigos curados especialmente para você.',
 }
 

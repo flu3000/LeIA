@@ -10,7 +10,8 @@
       "Bash(netstat -ano)",
       "Bash(findstr \":3001\")",
       "Bash(taskkill /PID 32904 /F)",
-      "Bash(cmd /c \"taskkill /PID 32904 /F\" 2>&1)"
+      "Bash(cmd /c \"taskkill /PID 32904 /F\" 2>&1)",
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(list\\(d.get\\(''''dependencies'''',{}\\).keys\\(\\)\\)\\)\")"
     ]
   }
 }

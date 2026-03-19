@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, BookOpen, MessageSquare, Filter, Star, Heart, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, BookOpen, MessageSquare, Filter, Star, Heart, CheckCircle2, Quote, CheckCircle } from 'lucide-react'
 import { topics, tipoStyle, dificuldadeStyle } from '../data/topics'
 import { useUserContent } from '../hooks/useUserContent'
 import type { SaveItem } from '../hooks/useUserContent'
+import PostCitationModal from '../components/PostCitationModal'
 
 const tipoLabel: Record<string, string> = {
   livro: 'Livro', video: 'Vídeo', podcast: 'Podcast', artigo: 'Artigo', curso: 'Curso',
@@ -17,8 +18,16 @@ export default function TopicDetailPage() {
   const navigate = useNavigate()
   const [tipoFilter, setTipoFilter] = useState<TipoFilter>('todos')
   const [dificuldadeFilter, setDificuldadeFilter] = useState<DificuldadeFilter>('todas')
+  const [citationCardId, setCitationCardId] = useState<string | undefined>()
+  const [citationToast, setCitationToast] = useState(false)
 
   const { isFavourite, isRead, isSaved, toggleSave, toggleRead } = useUserContent()
+
+  const handleCitationSuccess = () => {
+    setCitationCardId(undefined)
+    setCitationToast(true)
+    setTimeout(() => setCitationToast(false), 3000)
+  }
 
   const topic = topics.find((t) => t.id === id)
 
@@ -55,6 +64,21 @@ export default function TopicDetailPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
+      {/* Citation toast */}
+      {citationToast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-brand-primary border border-pomodoro-break/40 text-pomodoro-break text-sm px-4 py-2.5 rounded-xl shadow-lg">
+          <CheckCircle className="w-4 h-4 shrink-0" />
+          Insight compartilhado com sucesso!
+        </div>
+      )}
+
+      <PostCitationModal
+        open={citationCardId !== undefined}
+        onClose={() => setCitationCardId(undefined)}
+        onSuccess={handleCitationSuccess}
+        preselectedCardId={citationCardId}
+      />
+
       {/* Voltar */}
       <button
         onClick={() => navigate('/topics')}
@@ -241,6 +265,16 @@ export default function TopicDetailPage() {
                               read ? 'text-pomodoro-break' : 'text-slate-500 hover:text-pomodoro-break'
                             }`}
                           />
+                        </button>
+
+                        {/* Cite */}
+                        <button
+                          onClick={() => setCitationCardId(cardId)}
+                          className="p-1.5 rounded-lg hover:bg-slate-700 transition-all duration-150 active:scale-90"
+                          aria-label="Adicionar citação"
+                          title="Adicionar citação (+20 XP)"
+                        >
+                          <Quote className="w-3.5 h-3.5 text-slate-500 hover:text-brand-accent transition-colors" />
                         </button>
 
                         {/* Saved indicator */}
