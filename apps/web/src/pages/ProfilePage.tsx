@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, BookMarked, Timer, Library, MessageSquare, ChevronRight, Bell, ShieldCheck, Palette, Trash2, Sun, Moon, Zap } from 'lucide-react'
+import { LogOut, BookMarked, Timer, Library, MessageSquare, ChevronRight, Bell, ShieldCheck, Palette, Trash2, Sun, Moon, Zap, Settings } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 import { useTheme } from '../context/ThemeContext'
@@ -10,9 +10,12 @@ import MedalsSection from '../components/MedalsSection'
 import LeaderboardComponent from '../components/LeaderboardComponent'
 import Button from '../components/ui/Button'
 
-function Avatar({ name, size = 'lg' }: { name: string; size?: 'sm' | 'md' | 'lg' }) {
-  const initials = name.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+function Avatar({ name, avatarUrl, size = 'lg' }: { name: string; avatarUrl?: string; size?: 'sm' | 'md' | 'lg' }) {
   const sizeClass = { sm: 'w-8 h-8 text-sm', md: 'w-10 h-10 text-base', lg: 'w-16 h-16 text-2xl' }[size]
+  if (avatarUrl) {
+    return <img src={avatarUrl} alt={name} className={`${sizeClass} rounded-full object-cover border-2 border-brand-accent/40 shrink-0`} />
+  }
+  const initials = name.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase()
   return (
     <div className={`${sizeClass} rounded-full bg-brand-accent/20 border-2 border-brand-accent/40 flex items-center justify-center font-bold text-brand-accent shrink-0`}>
       {initials}
@@ -73,11 +76,16 @@ export default function ProfilePage() {
       {/* Header card */}
       <div className="bg-brand-primary border border-slate-700 rounded-2xl p-6">
         <div className="flex items-center gap-4 mb-5">
-          <Avatar name={user.name} size="lg" />
+          <Avatar name={user.name} avatarUrl={user.avatarUrl} size="lg" />
           <div className="min-w-0 flex-1">
             <h1 className="text-xl font-bold text-slate-100 truncate">{user.name}</h1>
             <p className="text-sm text-brand-text truncate">{user.email}</p>
             <p className="text-xs text-slate-600 mt-0.5">Membro desde {joinedDate}</p>
+            {user.bio && <p className="text-xs text-slate-400 mt-0.5 italic">"{user.bio}"</p>}
+            <button onClick={() => navigate('/settings')} className="flex items-center gap-1 text-xs text-brand-accent hover:text-sky-300 transition-colors mt-1">
+              <Settings className="w-3 h-3" />
+              Editar perfil
+            </button>
           </div>
           <div className="text-right shrink-0">
             <p className={`text-sm font-bold ${level.color}`}>{level.title}</p>
@@ -143,8 +151,7 @@ export default function ProfilePage() {
             description={theme === 'dark' ? 'Tema escuro ativo' : 'Tema claro ativo'} action={<ThemeToggle />} />
           <SettingRow icon={<Bell className="w-4 h-4" />} label="Notificações" description="Alertas e lembretes de estudo"
             action={<span className="text-xs text-brand-text bg-slate-700 px-2 py-0.5 rounded-full">Em breve</span>} />
-          <SettingRow icon={<ShieldCheck className="w-4 h-4" />} label="Segurança" description="Alterar senha e sessões ativas"
-            action={<span className="text-xs text-brand-text bg-slate-700 px-2 py-0.5 rounded-full">Em breve</span>} />
+          <SettingRow icon={<ShieldCheck className="w-4 h-4" />} label="Segurança" description="Alterar senha e dados da conta" onClick={() => navigate('/settings')} />
         </div>
       </div>
 
@@ -154,8 +161,7 @@ export default function ProfilePage() {
         </div>
         <div className="divide-y divide-slate-700/60">
           <SettingRow icon={<LogOut className="w-4 h-4" />} label="Sair da conta" description="Encerrar sessão neste dispositivo" onClick={() => setShowConfirm(true)} />
-          <SettingRow icon={<Trash2 className="w-4 h-4" />} label="Excluir conta" description="Remove permanentemente todos os dados" danger
-            action={<span className="text-xs text-brand-text bg-slate-700 px-2 py-0.5 rounded-full">Em breve</span>} />
+          <SettingRow icon={<Trash2 className="w-4 h-4" />} label="Excluir conta" description="Remove permanentemente todos os dados" danger onClick={() => navigate('/settings')} />
         </div>
       </div>
 

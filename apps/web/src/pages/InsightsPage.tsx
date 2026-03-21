@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Heart, Send, Sparkles, Users, ExternalLink, CheckCircle } from 'lucide-react'
+import { Heart, Send, Sparkles, Users, ExternalLink, CheckCircle, Trash2, BookOpen } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { useInsights, type Insight } from '../hooks/useInsights'
 import { useAuth } from '../context/AuthContext'
 import PostCitationModal from '../components/PostCitationModal'
@@ -15,33 +16,84 @@ function TimeAgo({ date }: { date: string }) {
   return <span>{Math.floor(hours / 24)}d</span>
 }
 
-function InsightCard({ insight, onLike }: { insight: Insight; onLike: (id: string) => void }) {
-  const initials = insight.displayName.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+function AuthorAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string }) {
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name}
+        className="w-8 h-8 rounded-full object-cover border border-brand-accent/30 shrink-0"
+      />
+    )
+  }
+  const initials = name.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+  return (
+    <div className="w-8 h-8 rounded-full bg-brand-accent/20 border border-brand-accent/30 flex items-center justify-center text-xs font-bold text-brand-accent shrink-0">
+      {initials}
+    </div>
+  )
+}
+
+function InsightCard({
+  insight,
+  currentUserId,
+  onLike,
+  onDelete,
+}: {
+  insight: Insight
+  currentUserId?: string
+  onLike: (id: string) => void
+  onDelete: (id: string) => void
+}) {
+  const isOwner = insight.userId === currentUserId
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8, scale: 0.97 }}
       className="bg-brand-primary border border-slate-700 hover:border-slate-600 rounded-2xl p-5 transition-colors"
     >
-      {/* Author */}
+      {/* Author (poster) — links to /profile/:userId */}
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-8 h-8 rounded-full bg-brand-accent/20 border border-brand-accent/30 flex items-center justify-center text-xs font-bold text-brand-accent shrink-0">
-          {initials}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-slate-200 truncate">{insight.displayName}</p>
-          <p className="text-xs text-slate-500">@{insight.username}</p>
-        </div>
-        <span className="text-xs text-slate-600 shrink-0"><TimeAgo date={insight.createdAt} /></span>
+        <Link
+          to={`/profile/${insight.profileHandle}`}
+          className="flex items-center gap-3 flex-1 min-w-0 group/author"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <AuthorAvatar name={insight.displayName} avatarUrl={insight.avatarUrl} />
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-slate-200 truncate group-hover/author:text-brand-accent transition-colors">
+              {insight.displayName}
+            </p>
+            <p className="text-xs text-slate-500">@{insight.username}</p>
+          </div>
+        </Link>
+        <span className="text-xs text-slate-600 shrink-0">
+          <TimeAgo date={insight.createdAt} />
+        </span>
       </div>
 
-      {/* Content */}
-      <blockquote className="font-serif text-slate-200 text-sm italic leading-relaxed mb-3 border-l-2 border-brand-accent/40 pl-3">
+      {/* Quote content */}
+      <blockquote className="font-serif text-slate-200 text-sm italic leading-relaxed mb-2 border-l-2 border-brand-accent/40 pl-3">
         "{insight.content}"
       </blockquote>
 
+      {/* Book attribution (author / book_title) */}
+      {(insight.author || insight.bookTitle) && (
+        <div className="flex items-center gap-1.5 pl-3 mb-3">
+          <BookOpen className="w-3 h-3 text-slate-500 shrink-0" />
+          <p className="text-xs text-slate-500">
+            {insight.bookTitle && <span className="italic">{insight.bookTitle}</span>}
+            {insight.bookTitle && insight.author && <span className="mx-1">·</span>}
+            {insight.author && <span>{insight.author}</span>}
+          </p>
+        </div>
+      )}
+
       {/* Footer */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         {insight.materialLink ? (
           <a
             href={insight.materialLink}
@@ -52,16 +104,53 @@ function InsightCard({ insight, onLike }: { insight: Insight; onLike: (id: strin
             <ExternalLink className="w-3 h-3" />
             Ver fonte
           </a>
-        ) : <span />}
-        <button
-          onClick={() => onLike(insight.id)}
-          className={`flex items-center gap-1.5 text-xs transition-colors ${
-            insight.isLiked ? 'text-pomodoro-focus' : 'text-slate-500 hover:text-pomodoro-focus'
-          }`}
-        >
-          <Heart className={`w-4 h-4 transition-transform ${insight.isLiked ? 'fill-current scale-110' : ''}`} />
-          {insight.likesCount > 0 && insight.likesCount}
-        </button>
+        ) : (
+          <span />
+        )}
+
+        <div className="flex items-center gap-3">
+          {/* Like */}
+          <button
+            onClick={() => onLike(insight.id)}
+            className={`flex items-center gap-1.5 text-xs transition-colors ${
+              insight.isLiked ? 'text-pomodoro-focus' : 'text-slate-500 hover:text-pomodoro-focus'
+            }`}
+          >
+            <Heart
+              className={`w-4 h-4 transition-transform ${insight.isLiked ? 'fill-current scale-110' : ''}`}
+            />
+            {insight.likesCount > 0 && insight.likesCount}
+          </button>
+
+          {/* Delete — owner only, two-tap confirmation */}
+          {isOwner && (
+            confirmDelete ? (
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-slate-500">Excluir?</span>
+                <button
+                  onClick={() => { onDelete(insight.id); setConfirmDelete(false) }}
+                  className="text-xs text-pomodoro-focus hover:text-rose-400 font-medium transition-colors"
+                >
+                  Sim
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                >
+                  Não
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="text-slate-600 hover:text-pomodoro-focus transition-colors"
+                aria-label="Excluir insight"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )
+          )}
+        </div>
       </div>
     </motion.div>
   )
@@ -69,7 +158,7 @@ function InsightCard({ insight, onLike }: { insight: Insight; onLike: (id: strin
 
 export default function InsightsPage() {
   const { user } = useAuth()
-  const { explorar, seguindo, isLoading, fetchExplorar, fetchSeguindo, toggleLike, publish, refresh } = useInsights()
+  const { explorar, seguindo, isLoading, fetchExplorar, fetchSeguindo, toggleLike, publish, deleteQuote, refresh } = useInsights()
   const [tab, setTab] = useState<'explorar' | 'seguindo'>('explorar')
   const [draft, setDraft] = useState('')
   const [materialLink, setMaterialLink] = useState('')
@@ -84,8 +173,13 @@ export default function InsightsPage() {
   const handlePublish = async () => {
     if (!draft.trim()) return
     setPublishing(true)
-    const ok = await publish(draft, materialLink || undefined)
-    if (ok) { setDraft(''); setMaterialLink(''); setShowCompose(false) }
+    const ok = await publish(draft, materialLink.trim() ? { materialLink: materialLink.trim() } : undefined)
+    if (ok) {
+      setDraft('')
+      setMaterialLink('')
+      setShowCompose(false)
+      await refresh()
+    }
     setPublishing(false)
   }
 
@@ -140,7 +234,7 @@ export default function InsightsPage() {
         )}
       </div>
 
-      {/* Compose */}
+      {/* Compose panel */}
       <AnimatePresence>
         {showCompose && (
           <motion.div
@@ -154,7 +248,7 @@ export default function InsightsPage() {
               <textarea
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                placeholder='Compartilhe uma citação ou reflexão… "A leitura é para a mente o que o exercício é para o corpo." — Addison'
+                placeholder='"Compartilhe uma citação ou reflexão…"'
                 maxLength={400}
                 rows={3}
                 className="w-full bg-brand-secondary border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-accent resize-none transition-colors font-serif italic"
@@ -172,7 +266,9 @@ export default function InsightsPage() {
                   disabled={!draft.trim() || publishing}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-accent text-white text-sm font-medium hover:bg-sky-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {publishing ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Send className="w-4 h-4" />}
+                  {publishing
+                    ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    : <Send className="w-4 h-4" />}
                   Publicar
                 </button>
               </div>
@@ -205,15 +301,25 @@ export default function InsightsPage() {
         <div className="flex flex-col items-center justify-center py-16 text-brand-text">
           <Sparkles className="w-10 h-10 mb-3 opacity-20" />
           <p className="text-sm font-medium text-slate-300">
-            {tab === 'seguindo' ? 'Siga outros leitores para ver os insights deles.' : 'Nenhum insight publicado ainda.'}
+            {tab === 'seguindo'
+              ? 'Siga outros leitores para ver os insights deles.'
+              : 'Nenhum insight publicado ainda. Seja o primeiro!'}
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
-          {feed.map((insight) => (
-            <InsightCard key={insight.id} insight={insight} onLike={toggleLike} />
-          ))}
-        </div>
+        <AnimatePresence initial={false}>
+          <div className="flex flex-col gap-3">
+            {feed.map((insight) => (
+              <InsightCard
+                key={insight.id}
+                insight={insight}
+                currentUserId={user?.id}
+                onLike={toggleLike}
+                onDelete={deleteQuote}
+              />
+            ))}
+          </div>
+        </AnimatePresence>
       )}
     </div>
   )

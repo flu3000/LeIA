@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { MessageSquare, BookOpen, Library, Timer, PanelLeft, Users, Sparkles } from 'lucide-react'
+import { MessageSquare, BookOpen, Library, Timer, PanelLeft, Users, Sparkles, Building2, Trophy } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const navItems = [
@@ -9,10 +9,15 @@ const navItems = [
   { to: '/library', icon: Library, label: 'Biblioteca' },
   { to: '/pomodoro', icon: Timer, label: 'Estudo Focado' },
   { to: '/insights', icon: Sparkles, label: 'Insights' },
-  { to: '/social', icon: Users, label: 'Social' },
+  { to: '/social', icon: Users, label: 'Amigos' },
+  { to: '/rankings', icon: Trophy, label: 'Rankings' },
+  { to: '/communities', icon: Building2, label: 'Comunidades' },
 ]
 
-function UserAvatar({ name }: { name: string }) {
+function UserAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string }) {
+  if (avatarUrl) {
+    return <img src={avatarUrl} alt={name} className="w-8 h-8 rounded-full object-cover border border-brand-accent/40 shrink-0" />
+  }
   const initials = name
     .split(' ')
     .slice(0, 2)
@@ -119,7 +124,7 @@ export default function Sidebar() {
               }`
             }
           >
-            <UserAvatar name={user.name} />
+            <UserAvatar name={user.name} avatarUrl={user.avatarUrl} />
             <div className={`min-w-0 ${labelClass}`}>
               <p className="text-sm font-medium text-white truncate">{user.name}</p>
               <p className="text-xs text-slate-400 truncate">{user.email}</p>

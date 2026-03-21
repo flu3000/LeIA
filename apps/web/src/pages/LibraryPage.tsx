@@ -1,249 +1,381 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { BookOpen, Heart, CheckCircle, Search, Library, Loader2, Star, RefreshCw, ChevronDown } from 'lucide-react'
-import Input from '../components/ui/Input'
-import { topics, type Topic } from '../data/topics'
-import { useUserContent } from '../hooks/useUserContent'
+import { useState, useMemo } from 'react'
+import { Link } from 'react-router-dom'
+import {
+  BookOpen, BookMarked, CheckCircle2, Library,
+  Search, X, ChevronDown, Trash2,
+} from 'lucide-react'
+import { useSavedBooks } from '../hooks/useSavedBooks'
+import type { SavedAs } from '../hooks/useBookDetail'
+import type { SavedBookItem } from '../hooks/useSavedBooks'
 
-type Tab = 'consultar' | 'salvos'
-type Filter = 'todos' | 'favoritos' | 'lidos'
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-// Broader grouping for accordion (Theme → Subtheme layout)
-const TOPIC_GROUPS: Record<string, string[]> = {
-  'Humanidades':    ['1', '5', '8'],  // Filosofia, História, Linguística
-  'Ciências Exatas':['2', '6'],       // Matemática, Física
-  'Ciências da Vida':['4'],           // Neurociência
-  'Tecnologia & Economia': ['3', '7'],// Programação, Economia
+const STATUS_TABS: { value: SavedAs; label: string; icon: React.ReactNode }[] = [
+  { value: 'a ler', label: 'a ler',  icon: <BookOpen    className="w-3.5 h-3.5" /> },
+  { value: 'lendo', label: 'lendo',  icon: <BookMarked  className="w-3.5 h-3.5" /> },
+  { value: 'lido',  label: 'lido',  icon: <CheckCircle2 className="w-3.5 h-3.5" /> },
+]
+
+const DIFF_STYLE: Record<string, string> = {
+  Iniciante:     'bg-pomodoro-break/15 text-pomodoro-break border-pomodoro-break/30',
+  Intermediário: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  Avançado:      'bg-pomodoro-focus/15 text-pomodoro-focus border-pomodoro-focus/30',
 }
 
-const TIPO_LABEL: Record<string, string> = {
-  livro: '📚 Livros', video: '🎬 Vídeos', podcast: '🎙 Podcasts', artigo: '📰 Artigos', curso: '🎓 Cursos',
-}
+// ── Book card ─────────────────────────────────────────────────────────────────
 
-// ── Accordion item ─────────────────────────────────────────
-function AccordionGroup({ label, topics: groupTopics }: { label: string; topics: Topic[] }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div className="bg-brand-primary border border-slate-700 rounded-2xl overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-slate-700/20 transition-colors"
-      >
-        <span className="font-serif font-semibold text-slate-100 text-base">{label}</span>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-brand-text">{groupTopics.length} tema{groupTopics.length !== 1 ? 's' : ''}</span>
-          <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
-        </div>
-      </button>
+function BookCard({
+  item,
+  onChangeStatus,
+  onRemove,
+}: {
+  item: SavedBookItem
+  onChangeStatus: (bookId: string, status: SavedAs) => void
+  onRemove: (bookId: string) => void
+}) {
+  const [coverError, setCoverError] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const book = item.books
 
-      {open && (
-        <div className="border-t border-slate-700/60">
-          {groupTopics.map((topic) => (
-            <TopicAccordion key={topic.id} topic={topic} />
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function TopicAccordion({ topic }: { topic: Topic }) {
-  const [open, setOpen] = useState(false)
-  const byTipo = topic.todasReferencias.reduce<Record<string, typeof topic.todasReferencias>>((acc, ref) => {
-    if (!acc[ref.tipo]) acc[ref.tipo] = []
-    acc[ref.tipo].push(ref)
-    return acc
-  }, {})
-
-  return (
-    <div className="border-b border-slate-700/30 last:border-0">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-slate-700/10 transition-colors"
-      >
-        <span className="text-xl">{topic.emoji}</span>
-        <span className="font-serif font-medium text-slate-200 flex-1 text-left">{topic.tema}</span>
-        <span className="text-xs text-brand-text">{topic.todasReferencias.length} ref.</span>
-        <ChevronDown className={`w-3.5 h-3.5 text-slate-600 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
-      </button>
-
-      {open && (
-        <div className="px-5 pb-4">
-          {Object.entries(byTipo).map(([tipo, refs]) => (
-            <div key={tipo} className="mb-4 last:mb-0">
-              <p className="text-xs text-slate-500 uppercase tracking-wider font-medium mb-2">
-                {TIPO_LABEL[tipo] ?? tipo}
-              </p>
-              <div className="flex flex-col gap-1.5">
-                {refs.map((ref, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm">
-                    <span className="w-1.5 h-1.5 rounded-full bg-brand-accent/50 shrink-0" />
-                    <span className="text-slate-300">{ref.titulo}</span>
-                    <span className="text-slate-600 text-xs ml-auto shrink-0">{ref.autor}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ──────────────────────────────────────────────────────────
-export default function LibraryPage() {
-  const [activeTab, setActiveTab] = useState<Tab>('consultar')
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState<Filter>('todos')
-  const navigate = useNavigate()
-  const { items, isSyncing, toggleSave, toggleRead, isFavourite } = useUserContent()
-
-  const savedTopicIds = new Set(items.filter((i) => i.category === 'Tema').map((i) => i.card_id))
-  const filteredItems = items.filter((item) => {
-    if (filter === 'favoritos') return item.is_favourite
-    if (filter === 'lidos') return item.is_read
-    return true
-  })
-  const savedCount = items.length
-
-  // Build grouped topics for accordion, filtered by search
-  const topicById = Object.fromEntries(topics.map((t) => [t.id, t]))
-  const groupedFiltered = Object.entries(TOPIC_GROUPS).map(([label, ids]) => ({
-    label,
-    topics: ids.flatMap((id) => {
-      const t = topicById[id]
-      if (!t) return []
-      if (search && !t.tema.toLowerCase().includes(search.toLowerCase())) return []
-      return [t]
-    }),
-  })).filter((g) => g.topics.length > 0)
-
-  return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-100 mb-1">Biblioteca</h1>
-        <p className="text-sm text-brand-text">Consulte temas e gerencie seus materiais salvos</p>
+  // Guard: if FK join returned null, render a minimal fallback
+  if (!book) {
+    return (
+      <div className="bg-brand-primary border border-slate-700 rounded-xl p-4 flex items-center gap-3 text-slate-500 text-sm">
+        <BookOpen className="w-5 h-5 shrink-0" />
+        <span>Livro não encontrado (book_id: {item.book_id})</span>
       </div>
+    )
+  }
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-brand-primary p-1 rounded-xl w-fit mb-6 border border-slate-700">
-        {(['consultar', 'salvos'] as Tab[]).map((tab) => (
-          <button key={tab} onClick={() => setActiveTab(tab)}
-            className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab ? 'bg-slate-700 text-slate-100' : 'text-brand-text hover:text-slate-200'}`}>
-            {tab === 'consultar' ? 'Acervo' : `Minha Coleção${savedCount > 0 ? ` (${savedCount})` : ''}`}
-          </button>
-        ))}
-      </div>
+  const progressPct =
+    item.saved_as === 'lendo' && book.pages && item.pages_read
+      ? Math.min(100, Math.round((item.pages_read / book.pages) * 100))
+      : 0
 
-      {isSyncing && (
-        <div className="flex items-center gap-2 text-xs text-brand-text mb-4 animate-pulse">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />Sincronizando...
-        </div>
-      )}
-
-      {/* ── Tab: Acervo (Accordion) ── */}
-      {activeTab === 'consultar' && (
-        <div>
-          <div className="mb-5 max-w-sm">
-            <Input placeholder="Buscar tema…" value={search} onChange={(e) => setSearch(e.target.value)} />
+  return (
+    <div className="bg-brand-primary border border-slate-700 hover:border-slate-600 rounded-xl p-4 flex gap-4 transition-colors group">
+      {/* Cover */}
+      <Link to={`/books/${book.book_id}`} className="shrink-0">
+        {book.cover_url && !coverError ? (
+          <img
+            src={book.cover_url}
+            alt={book.title}
+            onError={() => setCoverError(true)}
+            className="w-14 h-20 object-cover rounded-lg border border-slate-700"
+          />
+        ) : (
+          <div className="w-14 h-20 rounded-lg border border-slate-700 bg-brand-secondary flex items-center justify-center">
+            <BookOpen className="w-5 h-5 text-slate-600" />
           </div>
-          {groupedFiltered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-brand-text">
-              <Search className="w-10 h-10 mb-3 opacity-30" />
-              <p>Nenhum tema encontrado para "{search}"</p>
+        )}
+      </Link>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <Link
+              to={`/books/${book.book_id}`}
+              className="text-sm font-semibold text-slate-200 hover:text-brand-accent transition-colors line-clamp-2 leading-snug"
+            >
+              {book.title}
+            </Link>
+            <p className="text-xs text-slate-500 mt-0.5">{book.author}</p>
+          </div>
+
+          {/* Status + remove menu */}
+          <div className="relative shrink-0">
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 border border-slate-700 hover:border-slate-600 rounded-lg px-2 py-1 transition-colors"
+            >
+              {item.saved_as}
+              <ChevronDown className="w-3 h-3" />
+            </button>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
+                <div className="absolute right-0 top-8 z-40 w-36 bg-brand-primary border border-slate-700 rounded-xl shadow-xl overflow-hidden">
+                  {STATUS_TABS.map(({ value, label, icon }) => (
+                    <button
+                      key={value}
+                      onClick={() => { onChangeStatus(book.book_id, value); setMenuOpen(false) }}
+                      className={`w-full flex items-center gap-2 px-3 py-2.5 text-xs transition-colors ${
+                        item.saved_as === value
+                          ? 'text-brand-accent bg-brand-accent/10'
+                          : 'text-slate-300 hover:bg-white/5'
+                      }`}
+                    >
+                      {icon}{label}
+                    </button>
+                  ))}
+                  <div className="border-t border-slate-700">
+                    <button
+                      onClick={() => { onRemove(book.book_id); setMenuOpen(false) }}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-pomodoro-focus hover:bg-pomodoro-focus/10 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Remover
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Badges */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {book.theme && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-brand-accent/10 text-brand-accent border border-brand-accent/20">
+              {book.theme}
+            </span>
+          )}
+          {book.sub_theme && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700/60 text-slate-400 border border-slate-600">
+              {book.sub_theme}
+            </span>
+          )}
+          {book.difficulty && (
+            <span className={`text-xs px-2 py-0.5 rounded-full border ${DIFF_STYLE[book.difficulty] ?? ''}`}>
+              {book.difficulty}
+            </span>
+          )}
+        </div>
+
+        {/* Progress bar (Lendo only) */}
+        {item.saved_as === 'lendo' && book.pages && (
+          <div className="mt-0.5 space-y-1">
+            <div className="flex justify-between text-xs text-slate-500">
+              <span>{item.pages_read ?? 0} / {book.pages} páginas</span>
+              <span>{progressPct}%</span>
             </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {groupedFiltered.map((group) => (
-                <AccordionGroup key={group.label} label={group.label} topics={group.topics} />
-              ))}
+            <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-brand-accent rounded-full transition-all duration-500"
+                style={{ width: `${progressPct}%` }}
+              />
             </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Filter bar ────────────────────────────────────────────────────────────────
+
+function FilterSelect({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string
+  value: string
+  options: string[]
+  onChange: (v: string) => void
+}) {
+  return (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="appearance-none bg-brand-primary border border-slate-700 rounded-xl pl-3 pr-8 py-2 text-sm text-slate-300 focus:outline-none focus:border-brand-accent transition-colors cursor-pointer"
+      >
+        <option value="">{label}</option>
+        {options.map((o) => (
+          <option key={o} value={o}>{o}</option>
+        ))}
+      </select>
+      <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" />
+    </div>
+  )
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+
+export default function LibraryPage() {
+  const { items, isLoading, updateStatus, remove } = useSavedBooks()
+  const [activeTab, setActiveTab] = useState<SavedAs>('a ler')
+  const [filterTheme, setFilterTheme] = useState('')
+  const [filterSubTheme, setFilterSubTheme] = useState('')
+  const [filterAuthor, setFilterAuthor] = useState('')
+
+  // Unique filter options derived from the full saved list
+  const themes = useMemo(
+    () => [...new Set(items.map((i) => i.books?.theme).filter(Boolean) as string[])].sort(),
+    [items]
+  )
+  const subThemes = useMemo(
+    () =>
+      [
+        ...new Set(
+          items
+            .filter((i) => !filterTheme || i.books?.theme === filterTheme)
+            .map((i) => i.books?.sub_theme)
+            .filter(Boolean) as string[]
+        ),
+      ].sort(),
+    [items, filterTheme]
+  )
+  const authors = useMemo(
+    () => [...new Set(items.map((i) => i.books?.author).filter(Boolean) as string[])].sort(),
+    [items]
+  )
+
+  // Apply tab + cumulative filters
+  const visible = useMemo(() => {
+    return items.filter((i) => {
+      if (i.saved_as !== activeTab) return false
+      if (filterTheme    && i.books?.theme    !== filterTheme)    return false
+      if (filterSubTheme && i.books?.sub_theme !== filterSubTheme) return false
+      if (filterAuthor   && i.books?.author    !== filterAuthor)   return false
+      return true
+    })
+  }, [items, activeTab, filterTheme, filterSubTheme, filterAuthor])
+
+  const hasFilters = !!(filterTheme || filterSubTheme || filterAuthor)
+
+  const countByTab = (status: SavedAs) => items.filter((i) => i.saved_as === status).length
+
+  const clearFilters = () => {
+    setFilterTheme('')
+    setFilterSubTheme('')
+    setFilterAuthor('')
+  }
+
+  return (
+    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-5">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-slate-100 mb-1">Biblioteca</h1>
+        <p className="text-sm text-brand-text">
+          {isLoading ? 'Carregando…' : `${items.length} livro${items.length !== 1 ? 's' : ''} na sua coleção`}
+        </p>
+      </div>
+
+      {/* Status tabs */}
+      <div className="flex gap-1 bg-brand-primary p-1 rounded-xl w-fit border border-slate-700">
+        {STATUS_TABS.map(({ value, label, icon }) => {
+          const count = countByTab(value)
+          return (
+            <button
+              key={value}
+              onClick={() => setActiveTab(value)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === value
+                  ? 'bg-slate-700 text-slate-100'
+                  : 'text-brand-text hover:text-slate-200'
+              }`}
+            >
+              {icon}
+              {label}
+              {count > 0 && (
+                <span className={`text-xs rounded-full px-1.5 py-0.5 font-medium leading-none ${
+                  activeTab === value ? 'bg-brand-accent/20 text-brand-accent' : 'bg-slate-700 text-slate-400'
+                }`}>
+                  {count}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Filters */}
+      {!isLoading && items.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <FilterSelect
+            label="Tema"
+            value={filterTheme}
+            options={themes}
+            onChange={(v) => { setFilterTheme(v); setFilterSubTheme('') }}
+          />
+          <FilterSelect
+            label="Sub-tema"
+            value={filterSubTheme}
+            options={subThemes}
+            onChange={setFilterSubTheme}
+          />
+          <FilterSelect
+            label="Autor"
+            value={filterAuthor}
+            options={authors}
+            onChange={setFilterAuthor}
+          />
+
+          {/* Author free-text search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 pointer-events-none" />
+            <input
+              value={filterAuthor}
+              onChange={(e) => setFilterAuthor(e.target.value)}
+              placeholder="Buscar autor…"
+              className="bg-brand-primary border border-slate-700 rounded-xl pl-8 pr-3 py-2 text-sm text-slate-300 placeholder-slate-600 focus:outline-none focus:border-brand-accent transition-colors w-44"
+            />
+          </div>
+
+          {hasFilters && (
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors px-2 py-2 rounded-lg hover:bg-white/5"
+            >
+              <X className="w-3.5 h-3.5" />
+              Limpar filtros
+            </button>
           )}
         </div>
       )}
 
-      {/* ── Tab: Minha Coleção ── */}
-      {activeTab === 'salvos' && (
-        <div>
-          {items.length > 0 && (
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex gap-2 flex-wrap">
-                {(['todos', 'favoritos', 'lidos'] as Filter[]).map((f) => (
-                  <button key={f} onClick={() => setFilter(f)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filter === f ? 'bg-brand-accent/10 text-brand-accent border border-brand-accent/30' : 'text-brand-text border border-slate-700 hover:border-slate-600 hover:text-slate-200'}`}>
-                    {f === 'todos' ? 'Todos' : f === 'favoritos' ? '⭐ Favoritos' : '✅ Lidos'}
-                  </button>
-                ))}
-              </div>
-              <button onClick={() => {}} className="text-slate-500 hover:text-brand-text transition-colors p-1" aria-label="Atualizar">
-                <RefreshCw className="w-4 h-4" />
-              </button>
-            </div>
-          )}
+      {/* Loading */}
+      {isLoading && (
+        <div className="flex justify-center py-20">
+          <div className="w-7 h-7 border-2 border-brand-accent border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
 
-          {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-brand-text">
-              <Library className="w-12 h-12 mb-3 opacity-20" />
-              <p className="font-medium text-slate-300">Nenhum material salvo ainda</p>
-              <p className="text-sm mt-1 text-center max-w-xs">Salve temas ou converse com o Bibliotecário para curar referências</p>
-            </div>
-          ) : filteredItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-brand-text">
-              <BookOpen className="w-10 h-10 mb-3 opacity-20" /><p>Nenhum material nesta categoria</p>
-            </div>
-          ) : (
-            <div className="grid gap-2">
-              {filteredItems.map((item) => (
-                <div key={item.card_id}
-                  className={`bg-brand-primary border border-slate-700 rounded-xl p-4 flex items-center justify-between gap-3 transition-opacity ${item.is_read ? 'opacity-60' : 'opacity-100'}`}>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className={`font-medium text-sm truncate ${item.is_read ? 'text-brand-text line-through' : 'text-slate-200'}`}>{item.title}</p>
-                      {item.is_read && (
-                        <span className="text-xs px-1.5 py-0.5 rounded-full bg-pomodoro-break/10 text-pomodoro-break border border-pomodoro-break/20 shrink-0">Lido</span>
-                      )}
-                    </div>
-                    <p className="text-xs text-brand-text mt-0.5">{item.category}</p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={() => toggleSave({ card_id: item.card_id, title: item.title, category: item.category })}
-                      aria-label="Favoritar" className="transition-all duration-150 active:scale-90">
-                      <Heart className={`w-4 h-4 transition-colors ${item.is_favourite ? 'fill-brand-accent text-brand-accent' : 'text-slate-600 hover:text-slate-400'}`} />
-                    </button>
-                    <button onClick={() => toggleRead({ card_id: item.card_id, title: item.title, category: item.category })}
-                      aria-label="Marcar como lido" className="transition-all duration-150 active:scale-90">
-                      <CheckCircle className={`w-4 h-4 transition-colors ${item.is_read ? 'text-pomodoro-break' : 'text-slate-600 hover:text-slate-400'}`} />
-                    </button>
-                  </div>
-                </div>
-              ))}
+      {/* Empty states */}
+      {!isLoading && items.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-20 text-center gap-3 text-brand-text">
+          <Library className="w-12 h-12 opacity-20" />
+          <p className="font-medium text-slate-300">Sua biblioteca está vazia</p>
+          <p className="text-sm max-w-xs">
+            Acesse a página de um livro e adicione-o à sua lista de leitura.
+          </p>
+        </div>
+      )}
 
-              {/* Saved topics shortcut */}
-              {savedTopicIds.size > 0 && (
-                <div className="mt-4 pt-4 border-t border-slate-700/60">
-                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-3">Temas Salvos ({savedTopicIds.size})</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {topics.filter((t) => savedTopicIds.has(t.id)).map((t) => (
-                      <div key={t.id} onClick={() => navigate(`/topics/${t.id}`)}
-                        className="bg-brand-secondary border border-slate-700 hover:border-slate-600 rounded-xl p-3 cursor-pointer flex items-center gap-2 group transition-colors">
-                        <span className="text-lg">{t.emoji}</span>
-                        <div className="min-w-0">
-                          <p className="text-xs font-medium text-slate-200 group-hover:text-brand-accent truncate transition-colors">{t.tema}</p>
-                        </div>
-                        <button onClick={(e) => { e.stopPropagation(); toggleSave({ card_id: t.id, title: t.tema, category: 'Tema' }) }}
-                          className="ml-auto shrink-0 active:scale-90">
-                          <Star className={`w-3.5 h-3.5 ${isFavourite(t.id) ? 'fill-brand-accent text-brand-accent' : 'text-slate-600 hover:text-brand-accent'} transition-colors`} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+      {!isLoading && items.length > 0 && visible.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-16 gap-3 text-brand-text">
+          <BookOpen className="w-10 h-10 opacity-20" />
+          <p className="text-sm">
+            {hasFilters
+              ? 'Nenhum livro com esses filtros nesta aba.'
+              : `Nenhum livro na aba "${activeTab}" ainda.`}
+          </p>
+          {hasFilters && (
+            <button
+              onClick={clearFilters}
+              className="text-xs text-brand-accent hover:underline"
+            >
+              Limpar filtros
+            </button>
           )}
+        </div>
+      )}
+
+      {/* Book list */}
+      {!isLoading && visible.length > 0 && (
+        <div className="flex flex-col gap-3">
+          {visible.map((item) => (
+            <BookCard
+              key={item.book_id}
+              item={item}
+              onChangeStatus={updateStatus}
+              onRemove={remove}
+            />
+          ))}
         </div>
       )}
     </div>

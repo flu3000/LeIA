@@ -1,24 +1,5 @@
-/**
- * Follow/unfollow and user search.
- *
- * Supabase tables:
- *   follows (
- *     follower_id UUID REFERENCES auth.users,
- *     following_id UUID REFERENCES auth.users,
- *     created_at TIMESTAMPTZ DEFAULT NOW(),
- *     PRIMARY KEY (follower_id, following_id)
- *   )
- *
- *   profiles (
- *     id UUID PRIMARY KEY REFERENCES auth.users,
- *     username TEXT UNIQUE,
- *     display_name TEXT,
- *     avatar_url TEXT,
- *     total_xp INTEGER DEFAULT 0
- *   )
- */
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '../services/supabase'
+import { api } from '../services/apiClient'
 import { useAuth } from '../context/AuthContext'
 
 export interface PublicProfile {
@@ -36,13 +17,9 @@ export function useFollow() {
 
   useEffect(() => {
     if (!user) return
-    supabase
-      .from('follows')
-      .select('following_id')
-      .eq('follower_id', user.id)
-      .then(({ data }) => {
-        if (data) setFollowingIds(new Set(data.map((r) => r.following_id)))
-      })
+    api.get<string[]>('/api/social/following')
+      .then((ids) => setFollowingIds(new Set(ids)))
+      .catch((err) => console.error('[useFollow] init:', err))
   }, [user?.id])
 
   const toggleFollow = useCallback(
@@ -51,11 +28,11 @@ export function useFollow() {
       const isFollowing = followingIds.has(targetId)
 
       if (isFollowing) {
-        await supabase.from('follows').delete().eq('follower_id', user.id).eq('following_id', targetId)
         setFollowingIds((prev) => { const s = new Set(prev); s.delete(targetId); return s })
+        await api.delete(`/api/social/follow/${targetId}`)
       } else {
-        await supabase.from('follows').insert({ follower_id: user.id, following_id: targetId })
         setFollowingIds((prev) => new Set([...prev, targetId]))
+        await api.post(`/api/social/follow/${targetId}`)
       }
     },
     [user, followingIds]
@@ -64,41 +41,22 @@ export function useFollow() {
   const searchUsers = useCallback(
     async (query: string): Promise<PublicProfile[]> => {
       if (!query.trim()) return []
-      const { data } = await supabase
-        .from('profiles')
-        .select('id, username, display_name, avatar_url, total_xp')
-        .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
-        .neq('id', user?.id ?? '')
-        .limit(20)
-
-      return (data ?? []).map((r) => ({
-        id: r.id,
-        username: r.username ?? '',
-        displayName: r.display_name ?? r.username ?? 'Usuário',
-        avatarUrl: r.avatar_url,
-        totalXP: r.total_xp ?? 0,
-        isFollowing: followingIds.has(r.id),
-      }))
+      try {
+        return await api.get<PublicProfile[]>(`/api/social/users?q=${encodeURIComponent(query)}`)
+      } catch {
+        return []
+      }
     },
-    [user?.id, followingIds]
+    []
   )
 
   const getLeaderboard = useCallback(async (): Promise<PublicProfile[]> => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('id, username, display_name, avatar_url, total_xp')
-      .order('total_xp', { ascending: false })
-      .limit(50)
-
-    return (data ?? []).map((r) => ({
-      id: r.id,
-      username: r.username ?? '',
-      displayName: r.display_name ?? r.username ?? 'Usuário',
-      avatarUrl: r.avatar_url,
-      totalXP: r.total_xp ?? 0,
-      isFollowing: followingIds.has(r.id),
-    }))
-  }, [followingIds])
+    try {
+      return await api.get<PublicProfile[]>('/api/social/leaderboard')
+    } catch {
+      return []
+    }
+  }, [])
 
   return { followingIds, toggleFollow, searchUsers, getLeaderboard }
 }

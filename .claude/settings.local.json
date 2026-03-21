@@ -11,7 +11,13 @@
       "Bash(findstr \":3001\")",
       "Bash(taskkill /PID 32904 /F)",
       "Bash(cmd /c \"taskkill /PID 32904 /F\" 2>&1)",
-      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(list\\(d.get\\(''''dependencies'''',{}\\).keys\\(\\)\\)\\)\")"
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(list\\(d.get\\(''''dependencies'''',{}\\).keys\\(\\)\\)\\)\")",
+      "Bash(ls:*)",
+      "Bash(cp:*)",
+      "Bash(powershell -Command \"Remove-Item -Path 'C:\\\\Programação\\\\projetos_pessoais\\\\LeIA\\\\backend' -Recurse -Force\")",
+      "Bash(node -e \"require\\(''''tsx''''\\)\")",
+      "Bash(pnpm install:*)",
+      "Bash(timeout 5 npx tsx src/index.ts)"
     ]
   }
 }

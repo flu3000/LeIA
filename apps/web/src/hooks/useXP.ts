@@ -45,7 +45,7 @@ export function useXP() {
       .from('user_stats')
       .select('total_xp, sessions_count, focused_sessions, total_pages, total_chapters')
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
       .then(({ data }) => {
         if (!data) return
         setStats({

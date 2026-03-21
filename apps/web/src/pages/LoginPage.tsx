@@ -4,6 +4,7 @@ import { BookMarked, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react'
 import { useAuth, type OAuthProvider } from '../context/AuthContext'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
+import ForgotPasswordModal from '../components/ForgotPasswordModal'
 
 function GoogleIcon() {
   return (
@@ -38,6 +39,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [loadingOAuth, setLoadingOAuth] = useState<OAuthProvider | null>(null)
   const [error, setError] = useState('')
+  const [showForgot, setShowForgot] = useState(false)
 
   if (user) return <Navigate to="/" replace />
 
@@ -197,6 +199,18 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {mode === 'login' && (
+              <div className="flex justify-end -mt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowForgot(true)}
+                  className="text-xs text-brand-accent hover:text-sky-300 transition-colors"
+                >
+                  Esqueci minha senha
+                </button>
+              </div>
+            )}
+
             {error && (
               <p className="text-sm text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">
                 {error}
@@ -231,6 +245,8 @@ export default function LoginPage() {
           </p>
         )}
       </div>
+
+      <ForgotPasswordModal open={showForgot} onClose={() => setShowForgot(false)} />
     </div>
   )
 }

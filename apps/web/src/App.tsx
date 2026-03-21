@@ -8,7 +8,13 @@ import ProfilePage from './pages/ProfilePage'
 import LoginPage from './pages/LoginPage'
 import TopicDetailPage from './pages/TopicDetailPage'
 import SocialPage from './pages/SocialPage'
+import RankingsPage from './pages/RankingsPage'
 import InsightsPage from './pages/InsightsPage'
+import SettingsPage from './pages/SettingsPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
+import CommunitiesPage from './pages/CommunitiesPage'
+import UserProfilePage from './pages/UserProfilePage'
+import BookDetailPage from './pages/BookDetailPage'
 import { useAuth } from './context/AuthContext'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -30,6 +36,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route
           path="/"
           element={
@@ -45,7 +52,12 @@ export default function App() {
           <Route path="pomodoro" element={<PomodoroPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="social" element={<SocialPage />} />
+          <Route path="rankings" element={<RankingsPage />} />
           <Route path="insights" element={<InsightsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="communities" element={<CommunitiesPage />} />
+          <Route path="profile/:handle" element={<UserProfilePage />} />
+          <Route path="books/:id" element={<BookDetailPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
