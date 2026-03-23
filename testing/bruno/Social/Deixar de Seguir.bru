@@ -1,0 +1,23 @@
+meta {
+  name: Deixar de Seguir Usuário
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/users/:user_id/follow
+  body: none
+  auth: none
+}
+
+params:path {
+  user_id: uuid-do-usuario
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+assert {
+  res.status: eq 200
+}

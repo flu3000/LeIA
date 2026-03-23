@@ -1,0 +1,19 @@
+meta {
+  name: Listar Feed de Citações (Explorar)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/quotes
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+assert {
+  res.status: eq 200
+}

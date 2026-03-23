@@ -15,7 +15,7 @@ const publishSchema = z.object({
   material_link: z.string().url().optional().or(z.literal('')),
 })
 
-// GET /api/insights?tab=explorar|seguindo
+// GET /insights?tab=explorar|seguindo
 router.get('/', requireAuth, async (req, res) => {
   const tab = req.query.tab === 'seguindo' ? 'seguindo' : 'explorar'
 

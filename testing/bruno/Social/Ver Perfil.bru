@@ -1,0 +1,23 @@
+meta {
+  name: Ver Perfil de Usuário
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/users/:user_id
+  body: none
+  auth: none
+}
+
+params:path {
+  user_id: uuid-do-usuario
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+assert {
+  res.status: eq 200
+}

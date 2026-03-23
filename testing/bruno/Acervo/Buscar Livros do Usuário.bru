@@ -1,0 +1,19 @@
+meta {
+  name: Buscar Livros do Usuário
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/acervo
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+assert {
+  res.status: eq 200
+}

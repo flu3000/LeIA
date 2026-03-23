@@ -11,7 +11,7 @@ const upsertSchema = z.object({
   notes: z.string().optional(),
 })
 
-// GET /api/saved-books — all saved books for the user with book details
+// GET /saved-books — all saved books for the user with book details
 router.get('/', requireAuth, async (req, res) => {
   const { data, error } = await supabase
     .from('saved_books')

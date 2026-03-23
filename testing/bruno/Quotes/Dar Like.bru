@@ -1,0 +1,23 @@
+meta {
+  name: Dar Like em Citação
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/quotes/:quote_id/like
+  body: none
+  auth: none
+}
+
+params:path {
+  quote_id: 1
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+assert {
+  res.status: eq 200
+}

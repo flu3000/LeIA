@@ -1,0 +1,30 @@
+meta {
+  name: Atualizar Status do Livro (saved_as)
+  type: http
+  seq: 2
+}
+
+patch {
+  url: {{baseUrl}}/acervo/:book_id
+  body: json
+  auth: none
+}
+
+params:path {
+  book_id: 1
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+body:json {
+  {
+    "saved_as": "reading"
+  }
+}
+
+assert {
+  res.status: eq 200
+}

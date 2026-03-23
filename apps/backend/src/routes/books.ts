@@ -9,8 +9,8 @@ const BOOK_SUMMARY_COLS =
 const BOOK_DETAIL_COLS =
   'book_id, title, author, publisher, publishing_year, cover_url, theme, sub_theme, difficulty, description, translator, amazon_link, pages'
 
-// GET /api/books — list with optional filters
-router.get('/', async (req, res) => {
+// GET /books — list with optional filters
+router.get('/getAll', async (req, res) => {
   const { theme, difficulty, search } = req.query as Record<string, string>
 
   let query = supabase.from('books').select(BOOK_SUMMARY_COLS).order('title')
@@ -21,15 +21,15 @@ router.get('/', async (req, res) => {
 
   const { data, error } = await query
   if (error) {
-    console.error('[GET /api/books]', error)
+    console.error('[GET /api/books/getAll]', error)
     res.status(500).json({ error: error.message })
     return
   }
   res.json(data)
 })
 
-// GET /api/books/:bookId — full detail
-router.get('/:bookId', async (req, res) => {
+// GET /api/books/getById/:bookId — full detail
+router.get('/getById/:bookId', async (req, res) => {
   const { bookId } = req.params
   const { data, error } = await supabase
     .from('books')
@@ -38,7 +38,7 @@ router.get('/:bookId', async (req, res) => {
     .maybeSingle()
 
   if (error) {
-    console.error('[GET /api/books/:bookId]', error)
+    console.error('[GET /api/books/getById/:bookId]', error)
     res.status(500).json({ error: error.message })
     return
   }

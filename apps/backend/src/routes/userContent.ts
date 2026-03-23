@@ -14,7 +14,7 @@ const UpsertSchema = z.object({
   is_read:      z.boolean().optional(),
 })
 
-// GET /api/user-content — all items for the current user
+// GET /user-content — all items for the current user
 router.get('/', async (req, res) => {
   const { data, error } = await supabase
     .from('user_content')

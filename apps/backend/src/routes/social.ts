@@ -10,7 +10,7 @@ const reportSchema = z.object({
   reason:      z.string().min(1),
 })
 
-// GET /api/social/users?q= — search users by name or username
+// GET /social/users?q= — search users by name or username
 router.get('/users', requireAuth, async (req, res) => {
   const q = (req.query.q as string)?.trim()
   if (!q) {

@@ -1,0 +1,30 @@
+meta {
+  name: Salvar Notas do Livro
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/acervo/:book_id/notes
+  body: json
+  auth: none
+}
+
+params:path {
+  book_id: 1
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+body:json {
+  {
+    "notes": "Anotações sobre o livro aqui."
+  }
+}
+
+assert {
+  res.status: eq 200
+}

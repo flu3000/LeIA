@@ -1,0 +1,23 @@
+meta {
+  name: Filtrar Livros por Tema
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/books
+  body: none
+  auth: none
+}
+
+params:query {
+  tema: filosofia
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+assert {
+  res.status: eq 200
+}

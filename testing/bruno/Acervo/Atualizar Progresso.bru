@@ -1,0 +1,30 @@
+meta {
+  name: Atualizar Progresso de Leitura (pages_read)
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/acervo/:book_id/progress
+  body: json
+  auth: none
+}
+
+params:path {
+  book_id: 1
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{authToken}}
+}
+
+body:json {
+  {
+    "pages_read": 50
+  }
+}
+
+assert {
+  res.status: eq 200
+}

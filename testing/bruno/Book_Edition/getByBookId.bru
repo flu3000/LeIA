@@ -1,0 +1,19 @@
+meta {
+  name: getByBookId
+  type: http
+  seq: 1
+}
+
+get {
+  url: /book_editions/getByBookId/:bookId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  bookId: 
+}
+
+settings {
+  encodeUrl: true
+}

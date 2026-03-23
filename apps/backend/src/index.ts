@@ -32,11 +32,11 @@ app.use(
 )
 
 // ── Routes ────────────────────────────────────────────────────────────────────
-app.use('/api/books',        booksRouter)
-app.use('/api/saved-books',  savedBooksRouter)
-app.use('/api/insights',     insightsRouter)
-app.use('/api/social',       socialRouter)
-app.use('/api/user-content', userContentRouter)
+app.use('/books',        booksRouter)
+app.use('/saved-books',  savedBooksRouter)
+app.use('/insights',     insightsRouter)
+app.use('/social',       socialRouter)
+app.use('/user-content', userContentRouter)
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ ok: true }))
