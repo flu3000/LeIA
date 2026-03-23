@@ -43,16 +43,20 @@ export default function AppLayout() {
       />
       <Tabs.Screen
         name="topics"
-        options={{
-          title: 'Temas',
-          tabBarIcon: ({ color, size }) => <TabIcon name="library" color={color} size={size} />,
-        }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="library"
         options={{
-          title: 'Salvos',
-          tabBarIcon: ({ color, size }) => <TabIcon name="bookmark" color={color} size={size} />,
+          title: 'Biblioteca',
+          tabBarIcon: ({ color, size }) => <TabIcon name="library" color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="social"
+        options={{
+          title: 'Social',
+          tabBarIcon: ({ color, size }) => <TabIcon name="people-circle" color={color} size={size} />,
         }}
       />
       <Tabs.Screen

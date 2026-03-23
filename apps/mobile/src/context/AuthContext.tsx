@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
+import * as WebBrowser from 'expo-web-browser'
+import * as AuthSession from 'expo-auth-session'
 import { supabase } from '@/src/lib/supabase'
 
 export interface User {
@@ -17,6 +19,7 @@ interface AuthContextType {
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, password: string) => Promise<void>
+  loginWithOAuth: (provider: 'google' | 'apple') => Promise<void>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
   updateProfile: (data: { name?: string; username?: string; bio?: string; avatarUrl?: string }) => Promise<void>
@@ -66,7 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .catch(() => {})
       .finally(() => setIsLoading(false))
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[AuthStateChange]', event, session?.user?.id ?? null)
       if (session?.user) {
         loadUser(session.user).then(setUser)
       } else {
@@ -89,6 +93,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       options: { data: { name, full_name: name } },
     })
     if (error) throw error
+  }
+
+  const loginWithOAuth = async (provider: 'google' | 'apple') => {
+    // scheme deve ser EXATAMENTE o valor de "scheme" em app.json.
+    // useProxy: true roteia via https://auth.expo.io/@owner/slug —
+    // requer `expo login` no CLI para gerar a URL correta.
+    const redirectTo = AuthSession.makeRedirectUri({
+      scheme:   'leia-app',
+      // useProxy: true,
+    })
+
+    console.log('[OAuth] provider:', provider)
+    console.log('[OAuth] redirectTo gerado:', redirectTo)
+    console.log('[OAuth] cadastre este URI no Google Console e no Supabase → Auth → URL Configuration')
+
+    const queryParams: Record<string, string> = {}
+    if (provider === 'google') {
+      const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID
+      if (webClientId) {
+        queryParams.client_id = webClientId
+        console.log('[OAuth] Google Web Client ID presente:', webClientId.slice(0, 20) + '…')
+      } else {
+        console.warn('[OAuth] EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID não definido no .env')
+      }
+    }
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo,
+        skipBrowserRedirect: true,
+        ...(Object.keys(queryParams).length > 0 && { queryParams }),
+      },
+    })
+    if (error) throw error
+    if (!data.url) throw new Error('OAuth URL não gerada')
+
+    console.log('[OAuth] abrindo URL do Supabase no browser…')
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo)
+    console.log('[OAuth] browser result:', result.type, (result as { url?: string }).url ?? '')
+
+    if (result.type === 'success' && result.url) {
+      const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(result.url)
+      if (sessionError) {
+        console.error('[OAuth] exchangeCodeForSession error:', sessionError.message)
+        throw sessionError
+      }
+      console.log('[OAuth] sessão criada, user:', sessionData.session?.user?.id ?? null)
+    } else if (result.type === 'cancel' || result.type === 'dismiss') {
+      console.log('[OAuth] usuário cancelou o fluxo')
+    }
   }
 
   const logout = async () => {
@@ -130,7 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout, refreshUser, updateProfile }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, loginWithOAuth, logout, refreshUser, updateProfile }}>
       {children}
     </AuthContext.Provider>
   )
