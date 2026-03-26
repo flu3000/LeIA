@@ -11,6 +11,5 @@ app.register(cors, { origin: '*' });
 // Registrar as rotas
 app.register(bibliotecaRoutes);
 app.register(userRoutes);
-// ... outras importações
 
 app.listen({ port: process.env.PORT || 3001, host: '0.0.0.0' });

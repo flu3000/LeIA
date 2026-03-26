@@ -7,7 +7,6 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import * as Haptics from 'expo-haptics'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { Ionicons } from '@expo/vector-icons'
-
 import { useChat, type Message, type Fonte } from '@/src/hooks/useChat'
 import { useUserContent } from '@/src/hooks/useUserContent'
 import SourceCard from '@/src/components/SourceCard'
@@ -32,7 +31,7 @@ function MessageBubble({ message }: { message: Message }) {
     >
       {!isUser && (
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>🎓</Text>
+          <Ionicons name="school-outline" size={20} color="#0EA5E9" />
         </View>
       )}
 
@@ -230,7 +229,6 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     marginTop: 4,
   },
-  avatarText: { fontSize: 16 },
   bubble: {
     maxWidth: '85%',
     borderRadius: 16,

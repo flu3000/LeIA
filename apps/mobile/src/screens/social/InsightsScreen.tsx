@@ -13,7 +13,7 @@ import {
 } from 'react-native'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import { Ionicons, Feather } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 
 import { useInsights, type Insight } from '@/src/hooks/useInsights'
@@ -97,12 +97,14 @@ function InsightCard({ insight, currentUserId, onLike, onDelete }: InsightCardPr
 
       {/* Attribution */}
       {(insight.bookTitle || insight.author) && (
-        <Text style={styles.attribution} numberOfLines={2}>
-          {'📖 '}
-          {[insight.bookTitle, insight.author ? `— ${insight.author}` : null]
-            .filter(Boolean)
-            .join(' ')}
-        </Text>
+        <View style={styles.attributionRow}>
+          <Feather name="book-open" size={12} color="#94A3B8" />
+          <Text style={styles.attribution} numberOfLines={2}>
+            {[insight.bookTitle, insight.author ? `— ${insight.author}` : null]
+              .filter(Boolean)
+              .join(' ')}
+          </Text>
+        </View>
       )}
 
       {/* Footer actions */}
@@ -496,7 +498,13 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     lineHeight: 21,
   },
+  attributionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   attribution: {
+    flex: 1,
     fontSize: 12,
     color: '#94A3B8',
     lineHeight: 17,

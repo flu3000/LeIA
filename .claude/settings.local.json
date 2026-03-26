@@ -17,7 +17,28 @@
       "Bash(powershell -Command \"Remove-Item -Path 'C:\\\\Programação\\\\projetos_pessoais\\\\LeIA\\\\backend' -Recurse -Force\")",
       "Bash(node -e \"require\\(''''tsx''''\\)\")",
       "Bash(pnpm install:*)",
-      "Bash(timeout 5 npx tsx src/index.ts)"
+      "Bash(timeout 5 npx tsx src/index.ts)",
+      "Bash(node -e \"require\\(''./tailwind.config.js''\\)\")",
+      "Bash(pnpm exec:*)",
+      "Bash(node -e \":*)",
+      "Bash(cd:*)",
+      "Bash(cp \"app/\\(auth\\)/login.tsx\" src/screens/auth/LoginScreen.tsx)",
+      "Bash(cp \"app/\\(app\\)/index.tsx\" src/screens/app/ChatScreen.tsx)",
+      "Bash(cp \"app/\\(app\\)/topics.tsx\" src/screens/app/TopicsScreen.tsx)",
+      "Bash(cp \"app/\\(app\\)/library.tsx\" src/screens/app/LibraryScreen.tsx)",
+      "Bash(cp \"app/\\(app\\)/pomodoro.tsx\" src/screens/app/PomodoroScreen.tsx)",
+      "Bash(npx expo:*)",
+      "Bash(find:*)",
+      "Bash(node -e \"const pkg = require\\(''./apps/mobile/node_modules/expo-secure-store/package.json''\\); console.log\\(''expo-secure-store:'', pkg.version\\)\")",
+      "Bash(node -e \"const pkg = require\\(''./apps/mobile/node_modules/react-native-svg/package.json''\\); console.log\\(''react-native-svg:'', pkg.version\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''''version:'''', d[''''version'''']\\)\")",
+      "Bash(node:*)",
+      "Bash(find C:/Programação/projetos_pessoais/LeIA/apps/mobile/src -type f \\\\\\(-name *.ts -o -name *.tsx \\\\\\))",
+      "Bash(pnpm remove:*)",
+      "Read(//c/Programacao/projetos_pessoais/LeIA/apps/mobile/src/**)",
+      "Bash(dir \"C:\\\\Programação\\\\projetos_pessoais\\\\LeIA\\\\apps\\\\mobile\\\\src\\\\context\" /b)",
+      "Bash(/c/Programação/projetos_pessoais/LeIA/.gitignore:*)",
+      "Bash(node -e \"require\\(''./node_modules/react-native-get-random-values/package.json''\\)\")"
     ]
   }
 }

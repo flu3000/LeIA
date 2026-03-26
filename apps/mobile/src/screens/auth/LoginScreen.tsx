@@ -2,64 +2,147 @@ import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   KeyboardAvoidingView, Platform, ActivityIndicator, StyleSheet, Alert,
 } from 'react-native'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'expo-router'
 import * as Haptics from 'expo-haptics'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/src/context/AuthContext'
+import { colors } from '@/src/constants/colors'
+
+// ─── Password Strength ──────────────────────────────────────────────────────
+
+interface PasswordCriteria {
+  minLength: boolean
+  hasUpper:  boolean
+  hasLower:  boolean
+  hasNumber: boolean
+  hasSpecial: boolean
+}
+
+function getPasswordCriteria(password: string): PasswordCriteria {
+  return {
+    minLength:  password.length >= 8,
+    hasUpper:   /[A-Z]/.test(password),
+    hasLower:   /[a-z]/.test(password),
+    hasNumber:  /[0-9]/.test(password),
+    hasSpecial: /[^A-Za-z0-9]/.test(password),
+  }
+}
+
+function strengthScore(criteria: PasswordCriteria): number {
+  return Object.values(criteria).filter(Boolean).length
+}
+
+function strengthColor(score: number): string {
+  if (score <= 1) return colors.danger
+  if (score <= 2) return '#F97316'   // orange
+  if (score <= 3) return colors.warning
+  if (score === 4) return '#84CC16'  // lime
+  return colors.success
+}
+
+function strengthLabel(score: number): string {
+  if (score <= 1) return 'Muito fraca'
+  if (score <= 2) return 'Fraca'
+  if (score <= 3) return 'Razoável'
+  if (score === 4) return 'Boa'
+  return 'Forte'
+}
+
+const CRITERIA_LABELS: { key: keyof PasswordCriteria; label: string }[] = [
+  { key: 'minLength',  label: 'Mínimo 8 caracteres'   },
+  { key: 'hasUpper',   label: 'Uma letra maiúscula'    },
+  { key: 'hasLower',   label: 'Uma letra minúscula'    },
+  { key: 'hasNumber',  label: 'Um número'              },
+  { key: 'hasSpecial', label: 'Um caractere especial'  },
+]
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 type Mode = 'login' | 'register'
 
+// ─── Component ───────────────────────────────────────────────────────────────
+
 export default function LoginScreen() {
-  const { login, register, loginWithOAuth } = useAuth()
+  const { login, register, loginWithOAuth, signInWithGoogleNative } = useAuth()
   const router = useRouter()
 
-  const [mode,        setMode]        = useState<Mode>('login')
-  const [name,        setName]        = useState('')
-  const [email,       setEmail]       = useState('')
-  const [password,    setPassword]    = useState('')
-  const [isLoading,   setIsLoading]   = useState(false)
-  const [oauthLoading, setOauthLoading] = useState<'google' | 'apple' | null>(null)
-  const [showPassword, setShowPassword] = useState(false)
+  const [mode,            setMode]            = useState<Mode>('login')
+  const [name,            setName]            = useState('')
+  const [email,           setEmail]           = useState('')
+  const [password,        setPassword]        = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [isLoading,       setIsLoading]       = useState(false)
+  const [oauthLoading,    setOauthLoading]    = useState<'google' | 'apple' | null>(null)
+  const [showPassword,    setShowPassword]    = useState(false)
+  const [showConfirm,     setShowConfirm]     = useState(false)
+  const [showCriteria,    setShowCriteria]    = useState(false)
 
-  const handleOAuth = async (provider: 'google' | 'apple') => {
-    setOauthLoading(provider)
+  // ─── Derived ─────────────────────────────────────────────────────────────
+  const criteria   = getPasswordCriteria(password)
+  const score      = strengthScore(criteria)
+  const isStrong   = score === 5
+  const pwMatch    = password === confirmPassword
+  const canSubmit  = mode === 'login'
+    ? email.trim().length > 0 && password.length > 0
+    : name.trim().length > 0 && email.trim().length > 0 && isStrong && pwMatch && confirmPassword.length > 0
+
+  // ─── Handlers ────────────────────────────────────────────────────────────
+  const handleGoogleNative = async () => {
+    setOauthLoading('google')
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     try {
-      await loginWithOAuth(provider)
+      await signInWithGoogleNative()
+    } catch (err: unknown) {
+      // Cancellamento pelo usuário — silencioso
+      if (
+        err !== null &&
+        typeof err === 'object' &&
+        'code' in err &&
+        (err.code === statusCodes.SIGN_IN_CANCELLED ||
+         err.code === statusCodes.IN_PROGRESS)
+      ) return
+
+      const msg = err instanceof Error ? err.message : 'Erro desconhecido'
+      Alert.alert('Erro no login com Google', msg)
+    } finally {
+      setOauthLoading(null)
+    }
+  }
+
+  const handleApple = async () => {
+    setOauthLoading('apple')
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    try {
+      await loginWithOAuth('apple')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erro desconhecido'
       if (!msg.includes('cancelled') && !msg.includes('dismissed')) {
-        Alert.alert('Erro', `Não foi possível entrar com ${provider === 'google' ? 'Google' : 'Apple'}.`)
+        Alert.alert('Erro', 'Não foi possível entrar com Apple.')
       }
     } finally {
       setOauthLoading(null)
     }
   }
 
-  const switchMode = (m: Mode) => {
+  const switchMode = useCallback((m: Mode) => {
     setMode(m)
     setName('')
     setEmail('')
     setPassword('')
-  }
+    setConfirmPassword('')
+    setShowCriteria(false)
+  }, [])
 
   const handleSubmit = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Atenção', 'Preencha e-mail e senha.')
-      return
-    }
-    if (mode === 'register' && !name.trim()) {
-      Alert.alert('Atenção', 'Informe seu nome.')
-      return
-    }
-
+    if (!canSubmit) return
     setIsLoading(true)
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
 
     try {
       if (mode === 'login') {
         await login(email.trim(), password)
+        router.replace('/(app)')
       } else {
         await register(name.trim(), email.trim(), password)
         Alert.alert(
@@ -67,9 +150,7 @@ export default function LoginScreen() {
           'Verifique seu e-mail para confirmar o cadastro, depois faça login.',
           [{ text: 'OK', onPress: () => switchMode('login') }]
         )
-        return
       }
-      router.replace('/(app)')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erro desconhecido'
       let friendly = msg
@@ -82,6 +163,7 @@ export default function LoginScreen() {
     }
   }
 
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -93,7 +175,7 @@ export default function LoginScreen() {
       >
         {/* Logo */}
         <View style={styles.logoArea}>
-          <Text style={styles.logoIcon}>🎓</Text>
+          <Ionicons name="school-outline" size={56} color={colors.accent} style={{ marginBottom: 8 }} />
           <Text style={styles.logoText}>LeIA</Text>
           <Text style={styles.logoSub}>Seu Bibliotecário Inteligente</Text>
         </View>
@@ -120,61 +202,159 @@ export default function LoginScreen() {
           {mode === 'register' && (
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>Nome</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Seu nome completo"
-                placeholderTextColor="#4B6070"
-                value={name}
-                onChangeText={setName}
-                autoCapitalize="words"
-                returnKeyType="next"
-              />
+              <View style={styles.inputRow}>
+                <Ionicons name="person-outline" size={18} color={colors.dimmed} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.inputWithIcon}
+                  placeholder="Seu nome completo"
+                  placeholderTextColor={colors.dimmed}
+                  value={name}
+                  onChangeText={setName}
+                  autoCapitalize="words"
+                  returnKeyType="next"
+                />
+              </View>
             </View>
           )}
 
           {/* Email */}
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>E-mail</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="seu@email.com"
-              placeholderTextColor="#4B6070"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              returnKeyType="next"
-            />
+            <View style={styles.inputRow}>
+              <Ionicons name="mail-outline" size={18} color={colors.dimmed} style={styles.inputIcon} />
+              <TextInput
+                style={styles.inputWithIcon}
+                placeholder="seu@email.com"
+                placeholderTextColor={colors.dimmed}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                returnKeyType="next"
+              />
+            </View>
           </View>
 
           {/* Password */}
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Senha</Text>
-            <View style={styles.passwordRow}>
+            <View style={styles.inputRow}>
+              <Ionicons name="lock-closed-outline" size={18} color={colors.dimmed} style={styles.inputIcon} />
               <TextInput
-                style={[styles.input, styles.passwordInput]}
-                placeholder="Mínimo 6 caracteres"
-                placeholderTextColor="#4B6070"
+                style={[styles.inputWithIcon, { paddingRight: 4 }]}
+                placeholder={mode === 'register' ? 'Mínimo 8 caracteres' : 'Sua senha'}
+                placeholderTextColor={colors.dimmed}
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(t) => { setPassword(t); setShowCriteria(t.length > 0 && mode === 'register') }}
                 secureTextEntry={!showPassword}
-                returnKeyType="done"
-                onSubmitEditing={handleSubmit}
+                returnKeyType={mode === 'login' ? 'done' : 'next'}
+                onSubmitEditing={mode === 'login' ? handleSubmit : undefined}
               />
               <TouchableOpacity
                 style={styles.eyeBtn}
                 onPress={() => setShowPassword((v) => !v)}
               >
-                <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁️'}</Text>
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={18}
+                  color={colors.dimmed}
+                />
               </TouchableOpacity>
             </View>
+
+            {/* Strength bar + label (register only) */}
+            {mode === 'register' && password.length > 0 && (
+              <View style={styles.strengthWrap}>
+                <View style={styles.strengthTrack}>
+                  {[1,2,3,4,5].map((i) => (
+                    <View
+                      key={i}
+                      style={[
+                        styles.strengthSegment,
+                        { backgroundColor: i <= score ? strengthColor(score) : colors.border },
+                      ]}
+                    />
+                  ))}
+                </View>
+                <Text style={[styles.strengthLabel, { color: strengthColor(score) }]}>
+                  {strengthLabel(score)}
+                </Text>
+              </View>
+            )}
+
+            {/* Criteria checklist (register only) */}
+            {mode === 'register' && showCriteria && (
+              <View style={styles.criteriaList}>
+                {CRITERIA_LABELS.map(({ key, label }) => (
+                  <View key={key} style={styles.criteriaRow}>
+                    <Ionicons
+                      name={criteria[key] ? 'checkmark-circle' : 'ellipse-outline'}
+                      size={14}
+                      color={criteria[key] ? colors.success : colors.dimmed}
+                    />
+                    <Text style={[styles.criteriaText, criteria[key] && styles.criteriaTextMet]}>
+                      {label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
+
+          {/* Confirm Password (register only) */}
+          {mode === 'register' && (
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Confirmar senha</Text>
+              <View style={[
+                styles.inputRow,
+                confirmPassword.length > 0 && (pwMatch ? styles.inputRowOk : styles.inputRowError),
+              ]}>
+                <Ionicons name="shield-checkmark-outline" size={18} color={colors.dimmed} style={styles.inputIcon} />
+                <TextInput
+                  style={[styles.inputWithIcon, { paddingRight: 4 }]}
+                  placeholder="Repita a senha"
+                  placeholderTextColor={colors.dimmed}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry={!showConfirm}
+                  returnKeyType="done"
+                  onSubmitEditing={handleSubmit}
+                />
+                <TouchableOpacity
+                  style={styles.eyeBtn}
+                  onPress={() => setShowConfirm((v) => !v)}
+                >
+                  <Ionicons
+                    name={showConfirm ? 'eye-off-outline' : 'eye-outline'}
+                    size={18}
+                    color={colors.dimmed}
+                  />
+                </TouchableOpacity>
+              </View>
+              {confirmPassword.length > 0 && !pwMatch && (
+                <View style={styles.errorRow}>
+                  <Ionicons name="alert-circle-outline" size={13} color={colors.danger} />
+                  <Text style={styles.errorText}>As senhas não coincidem.</Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Forgot password link (login only) */}
+          {mode === 'login' && (
+            <TouchableOpacity
+              style={styles.forgotRow}
+              onPress={() => router.push('/(auth)/forgot-password')}
+            >
+              <Text style={styles.forgotText}>Esqueci minha senha</Text>
+            </TouchableOpacity>
+          )}
 
           {/* Submit button */}
           <TouchableOpacity
-            style={[styles.submitBtn, isLoading && styles.submitBtnDisabled]}
+            style={[styles.submitBtn, (!canSubmit || isLoading) && styles.submitBtnDisabled]}
             onPress={handleSubmit}
-            disabled={isLoading}
+            disabled={!canSubmit || isLoading}
             activeOpacity={0.85}
           >
             {isLoading
@@ -195,7 +375,7 @@ export default function LoginScreen() {
           {/* OAuth buttons */}
           <TouchableOpacity
             style={[styles.oauthBtn, styles.oauthGoogle, oauthLoading === 'google' && styles.submitBtnDisabled]}
-            onPress={() => handleOAuth('google')}
+            onPress={handleGoogleNative}
             disabled={oauthLoading !== null}
             activeOpacity={0.85}
           >
@@ -210,7 +390,7 @@ export default function LoginScreen() {
 
           <TouchableOpacity
             style={[styles.oauthBtn, styles.oauthApple, oauthLoading === 'apple' && styles.submitBtnDisabled]}
-            onPress={() => handleOAuth('apple')}
+            onPress={handleApple}
             disabled={oauthLoading !== null}
             activeOpacity={0.85}
           >
@@ -236,7 +416,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-    backgroundColor: '#131f24',
+    backgroundColor: colors.background,
   },
   scroll: {
     flexGrow: 1,
@@ -250,31 +430,27 @@ const styles = StyleSheet.create({
     marginBottom: 36,
     marginTop: 60,
   },
-  logoIcon: {
-    fontSize: 56,
-    marginBottom: 8,
-  },
   logoText: {
     fontSize: 40,
     fontWeight: '800',
-    color: '#F0EEE6',
+    color: colors.text,
     letterSpacing: 2,
   },
   logoSub: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: colors.muted,
     marginTop: 6,
   },
   card: {
-    backgroundColor: '#1B2C33',
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: colors.border,
   },
   tabs: {
     flexDirection: 'row',
-    backgroundColor: '#131f24',
+    backgroundColor: colors.background,
     borderRadius: 12,
     padding: 4,
     marginBottom: 24,
@@ -286,10 +462,10 @@ const styles = StyleSheet.create({
     borderRadius: 9,
   },
   tabActive: {
-    backgroundColor: '#0EA5E9',
+    backgroundColor: colors.accent,
   },
   tabText: {
-    color: '#94A3B8',
+    color: colors.muted,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -300,48 +476,110 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
-    color: '#94A3B8',
-    fontSize: 12,
+    color: colors.muted,
+    fontSize: 11,
     fontWeight: '600',
     marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  input: {
-    backgroundColor: '#131f24',
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background,
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: '#F0EEE6',
-    fontSize: 15,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: colors.border,
   },
-  passwordRow: {
-    position: 'relative',
+  inputRowOk: {
+    borderColor: colors.success,
   },
-  passwordInput: {
-    paddingRight: 50,
+  inputRowError: {
+    borderColor: colors.danger,
+  },
+  inputIcon: {
+    marginLeft: 14,
+  },
+  inputWithIcon: {
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 14,
+    color: colors.text,
+    fontSize: 15,
   },
   eyeBtn: {
-    position: 'absolute',
-    right: 14,
-    top: 0,
-    bottom: 0,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
     justifyContent: 'center',
   },
-  eyeIcon: {
-    fontSize: 18,
+  strengthWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 8,
+  },
+  strengthTrack: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 3,
+  },
+  strengthSegment: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+  },
+  strengthLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    minWidth: 60,
+    textAlign: 'right',
+  },
+  criteriaList: {
+    marginTop: 10,
+    gap: 5,
+  },
+  criteriaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  criteriaText: {
+    fontSize: 12,
+    color: colors.dimmed,
+  },
+  criteriaTextMet: {
+    color: colors.success,
+  },
+  errorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 5,
+    marginLeft: 2,
+  },
+  errorText: {
+    fontSize: 12,
+    color: colors.danger,
+  },
+  forgotRow: {
+    alignSelf: 'flex-end',
+    marginTop: -4,
+    marginBottom: 12,
+  },
+  forgotText: {
+    color: colors.accent,
+    fontSize: 13,
+    fontWeight: '500',
   },
   submitBtn: {
-    backgroundColor: '#0EA5E9',
+    backgroundColor: colors.accent,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 4,
   },
   submitBtnDisabled: {
-    opacity: 0.6,
+    opacity: 0.45,
   },
   submitBtnText: {
     color: '#fff',
@@ -349,7 +587,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   footer: {
-    color: '#4B6070',
+    color: colors.dimmed,
     fontSize: 11,
     textAlign: 'center',
     marginTop: 24,
@@ -368,7 +606,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.08)',
   },
   dividerText: {
-    color: '#4B6070',
+    color: colors.dimmed,
     fontSize: 12,
     fontWeight: '500',
   },

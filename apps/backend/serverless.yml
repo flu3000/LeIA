@@ -1,0 +1,49 @@
+service: leia-backend
+
+# Carrega automaticamente as variáveis do arquivo .env durante o deploy
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: sa-east-1    # São Paulo — menor latência para usuários brasileiros
+  architecture: arm64  # Graviton2: ~20% mais rápido e ~20% mais barato que x86
+  memorySize: 512
+  timeout: 29          # Máximo suportado pelo API Gateway HTTP (29s)
+
+  environment:
+    NODE_ENV: production
+    SUPABASE_URL: ${env:SUPABASE_URL}
+    SUPABASE_SERVICE_ROLE_KEY: ${env:SUPABASE_SERVICE_ROLE_KEY}
+    ALLOWED_ORIGINS: ${env:ALLOWED_ORIGINS, 'https://leia.app'}
+
+functions:
+  api:
+    handler: src/lambda.handler
+    description: LeIA — Backend API (books, insights, social, user content)
+    events:
+      # Captura todas as rotas e métodos via HTTP API (API Gateway v2)
+      - httpApi:
+          path: /
+          method: ANY
+      - httpApi:
+          path: /{proxy+}
+          method: ANY
+
+plugins:
+  - serverless-offline   # Para testes locais: pnpm serverless offline
+
+custom:
+  esbuild:
+    bundle: true        # Inclui todas as dependências no bundle (sem zip de node_modules)
+    minify: false       # Manter legível para facilitar debug no CloudWatch
+    sourcemap: true     # Source maps inline para stack traces legíveis
+    platform: node
+    target: node20
+    format: cjs         # CommonJS — consistente com tsconfig.json "module": "CommonJS"
+    exclude:
+      - '@aws-sdk/*'    # SDKs AWS já disponíveis no runtime do Lambda
+
+  serverless-offline:
+    httpPort: 3002      # Mesma porta que o dev local para não quebrar os clientes
+    noPrependStageInUrl: true

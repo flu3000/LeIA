@@ -43,11 +43,14 @@ function RootLayoutNav() {
   useEffect(() => {
     if (isLoading) return
 
-    const inAuthGroup = segments[0] === '(auth)'
+    const inAuthGroup   = segments[0] === '(auth)'
+    const inOnboarding  = segments[0] === '(auth)' && segments[1] === 'onboarding'
 
     if (!user && !inAuthGroup) {
       router.replace('/(auth)/login')
-    } else if (user && inAuthGroup) {
+    } else if (user && !user.hasCompletedProfile && !inOnboarding) {
+      router.replace('/(auth)/onboarding')
+    } else if (user && user.hasCompletedProfile && inAuthGroup) {
       router.replace('/(app)')
     }
   }, [user, isLoading, segments])

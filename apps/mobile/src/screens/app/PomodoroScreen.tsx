@@ -1,10 +1,11 @@
 import {
   View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet, Dimensions,
 } from 'react-native'
-import { useState, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Svg, { Circle } from 'react-native-svg'
 import * as Haptics from 'expo-haptics'
+import { Feather, Ionicons } from '@expo/vector-icons'
 
 import { usePomodoro, type PomodoroMode } from '@/src/hooks/usePomodoro'
 import { usePomodoroSettings } from '@/src/hooks/usePomodoroSettings'
@@ -17,12 +18,14 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 
 function DurationStepper({
   label,
+  icon,
   value,
   onChange,
   min = 1,
   max = 90,
 }: {
   label: string
+  icon: React.ReactNode
   value: number
   onChange: (v: number) => void
   min?: number
@@ -30,7 +33,10 @@ function DurationStepper({
 }) {
   return (
     <View style={styles.stepper}>
-      <Text style={styles.stepperLabel}>{label}</Text>
+      <View style={styles.stepperLabelWrap}>
+        {icon}
+        <Text style={styles.stepperLabel}>{label}</Text>
+      </View>
       <View style={styles.stepperControls}>
         <TouchableOpacity
           style={[styles.stepBtn, value <= min && styles.stepBtnDisabled]}
@@ -105,7 +111,8 @@ export default function PomodoroScreen() {
           <Text style={styles.title}>Técnica Pomodoro</Text>
           {stats.streak > 0 && (
             <View style={styles.streakBadge}>
-              <Text style={styles.streakText}>🔥 {stats.streak}</Text>
+              <Ionicons name="flame-outline" size={14} color="#fbbf24" />
+              <Text style={styles.streakText}> {stats.streak}</Text>
             </View>
           )}
         </View>
@@ -168,9 +175,10 @@ export default function PomodoroScreen() {
             <Text style={[styles.timerText, { color: accentColor }]}>
               {pad(minutes)}:{pad(seconds)}
             </Text>
-            <Text style={styles.timerMode}>
-              {isFocus ? '🎯 Foco' : '☕ Pausa'}
-            </Text>
+            <View style={styles.timerModeRow}>
+              {isFocus ? <Feather name="target" size={14} color="#94A3B8" /> : <Feather name="coffee" size={14} color="#94A3B8" />}
+              <Text style={styles.timerMode}>{isFocus ? ' Foco' : ' Pausa'}</Text>
+            </View>
             {sessions > 0 && (
               <Text style={styles.sessionsText}>{sessions} sessões hoje</Text>
             )}
@@ -180,9 +188,10 @@ export default function PomodoroScreen() {
         {/* Interrupted warning */}
         {focusInterrupted && (
           <TouchableOpacity style={styles.warningBanner} onPress={dismissInterrupted}>
-            <Text style={styles.warningText}>
-              ⚠️ Foco interrompido — o app foi para segundo plano
-            </Text>
+            <View style={styles.warningRow}>
+              <Feather name="alert-triangle" size={14} color="#fbbf24" />
+              <Text style={styles.warningText}> Foco interrompido — o app foi para segundo plano</Text>
+            </View>
           </TouchableOpacity>
         )}
 
@@ -193,7 +202,7 @@ export default function PomodoroScreen() {
             onPress={handleReset}
             activeOpacity={0.7}
           >
-            <Text style={styles.resetBtnText}>↺</Text>
+            <Feather name="rotate-ccw" size={22} color="#94A3B8" />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -201,9 +210,7 @@ export default function PomodoroScreen() {
             onPress={handleToggle}
             activeOpacity={0.85}
           >
-            <Text style={styles.playBtnText}>
-              {isRunning ? '⏸' : '▶'}
-            </Text>
+            {isRunning ? <Feather name="pause" size={28} color="#fff" /> : <Feather name="play" size={28} color="#fff" />}
           </TouchableOpacity>
 
           <View style={styles.resetBtn} />
@@ -216,7 +223,12 @@ export default function PomodoroScreen() {
               Sessões hoje: {stats.sessionsToday} / {stats.dailyGoal}
             </Text>
             {saveStatus === 'saving' && <Text style={styles.saveStatus}>Salvando...</Text>}
-            {saveStatus === 'saved'  && <Text style={[styles.saveStatus, { color: '#10B981' }]}>✓ Salvo</Text>}
+            {saveStatus === 'saved'  && (
+              <View style={styles.saveStatusRow}>
+                <Feather name="check" size={12} color="#10B981" />
+                <Text style={[styles.saveStatus, { color: '#10B981' }]}> Salvo</Text>
+              </View>
+            )}
           </View>
           <View style={styles.progressBar}>
             <View
@@ -235,18 +247,21 @@ export default function PomodoroScreen() {
         <View style={styles.settingsSection}>
           <Text style={styles.settingsTitle}>Durações</Text>
           <DurationStepper
-            label="⏱ Foco"
+            label="Foco"
+            icon={<Ionicons name="timer-outline" size={14} color="#94A3B8" />}
             value={durations.focus}
             onChange={(v) => handleDurationChange('focus', v)}
             min={5}
           />
           <DurationStepper
-            label="☕ Pausa"
+            label="Pausa"
+            icon={<Feather name="coffee" size={14} color="#94A3B8" />}
             value={durations.break}
             onChange={(v) => handleDurationChange('break', v)}
           />
           <DurationStepper
-            label="🎯 Meta diária"
+            label="Meta diária"
+            icon={<Feather name="target" size={14} color="#94A3B8" />}
             value={stats.dailyGoal}
             onChange={saveDailyGoal}
             max={20}
@@ -258,12 +273,17 @@ export default function PomodoroScreen() {
       <Modal transparent animationType="fade" visible={showCompleteModal}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalEmoji}>🎉</Text>
+            <Ionicons name="sparkles-outline" size={48} color="#0EA5E9" style={{ marginBottom: 12 }} />
             <Text style={styles.modalTitle}>Sessão completa!</Text>
             <Text style={styles.modalBody}>
               Ótimo trabalho! Você completou {stats.sessionsToday} de {stats.dailyGoal} sessões hoje.
-              {stats.streak > 1 ? `\n\n🔥 Sequência de ${stats.streak} dias!` : ''}
             </Text>
+            {stats.streak > 1 && (
+              <View style={styles.modalStreakRow}>
+                <Ionicons name="flame-outline" size={16} color="#fbbf24" />
+                <Text style={styles.modalStreakText}> Sequência de {stats.streak} dias!</Text>
+              </View>
+            )}
             <TouchableOpacity
               style={styles.modalBtn}
               onPress={() => setShowCompleteModal(false)}
@@ -278,9 +298,10 @@ export default function PomodoroScreen() {
       {/* Goal reached toast */}
       {goalJustReached && (
         <View style={styles.goalToast}>
-          <Text style={styles.goalToastText}>
-            🏆 Meta diária atingida! {stats.dailyGoal} sessões completadas!
-          </Text>
+          <View style={styles.goalToastRow}>
+            <Ionicons name="trophy-outline" size={16} color="#fbbf24" />
+            <Text style={styles.goalToastText}> Meta diária atingida! {stats.dailyGoal} sessões completadas!</Text>
+          </View>
         </View>
       )}
     </SafeAreaView>
@@ -309,6 +330,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: 'rgba(251,191,36,0.15)',
     borderRadius: 20,
     paddingHorizontal: 12,
@@ -369,10 +393,14 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
     letterSpacing: 2,
   },
+  timerModeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
   timerMode: {
     color: '#94A3B8',
     fontSize: 14,
-    marginTop: 4,
   },
   sessionsText: {
     color: '#4B6070',
@@ -387,10 +415,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(251,191,36,0.3)',
   },
+  warningRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    justifyContent: 'center',
+  },
   warningText: {
     color: '#fbbf24',
     fontSize: 13,
-    textAlign: 'center',
   },
   controls: {
     flexDirection: 'row',
@@ -407,20 +440,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  resetBtnText: {
-    fontSize: 24,
-    color: '#94A3B8',
-  },
   playBtn: {
     width: 72,
     height: 72,
     borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  playBtnText: {
-    fontSize: 28,
-    color: '#fff',
   },
   progressSection: {
     marginBottom: 24,
@@ -433,6 +458,11 @@ const styles = StyleSheet.create({
   progressLabel: {
     color: '#94A3B8',
     fontSize: 13,
+  },
+  saveStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
   },
   saveStatus: {
     color: '#94A3B8',
@@ -469,10 +499,15 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.05)',
   },
+  stepperLabelWrap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   stepperLabel: {
     color: '#94A3B8',
     fontSize: 14,
-    flex: 1,
   },
   stepperControls: {
     flexDirection: 'row',
@@ -519,10 +554,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
   },
-  modalEmoji: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
   modalTitle: {
     color: '#F0EEE6',
     fontSize: 22,
@@ -534,7 +565,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
+    marginBottom: 16,
+  },
+  modalStreakRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 24,
+  },
+  modalStreakText: {
+    color: '#fbbf24',
+    fontSize: 14,
+    fontWeight: '600',
   },
   modalBtn: {
     backgroundColor: '#0EA5E9',
@@ -559,6 +600,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#fbbf24',
+  },
+  goalToastRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   goalToastText: {
     color: '#fbbf24',

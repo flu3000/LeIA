@@ -6,10 +6,12 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsup src/index.ts --format cjs --dts --out-dir dist",
     "start": "node dist/index.js",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "deploy": "serverless deploy"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
+    "@vendia/serverless-express": "^4.12.6",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.18.3",
@@ -20,6 +22,12 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^20.11.0",
+    "@types/serverless": "^3.12.28",
+    "esbuild": "^0.27.4",
+    "serverless": "^4.33.0",
+    "serverless-esbuild": "^1.57.0",
+    "serverless-offline": "^14.5.0",
+    "serverless-plugin-typescript": "^2.1.5",
     "tsup": "^8.0.0",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"

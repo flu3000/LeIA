@@ -1,38 +1,24 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Dependências
+node_modules/
 
-# Dependencies
-node_modules
-.pnp
-.pnp.js
-
-# Local env files
+# Variáveis de ambiente — NUNCA commitar
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 
-# Testing
-coverage
-
-# Turbo
-.turbo
-
-# Vercel
-.vercel
-
-# Build Outputs
+# Build outputs
+dist/
+build/
 .next/
-out/
-build
-dist
 
+# Serverless Framework
+.serverless/
+.esbuild/
 
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Expo / React Native
+apps/mobile/.expo/
+apps/mobile/dist/
 
 # Misc
 .DS_Store
-*.pem
+*.log

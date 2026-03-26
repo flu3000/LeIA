@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, Linking, StyleSheet } from 'react-native'
 import * as Haptics from 'expo-haptics'
 import { tipoColors, dificuldadeColors } from '@/src/data/topics'
+import { Feather, Ionicons } from '@expo/vector-icons'
 
 interface SourceCardProps {
   fonte: {
@@ -16,12 +17,14 @@ interface SourceCardProps {
   onToggleFavourite?: () => void
 }
 
-const tipoEmoji: Record<string, string> = {
-  livro:   '📚',
-  video:   '🎬',
-  podcast: '🎙️',
-  artigo:  '📄',
-  curso:   '🎓',
+function TipoIcon({ tipo, size, color }: { tipo: string; size: number; color: string }) {
+  switch (tipo) {
+    case 'livro':   return <Feather name="book-open" size={size} color={color} />
+    case 'video':   return <Feather name="video" size={size} color={color} />
+    case 'podcast': return <Feather name="mic" size={size} color={color} />
+    case 'curso':   return <Ionicons name="school-outline" size={size} color={color} />
+    default:        return <Feather name="file-text" size={size} color={color} />
+  }
 }
 
 export default function SourceCard({ fonte, isFavourite, onToggleFavourite }: SourceCardProps) {
@@ -44,10 +47,9 @@ export default function SourceCard({ fonte, isFavourite, onToggleFavourite }: So
     <View style={styles.card}>
       {/* Type + Difficulty row */}
       <View style={styles.tagsRow}>
-        <View style={[styles.badge, { backgroundColor: tipoColor.bg }]}>
-          <Text style={[styles.badgeText, { color: tipoColor.text }]}>
-            {tipoEmoji[tipo] ?? '📄'} {tipo}
-          </Text>
+        <View style={[styles.badge, styles.badgeInner, { backgroundColor: tipoColor.bg }]}>
+          <TipoIcon tipo={tipo} size={10} color={tipoColor.text} />
+          <Text style={[styles.badgeText, { color: tipoColor.text }]}>{tipo}</Text>
         </View>
         {fonte.dificuldade ? (
           <View style={[styles.badge, { backgroundColor: difColor.bg }]}>
@@ -75,7 +77,7 @@ export default function SourceCard({ fonte, isFavourite, onToggleFavourite }: So
             onPress={handleFavourite}
             activeOpacity={0.7}
           >
-            <Text style={{ fontSize: 16 }}>{isFavourite ? '❤️' : '🤍'}</Text>
+            <Ionicons name={isFavourite ? 'heart' : 'heart-outline'} size={16} color={isFavourite ? '#fb7185' : '#4B6070'} />
           </TouchableOpacity>
         ) : null}
 
@@ -120,6 +122,11 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
+  },
+  badgeInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   badgeText: {
     fontSize: 11,

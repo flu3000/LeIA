@@ -5,14 +5,20 @@ import { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import * as Haptics from 'expo-haptics'
 import Animated, { FadeInDown } from 'react-native-reanimated'
-import { Ionicons } from '@expo/vector-icons'
+import { Ionicons, Feather } from '@expo/vector-icons'
 
 import { useUserContent, type UserContent } from '@/src/hooks/useUserContent'
 
 type Filter = 'todos' | 'favoritos' | 'lidos'
 
-const tipoEmoji: Record<string, string> = {
-  livro: '📚', video: '🎬', podcast: '🎙️', artigo: '📄', curso: '🎓',
+function TipoIcon({ tipo, size, color }: { tipo: string; size: number; color: string }) {
+  switch (tipo) {
+    case 'livro':   return <Feather name="book-open" size={size} color={color} />
+    case 'video':   return <Feather name="video" size={size} color={color} />
+    case 'podcast': return <Feather name="mic" size={size} color={color} />
+    case 'curso':   return <Ionicons name="school-outline" size={size} color={color} />
+    default:        return <Feather name="file-text" size={size} color={color} />
+  }
 }
 
 function ContentCard({ item, onToggleFav, onToggleRead }: {
@@ -25,9 +31,9 @@ function ContentCard({ item, onToggleFav, onToggleRead }: {
       <View style={styles.card}>
         {/* Header */}
         <View style={styles.cardHeader}>
-          <Text style={styles.cardEmoji}>
-            {tipoEmoji[item.category?.toLowerCase()] ?? '📄'}
-          </Text>
+          <View style={styles.cardIconWrap}>
+            <TipoIcon tipo={item.category?.toLowerCase() ?? 'artigo'} size={20} color="#94A3B8" />
+          </View>
           <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
         </View>
 
@@ -38,12 +44,18 @@ function ContentCard({ item, onToggleFav, onToggleRead }: {
           </View>
           {item.is_favourite && (
             <View style={styles.favBadge}>
-              <Text style={styles.favBadgeText}>❤️ Favorito</Text>
+              <View style={styles.badgeInner}>
+                <Ionicons name="heart" size={10} color="#fb7185" />
+                <Text style={styles.favBadgeText}> Favorito</Text>
+              </View>
             </View>
           )}
           {item.is_read && (
             <View style={styles.readBadge}>
-              <Text style={styles.readBadgeText}>✓ Lido</Text>
+              <View style={styles.badgeInner}>
+                <Feather name="check" size={10} color="#10B981" />
+                <Text style={styles.readBadgeText}> Lido</Text>
+              </View>
             </View>
           )}
         </View>
@@ -55,7 +67,7 @@ function ContentCard({ item, onToggleFav, onToggleRead }: {
             onPress={onToggleFav}
             activeOpacity={0.7}
           >
-            <Text style={{ fontSize: 14 }}>{item.is_favourite ? '❤️' : '🤍'}</Text>
+            <Ionicons name={item.is_favourite ? 'heart' : 'heart-outline'} size={14} color={item.is_favourite ? '#fb7185' : '#4B6070'} />
             <Text style={[styles.actionText, item.is_favourite && styles.actionTextActive]}>
               {item.is_favourite ? 'Salvo' : 'Salvar'}
             </Text>
@@ -123,9 +135,13 @@ export default function LibraryScreen() {
             onPress={() => setFilter(f)}
             activeOpacity={0.7}
           >
-            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
-              {f === 'todos' ? 'Todos' : f === 'favoritos' ? '❤️ Favoritos' : '✓ Lidos'}
-            </Text>
+            <View style={styles.filterTabInner}>
+              {f === 'favoritos' && <Ionicons name="heart-outline" size={12} color={filter === f ? '#fff' : '#94A3B8'} />}
+              {f === 'lidos'     && <Feather name="check" size={12} color={filter === f ? '#fff' : '#94A3B8'} />}
+              <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
+                {f === 'todos' ? 'Todos' : f === 'favoritos' ? ' Favoritos' : ' Lidos'}
+              </Text>
+            </View>
           </TouchableOpacity>
         ))}
       </View>
@@ -145,7 +161,7 @@ export default function LibraryScreen() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>📭</Text>
+            <Feather name="inbox" size={48} color="#4B6070" style={{ marginBottom: 12 }} />
             <Text style={styles.emptyTitle}>Nenhum conteúdo salvo</Text>
             <Text style={styles.emptySubtitle}>
               {filter === 'todos'
@@ -202,6 +218,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#0EA5E9',
     borderColor: '#0EA5E9',
   },
+  filterTabInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   filterText: {
     color: '#94A3B8',
     fontSize: 13,
@@ -228,9 +248,11 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 10,
   },
-  cardEmoji: {
-    fontSize: 24,
-    lineHeight: 28,
+  cardIconWrap: {
+    width: 28,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 2,
   },
   cardTitle: {
     flex: 1,
@@ -256,6 +278,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     textTransform: 'capitalize',
+  },
+  badgeInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   favBadge: {
     backgroundColor: 'rgba(239,68,68,0.12)',
@@ -314,10 +341,6 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
     alignItems: 'center',
     paddingHorizontal: 40,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 12,
   },
   emptyTitle: {
     color: '#F0EEE6',

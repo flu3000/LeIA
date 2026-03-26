@@ -50,28 +50,22 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="flex items-center justify-between px-3 py-3 min-w-8">
         <div className="flex items-center gap-2.5 min-w-10 overflow-hidden w-100 h-8 px-1">
-          <svg 
-            viewBox="0 0 24 28" 
-            fill="none" 
-            xmlns="http://www.w3.org/2000/svg" 
-            className="w-8 h-8 text-brand-accent shrink-0 bg-transparent"
-          >
-            <path d="M11.5173 16.7831L21.5173 11.1829" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-            <path d="M12.3173 8.05552L15.2208 7.30087" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-            <path d="M11.5173 10.9537L12.5526 7.20595" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-            <path d="M21.5173 20.483V11.483" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-            <path d="M11.5173 26.483L11.5173 16.483" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-            <path d="M11.5173 26.483L21.5173 20.8828" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-            <path d="M11.5173 16.7831L1.51729 11.1829" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-            <path d="M10.7173 8.05552L7.81374 7.30087" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-            <path d="M11.5173 10.9537L10.482 7.20595" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-            <path d="M1.51728 20.483L1.51728 11.483" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-            <path d="M11.5173 26.483L1.51729 20.8828" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-            <path d="M11.5173 7.08325L21.5173 1.48302" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-            <path d="M11.5173 7.08325L1.51729 1.48302" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-            <path d="M21.4875 11.0344L18.5461 3.1956" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-            <path d="M1.54708 11.0344L4.48845 3.1956" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-          </svg>
+            
+<svg className='w-8 h-8 shrink-0 bg-transparent' viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="320" height="320" rx="64" fill="#131F24"/>
+<path d="M160 197L71 146" stroke="#EAE0C8" stroke-width="32" stroke-linecap="round"/>
+<rect x="136" y="77" width="54" height="58" fill="#131F24"/>
+<path d="M160 111L71 60" stroke="#EAE0C8" stroke-width="32" stroke-linecap="round"/>
+<path d="M249 220L249 60" stroke="#EAE0C8" stroke-width="32" stroke-linecap="round"/>
+<path d="M160 197L249 146" stroke="#EAE0C8" stroke-width="32" stroke-linecap="round"/>
+<path d="M71 220L71 60" stroke="#131F24" stroke-width="48" stroke-linecap="round"/>
+<path d="M160 271L160 111" stroke="#131F24" stroke-width="48" stroke-linecap="round"/>
+<path d="M71 220L71 60" stroke="#EAE0C8" stroke-width="32" stroke-linecap="round"/>
+<path d="M160 271L71 220" stroke="#EAE0C8" stroke-width="32" stroke-linecap="round"/>
+<path d="M160 271L160 111" stroke="#EAE0C8" stroke-width="32" stroke-linecap="round"/>
+<path d="M160 66.0001V66" stroke="#EAE0C8" stroke-width="32" stroke-linecap="round"/>
+<path d="M160 111L249 60" stroke="#EAE0C8" stroke-width="32" stroke-linecap="round"/>
+</svg>
           <span className={`text-xl font-serif font-semibold text-brand-text leading-tight w-full ${labelClass}`}>
             LeIA
           </span>
