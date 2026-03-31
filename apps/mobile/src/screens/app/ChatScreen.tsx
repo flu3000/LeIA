@@ -2,14 +2,20 @@ import {
   View, Text, TextInput, TouchableOpacity, FlatList,
   KeyboardAvoidingView, Platform, ActivityIndicator, StyleSheet,
 } from 'react-native'
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import * as Haptics from 'expo-haptics'
-import Animated, { FadeInDown } from 'react-native-reanimated'
+import Animated, { FadeInDown, runOnJS } from 'react-native-reanimated'
+import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import { Ionicons } from '@expo/vector-icons'
+
 import { useChat, type Message, type Fonte } from '@/src/hooks/useChat'
+import { useChatSessions } from '@/src/hooks/useChatSessions'
 import { useUserContent } from '@/src/hooks/useUserContent'
 import SourceCard from '@/src/components/SourceCard'
+import ChatDrawer from '@/src/components/ChatDrawer'
+
+// ── Sub-components ────────────────────────────────────────────────────────────
 
 function TypingDots() {
   return (
@@ -40,7 +46,6 @@ function MessageBubble({ message }: { message: Message }) {
           {message.content}
         </Text>
 
-        {/* Source cards */}
         {message.sources && message.sources.length > 0 && (
           <View style={styles.sourcesContainer}>
             {message.sources.map((fonte: Fonte, i: number) => (
@@ -60,7 +65,6 @@ function MessageBubble({ message }: { message: Message }) {
           </View>
         )}
 
-        {/* Citations */}
         {message.citations && message.citations.length > 0 && (
           <View style={styles.citationsRow}>
             {message.citations.slice(0, 3).map((url, i) => (
@@ -77,141 +81,224 @@ function MessageBubble({ message }: { message: Message }) {
   )
 }
 
+// ── Main screen ───────────────────────────────────────────────────────────────
+
 export default function ChatScreen() {
-  const { messages, isTyping, isClearing, sendMessage, clearHistory } = useChat()
+  const [drawerOpen,       setDrawerOpen]       = useState(false)
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [input, setInput] = useState('')
   const listRef = useRef<FlatList>(null)
 
+  const {
+    sessions, isLoading: isLoadingSessions,
+    fetchSessions, createSession, renameSession, deleteSession,
+  } = useChatSessions()
+
+  const { messages, isTyping, sendMessage } = useChat(currentSessionId)
+
+  // ── Bootstrap ──────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    fetchSessions()
+  }, [])
+
+  useEffect(() => {
+    if (currentSessionId || isLoadingSessions) return
+    if (sessions.length > 0) {
+      setCurrentSessionId(sessions[0].id)
+    } else {
+      createSession().then((s) => { if (s) setCurrentSessionId(s.id) })
+    }
+  }, [sessions, isLoadingSessions, currentSessionId])
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
+
   const handleSend = useCallback(async () => {
     const text = input.trim()
-    if (!text || isTyping) return
+    if (!text || isTyping || !currentSessionId) return
     setInput('')
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    sendMessage(text)
-  }, [input, isTyping, sendMessage])
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    await sendMessage(text)
+    fetchSessions()
+  }, [input, isTyping, currentSessionId, sendMessage, fetchSessions])
 
-  const handleClear = useCallback(async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-    clearHistory()
-  }, [clearHistory])
+  const handleNewSession = useCallback(async () => {
+    const s = await createSession()
+    if (s) { setCurrentSessionId(s.id); setDrawerOpen(false) }
+  }, [createSession])
+
+  const handleSelectSession = useCallback((id: string) => {
+    setCurrentSessionId(id)
+  }, [])
+
+  const handleDeleteSession = useCallback(async (id: string) => {
+    await deleteSession(id)
+    if (id === currentSessionId) {
+      const remaining = sessions.filter((s) => s.id !== id)
+      if (remaining.length > 0) {
+        setCurrentSessionId(remaining[0].id)
+      } else {
+        const s = await createSession()
+        if (s) setCurrentSessionId(s.id)
+      }
+    }
+  }, [deleteSession, sessions, currentSessionId, createSession])
+
+  // ── Drawer open (called from worklet via runOnJS) ──────────────────────────
+
+  const openDrawer = useCallback(() => {
+    Haptics.selectionAsync()
+    setDrawerOpen(true)
+  }, [])
+
+  // ── Edge swipe gesture (swipe right from left edge → open drawer) ──────────
+
+  const edgeGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .activeOffsetX([8, 9999])
+        .failOffsetY([-40, 40])
+        .onEnd((e) => {
+          if (e.translationX > 50 || e.velocityX > 400) {
+            runOnJS(openDrawer)()
+          }
+        }),
+    [openDrawer],
+  )
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>LeIA</Text>
-          <Text style={styles.headerSub}>Bibliotecário Inteligente</Text>
-        </View>
-        <TouchableOpacity
-          style={styles.clearBtn}
-          onPress={handleClear}
-          disabled={isClearing}
-          activeOpacity={0.7}
-        >
-          {isClearing
-            ? <ActivityIndicator size="small" color="#0EA5E9" />
-            : <Text style={styles.clearBtnText}>Nova Conversa</Text>
-          }
-        </TouchableOpacity>
-      </View>
+    <View style={{ flex: 1 }}>
+      <SafeAreaView style={styles.container} edges={['top']}>
 
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={0}
-      >
-        {/* Message list */}
-        <FlatList
-          ref={listRef}
-          data={messages}
-          keyExtractor={(m) => m.id}
-          renderItem={({ item }) => <MessageBubble message={item} />}
-          contentContainerStyle={styles.messageList}
-          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
-          showsVerticalScrollIndicator={false}
-          ListFooterComponent={isTyping ? <TypingDots /> : null}
-        />
-
-        {/* Input bar */}
-        <View style={styles.inputBar}>
-          <TextInput
-            style={styles.textInput}
-            value={input}
-            onChangeText={setInput}
-            placeholder="Sobre o que quer aprender?"
-            placeholderTextColor="#4B6070"
-            multiline
-            maxLength={600}
-            returnKeyType="send"
-            blurOnSubmit={false}
-          />
+        {/* Header */}
+        <View style={styles.header}>
           <TouchableOpacity
-            style={[styles.sendBtn, (!input.trim() || isTyping) && styles.sendBtnDisabled]}
-            onPress={handleSend}
-            disabled={!input.trim() || isTyping}
-            activeOpacity={0.8}
+            style={styles.headerBtn}
+            onPress={() => { Haptics.selectionAsync(); setDrawerOpen(true) }}
+            activeOpacity={0.7}
           >
-            <Ionicons name="send" size={18} color="#fff" />
+            <Ionicons name="menu" size={22} color="#94A3B8" />
           </TouchableOpacity>
+
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>LeIA</Text>
+            <Text style={styles.headerSub}>Bibliotecário Inteligente</Text>
+          </View>
+
+          {/* Espaço espelho para centralizar o título */}
+          <View style={styles.headerBtn} />
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+        >
+          <FlatList
+            ref={listRef}
+            data={messages}
+            keyExtractor={(m) => m.id}
+            renderItem={({ item }) => <MessageBubble message={item} />}
+            contentContainerStyle={styles.messageList}
+            onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+            showsVerticalScrollIndicator={false}
+            ListFooterComponent={isTyping ? <TypingDots /> : null}
+          />
+
+          <View style={styles.inputBar}>
+            <TextInput
+              style={styles.textInput}
+              value={input}
+              onChangeText={setInput}
+              placeholder="Sobre o que quer aprender?"
+              placeholderTextColor="#4B6070"
+              multiline
+              maxLength={600}
+              returnKeyType="send"
+              blurOnSubmit={false}
+            />
+            <TouchableOpacity
+              style={[styles.sendBtn, (!input.trim() || isTyping) && styles.sendBtnDisabled]}
+              onPress={handleSend}
+              disabled={!input.trim() || isTyping}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="send" size={18} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+
+      {/* Left-edge swipe zone (20px wide, behind drawer) */}
+      <GestureDetector gesture={edgeGesture}>
+        <View style={styles.edgeZone} />
+      </GestureDetector>
+
+      {/* Drawer (absolute overlay, rendered last = on top) */}
+      <ChatDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        sessions={sessions}
+        isLoadingSessions={isLoadingSessions}
+        currentSessionId={currentSessionId}
+        onSelectSession={handleSelectSession}
+        onNewSession={handleNewSession}
+        onRenameSession={renameSession}
+        onDeleteSession={handleDeleteSession}
+      />
+    </View>
   )
 }
+
+// ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F1C22',
+    backgroundColor: '#131f24',
   },
   flex: { flex: 1 },
+
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.06)',
     backgroundColor: '#131f24',
   },
+  headerBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
   headerTitle: {
     color: '#F0EEE6',
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '800',
     letterSpacing: 1,
   },
   headerSub: {
     color: '#94A3B8',
-    fontSize: 11,
+    fontSize: 10,
     marginTop: 1,
   },
-  clearBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#0EA5E9',
-    minWidth: 90,
-    alignItems: 'center',
-  },
-  clearBtnText: {
-    color: '#0EA5E9',
-    fontSize: 12,
-    fontWeight: '600',
-  },
+
   messageList: {
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 8,
   },
-  messageRow: {
-    marginBottom: 12,
-  },
-  userRow: {
-    alignItems: 'flex-end',
-  },
+  messageRow: { marginBottom: 12 },
+  userRow:    { alignItems: 'flex-end' },
   assistantRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -243,15 +330,10 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
     flex: 1,
   },
-  bubbleText: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
+  bubbleText:    { fontSize: 14, lineHeight: 20 },
   userText:      { color: '#fff' },
   assistantText: { color: '#F0EEE6' },
-  sourcesContainer: {
-    marginTop: 10,
-  },
+  sourcesContainer: { marginTop: 10 },
   citationsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -265,10 +347,8 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     maxWidth: 160,
   },
-  citationText: {
-    color: '#4B6070',
-    fontSize: 10,
-  },
+  citationText: { color: '#4B6070', fontSize: 10 },
+
   typingBubble: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -286,6 +366,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontStyle: 'italic',
   },
+
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -319,7 +400,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
-  sendBtnDisabled: {
-    backgroundColor: '#243640',
+  sendBtnDisabled: { backgroundColor: '#243640' },
+
+  edgeZone: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 20,
   },
 })

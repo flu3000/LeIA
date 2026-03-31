@@ -2,6 +2,7 @@
 export const colors = {
   // Fundos
   background:  '#131f24',
+  //background:  '#020f14',
   surface:     '#1B2C33',
   surfaceDeep: '#243640',
   dark:        '#0F1C22',
@@ -11,7 +12,7 @@ export const colors = {
   accentDim:   'rgba(14,165,233,0.15)',
 
   // Texto
-  text:        '#F0EEE6',
+  text:        '#EAE0C8',
   muted:       '#94A3B8',
   dimmed:      '#4B6070',
 

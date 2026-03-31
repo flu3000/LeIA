@@ -53,17 +53,13 @@
         {
           "photosPermission": "O LeIA precisa acessar sua galeria para você trocar a foto de perfil."
         }
-      ],
-      "@react-native-google-signin/google-signin"
+      ]
     ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "7f4e06e5-d307-4d72-a77e-a6b43b6cdef1"
-      }
+      "router": {}
     }
   }
 }

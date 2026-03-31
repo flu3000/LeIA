@@ -1,7 +1,7 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useAuth } from '@/src/context/AuthContext'
+import { chatApi, CHAT_URL } from '@/src/lib/apiClient'
 import { supabase } from '@/src/lib/supabase'
-import { CHAT_URL } from '@/src/lib/apiClient'
 
 export interface Fonte {
   id_externo?: string
@@ -27,7 +27,7 @@ const WELCOME: Message = {
   content: 'Olá!\n\nQual tema você gostaria de explorar hoje? Posso indicar livros, vídeos, podcasts e artigos curados especialmente para você.',
 }
 
-function dbRowsToMessages(rows: { role: string; content: string }[]): Message[] {
+function rowsToMessages(rows: { role: string; content: string }[]): Message[] {
   return rows.map((row, i) => ({
     id: `db-${i}`,
     role: row.role as 'user' | 'assistant',
@@ -35,42 +35,37 @@ function dbRowsToMessages(rows: { role: string; content: string }[]): Message[] 
   }))
 }
 
-export function useChat() {
+export function useChat(sessionId: string | null) {
   const { user } = useAuth()
   const [messages, setMessages] = useState<Message[]>([WELCOME])
-  const [isTyping, setIsTyping] = useState(false)
-  const [isClearing, setIsClearing] = useState(false)
-  const [historyLoaded, setHistoryLoaded] = useState(false)
+  const [isTyping, setIsTyping]   = useState(false)
+  const prevSessionId = useRef<string | null>(null)
 
-  // Load history from Supabase
+  // Carrega mensagens sempre que a sessão muda
   useEffect(() => {
-    if (!user?.id || historyLoaded) return
+    if (!sessionId || sessionId === prevSessionId.current) return
+    prevSessionId.current = sessionId
 
-    supabase
-      .from('chat_messages')
-      .select('role, content')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: true })
-      .limit(20)
-      .then(({ data, error }) => {
-        if (error) console.error('[useChat] history fetch:', error)
-        if (data && data.length > 0) {
-          setMessages([WELCOME, ...dbRowsToMessages(data)])
-        }
-        setHistoryLoaded(true)
+    setMessages([WELCOME])
+
+    chatApi
+      .get<{ role: string; content: string }[]>(`/api/chat/sessions/${sessionId}/messages`)
+      .then((rows) => {
+        if (rows.length > 0) setMessages([WELCOME, ...rowsToMessages(rows)])
       })
-  }, [user?.id, historyLoaded])
+      .catch((e) => console.error('[useChat] load messages:', e))
+  }, [sessionId])
 
-  // Reset on user change
+  // Reset ao trocar de usuário
   useEffect(() => {
     if (!user?.id) {
       setMessages([WELCOME])
-      setHistoryLoaded(false)
+      prevSessionId.current = null
     }
   }, [user?.id])
 
   const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || isTyping) return
+    if (!text.trim() || isTyping || !user?.id) return
 
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text }
     setMessages((prev) => [...prev, userMsg])
@@ -81,10 +76,15 @@ export function useChat() {
       .map((m) => ({ role: m.role, content: m.content }))
 
     try {
+      const { data: { session: authSession } } = await supabase.auth.getSession()
+      const authHeader = authSession?.access_token
+        ? { Authorization: `Bearer ${authSession.access_token}` }
+        : {}
+
       const res = await fetch(`${CHAT_URL}/api/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mensagem: text, userId: user?.id, historico }),
+        headers: { 'Content-Type': 'application/json', ...authHeader },
+        body: JSON.stringify({ mensagem: text, userId: user.id, historico, sessionId }),
       })
 
       const data = await res.json()
@@ -110,20 +110,7 @@ export function useChat() {
     } finally {
       setIsTyping(false)
     }
-  }, [isTyping, user?.id, messages])
+  }, [isTyping, user?.id, messages, sessionId])
 
-  const clearHistory = useCallback(async () => {
-    if (!user?.id || isClearing) return
-    setIsClearing(true)
-    const { error } = await supabase
-      .from('chat_messages')
-      .delete()
-      .eq('user_id', user.id)
-    if (error) console.error('[useChat] clearHistory:', error)
-    setMessages([WELCOME])
-    setHistoryLoaded(true)
-    setIsClearing(false)
-  }, [user?.id, isClearing])
-
-  return { messages, isTyping, isClearing, sendMessage, clearHistory }
+  return { messages, isTyping, sendMessage }
 }

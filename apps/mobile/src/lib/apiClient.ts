@@ -54,12 +54,14 @@ async function request<T>(
 export const chatApi = {
   get:    <T>(path: string)                 => request<T>(CHAT_URL,    'GET',    path),
   post:   <T>(path: string, body?: unknown) => request<T>(CHAT_URL,    'POST',   path, body),
+  patch:  <T>(path: string, body?: unknown) => request<T>(CHAT_URL,    'PATCH',  path, body),
   delete: <T>(path: string)                 => request<T>(CHAT_URL,    'DELETE', path),
 }
 
 export const api = {
   get:    <T>(path: string)                 => request<T>(BACKEND_URL, 'GET',    path),
   post:   <T>(path: string, body?: unknown) => request<T>(BACKEND_URL, 'POST',   path, body),
+  patch:  <T>(path: string, body?: unknown) => request<T>(BACKEND_URL, 'PATCH',  path, body),
   put:    <T>(path: string, body?: unknown) => request<T>(BACKEND_URL, 'PUT',    path, body),
   delete: <T>(path: string)                 => request<T>(BACKEND_URL, 'DELETE', path),
 }

@@ -1,157 +1,241 @@
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native'
+import {
+  View, Text, TouchableOpacity, StyleSheet, Animated,
+} from 'react-native'
+import { useRef, useState, useCallback } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useRouter } from 'expo-router'
+import Reanimated, {
+  useSharedValue, useAnimatedStyle, withTiming, Easing,
+} from 'react-native-reanimated'
 import * as Haptics from 'expo-haptics'
 
-interface NavCard {
-  label: string
-  description: string
-  icon: string
-  color: string
-  route: string
-}
+import InsightsTab, { type InsightSubTab } from '@/src/screens/social/InsightsTab'
+import RankingsTab from '@/src/screens/social/RankingsTab'
+import CommunitiesTab from '@/src/screens/social/CommunitiesTab'
 
-const NAV_CARDS: NavCard[] = [
-  {
-    label: 'Insights',
-    description: 'Citações e reflexões da comunidade',
-    icon: 'sparkles',
-    color: '#F59E0B',
-    route: '/insights',
-  },
-  {
-    label: 'Rankings',
-    description: 'Ranking de leitura e busca de usuários',
-    icon: 'trophy',
-    color: '#0EA5E9',
-    route: '/rankings',
-  },
-  {
-    label: 'Amigos',
-    description: 'Quem você segue e seus seguidores',
-    icon: 'people',
-    color: '#10B981',
-    route: '/friends',
-  },
-  {
-    label: 'Comunidades',
-    description: 'Clubes de leitura para leitores',
-    icon: 'library',
-    color: '#8B5CF6',
-    route: '/communities',
-  },
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+type MainTab = 'insights' | 'rankings' | 'communities'
+
+const MAIN_TABS = [
+  { key: 'insights'    as const, icon: 'sparkles'    as const, color: '#8B5CF6', label: 'Insights'    },
+  { key: 'rankings'   as const, icon: 'trophy'       as const, color: '#E7FF21', label: 'Rankings'    },
+  { key: 'communities' as const, icon: 'people'       as const, color: '#14B8A6', label: 'Comunidades' },
 ]
 
-export default function SocialScreen() {
-  const router = useRouter()
+const INSIGHT_SUB_TABS: { key: InsightSubTab; label: string }[] = [
+  { key: 'todos',    label: 'Todos'    },
+  { key: 'seguindo', label: 'Seguindo' },
+  { key: 'curtidos', label: 'Curtidos' },
+  { key: 'seus',     label: 'Seus'     },
+]
 
-  const handlePress = (route: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    router.push(route as never)
-  }
+// ── Component ─────────────────────────────────────────────────────────────────
+
+export default function SocialScreen() {
+  const [mainTab, setMainTab]     = useState<MainTab>('insights')
+  const [subTabIdx, setSubTabIdx] = useState(0)
+  const [subBarWidth, setSubBarWidth] = useState(0)
+
+  // Fade animation for main tab content switch (React Native Animated)
+  const fadeAnim = useRef(new Animated.Value(1)).current
+
+  // Spring indicator for sub-tabs (Reanimated)
+  const indicatorX = useSharedValue(0)
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: indicatorX.value }],
+  }))
+
+  const tabWidth = subBarWidth / INSIGHT_SUB_TABS.length
+
+  // ── Handlers ───────────────────────────────────────────────────────────────
+
+  const switchMainTab = useCallback((tab: MainTab) => {
+    if (tab === mainTab) return
+    Haptics.selectionAsync()
+    Animated.timing(fadeAnim, { toValue: 0, duration: 80, useNativeDriver: true })
+      .start(() => {
+        setMainTab(tab)
+        Animated.timing(fadeAnim, { toValue: 1, duration: 150, useNativeDriver: true }).start()
+      })
+  }, [mainTab, fadeAnim])
+
+  const switchSubTab = useCallback((idx: number) => {
+    setSubTabIdx(idx)
+    indicatorX.value = withTiming(idx * tabWidth, { duration: 200, easing: Easing.out(Easing.quad) })
+    Haptics.selectionAsync()
+  }, [indicatorX, tabWidth])
+
+  // ── Active tab theme ────────────────────────────────────────────────────────
+
+  const activeColor = MAIN_TABS.find((t) => t.key === mainTab)?.color ?? '#8B5CF6'
+
+  // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Social</Text>
-          <Text style={styles.subtitle}>Conecte-se com outros leitores</Text>
-        </View>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
 
-        {/* Navigation cards */}
-        <View style={styles.cardsContainer}>
-          {NAV_CARDS.map((card) => (
+      {/* ── Nível 1: Ícones grandes das abas principais ── */}
+      <View style={[styles.mainTabBar, { borderBottomColor: activeColor + '33' }]}>
+        {MAIN_TABS.map((tab) => {
+          const isActive = mainTab === tab.key
+          return (
             <TouchableOpacity
-              key={card.route}
-              style={styles.card}
-              onPress={() => handlePress(card.route)}
-              activeOpacity={0.7}
+              key={tab.key}
+              style={styles.mainTabBtn}
+              onPress={() => switchMainTab(tab.key)}
+              activeOpacity={0.75}
             >
-              {/* Icon circle */}
-              <View style={[styles.iconCircle, { backgroundColor: `${card.color}22` }]}>
-                <Ionicons name={card.icon as never} size={26} color={card.color} />
+              {/* Glow circle when active */}
+              <View style={[
+                styles.mainTabIconWrap,
+                isActive && { backgroundColor: tab.color + '22' },
+              ]}>
+                <Ionicons
+                  name={tab.icon}
+                  size={isActive ? 28 : 24}
+                  color={isActive ? tab.color : '#4A5568'}
+                />
               </View>
-
-              {/* Text content */}
-              <View style={styles.cardText}>
-                <Text style={styles.cardLabel}>{card.label}</Text>
-                <Text style={styles.cardDescription}>{card.description}</Text>
-              </View>
-
-              {/* Chevron */}
-              <Ionicons name="chevron-forward" size={18} color="#4B6070" />
+              <Text style={[styles.mainTabLabel, isActive && { color: tab.color }]}>
+                {tab.label}
+              </Text>
+              {/* Active underline */}
+              {isActive && (
+                <View style={[styles.mainTabUnderline, { backgroundColor: tab.color }]} />
+              )}
             </TouchableOpacity>
-          ))}
+          )
+        })}
+      </View>
+
+      {/* ── Nível 2: Sub-abas de texto (só para Insights) ── */}
+      {mainTab === 'insights' && (
+        <View
+          style={styles.subTabBar}
+          onLayout={(e) => setSubBarWidth(e.nativeEvent.layout.width)}
+        >
+          {INSIGHT_SUB_TABS.map((tab, idx) => {
+            const isActive = subTabIdx === idx
+            return (
+              <TouchableOpacity
+                key={tab.key}
+                style={styles.subTabBtn}
+                onPress={() => switchSubTab(idx)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.subTabText, isActive && styles.subTabTextActive]}>
+                  {tab.label}
+                </Text>
+              </TouchableOpacity>
+            )
+          })}
+
+          {/* Spring indicator */}
+          {subBarWidth > 0 && (
+            <Reanimated.View
+              style={[
+                styles.subTabIndicator,
+                indicatorStyle,
+                { width: tabWidth },
+              ]}
+            />
+          )}
         </View>
-      </ScrollView>
+      )}
+
+      {/* ── Content ── */}
+      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+        {mainTab === 'insights' && (
+          <InsightsTab subTab={INSIGHT_SUB_TABS[subTabIdx].key} />
+        )}
+        {mainTab === 'rankings' && <RankingsTab />}
+        {mainTab === 'communities' && <CommunitiesTab />}
+      </Animated.View>
+
     </SafeAreaView>
   )
 }
+
+// ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#131f24',
   },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 32,
-  },
-  header: {
-    paddingTop: 24,
-    paddingBottom: 28,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#F0EEE6',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#94A3B8',
-  },
-  cardsContainer: {
-    gap: 12,
-  },
-  card: {
-    backgroundColor: '#1B2C33',
-    borderRadius: 16,
-    padding: 20,
+
+  // ── Main tab bar (Nível 1) ────────────────────────────────────────────────
+
+  mainTabBar: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    paddingHorizontal: 8,
+    paddingTop: 8,
+    paddingBottom: 0,
+    borderBottomWidth: 1,
   },
-  iconCircle: {
+  mainTabBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingBottom: 10,
+    gap: 4,
+    position: 'relative',
+  },
+  mainTabIconWrap: {
     width: 52,
-    height: 52,
-    borderRadius: 26,
+    height: 44,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardText: {
-    flex: 1,
-  },
-  cardLabel: {
-    fontSize: 17,
+  mainTabLabel: {
+    fontSize: 10,
     fontWeight: '700',
-    color: '#F0EEE6',
-    marginBottom: 3,
+    color: '#4A5568',
+    letterSpacing: 0.2,
   },
-  cardDescription: {
+  mainTabUnderline: {
+    position: 'absolute',
+    bottom: 0,
+    left: '15%',
+    right: '15%',
+    height: 2,
+    borderRadius: 1,
+  },
+
+  // ── Sub-tab bar (Nível 2) ─────────────────────────────────────────────────
+
+  subTabBar: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+    position: 'relative',
+  },
+  subTabBtn: {
+    flex: 1,
+    paddingVertical: 11,
+    alignItems: 'center',
+  },
+  subTabText: {
     fontSize: 13,
-    color: '#94A3B8',
-    lineHeight: 18,
+    fontWeight: '600',
+    color: '#4A5568',
+  },
+  subTabTextActive: {
+    color: '#8B5CF6',
+    fontWeight: '700',
+  },
+  subTabIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: '#8B5CF6',
+  },
+
+  // ── Content ───────────────────────────────────────────────────────────────
+
+  content: {
+    flex: 1,
   },
 })

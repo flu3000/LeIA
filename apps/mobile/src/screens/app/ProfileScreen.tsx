@@ -10,6 +10,7 @@ import { Ionicons, Feather } from '@expo/vector-icons'
 
 import { useAuth } from '@/src/context/AuthContext'
 import { supabase } from '@/src/lib/supabase'
+import { CHAT_URL } from '@/src/lib/apiClient'
 import { useUserContent } from '@/src/hooks/useUserContent'
 import { getLevelForXP, getProgressToNext } from '@/src/data/levels'
 import MedalsSection from '@/src/components/MedalsSection'
@@ -32,11 +33,13 @@ function Avatar({
   name,
   avatarUrl,
   size = 80,
+  isUploading = false,
   onPress,
 }: {
   name: string
   avatarUrl?: string
   size?: number
+  isUploading?: boolean
   onPress?: () => void
 }) {
   const initials = name
@@ -45,31 +48,47 @@ function Avatar({
     .map((w) => w[0]?.toUpperCase() ?? '')
     .join('')
 
-  const circle: object = {
-    width: size,
-    height: size,
-    borderRadius: size / 2,
-    borderWidth: 3,
-    borderColor: 'rgba(14,165,233,0.4)',
-    overflow: 'hidden',
-    position: 'relative',
-  }
+  const BADGE = Math.round(size * 0.34)
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={onPress ? 0.8 : 1} style={circle}>
-      {avatarUrl ? (
-        <Image source={{ uri: avatarUrl }} style={{ width: size, height: size }} />
-      ) : (
-        <View style={[styles.avatarFallback, { width: size, height: size, borderRadius: size / 2 }]}>
-          <Text style={[styles.avatarInitials, { fontSize: size * 0.34 }]}>{initials || '?'}</Text>
+    <View style={{ width: size, height: size }}>
+      {/* Círculo principal */}
+      <TouchableOpacity
+        onPress={isUploading ? undefined : onPress}
+        activeOpacity={0.8}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          borderWidth: 3,
+          borderColor: 'rgba(14,165,233,0.4)',
+          overflow: 'hidden',
+          opacity: isUploading ? 0.45 : 1,
+        }}
+      >
+        {avatarUrl ? (
+          <Image source={{ uri: avatarUrl }} style={{ width: size, height: size }} resizeMode="cover" />
+        ) : (
+          <View style={[styles.avatarFallback, { width: size, height: size, borderRadius: size / 2 }]}>
+            <Text style={[styles.avatarInitials, { fontSize: size * 0.34 }]}>{initials || '?'}</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+
+      {/* Spinner de upload (centrado) */}
+      {isUploading && (
+        <View style={[StyleSheet.absoluteFillObject, { alignItems: 'center', justifyContent: 'center' }]}>
+          <ActivityIndicator color="#0EA5E9" size="small" />
         </View>
       )}
-      {onPress && (
-        <View style={styles.avatarOverlay}>
-          <Feather name="camera" size={16} color="#fff" />
+
+      {/* Badge câmera (canto inferior direito) */}
+      {!isUploading && !!onPress && (
+        <View style={[styles.cameraBadge, { width: BADGE, height: BADGE, borderRadius: BADGE / 2 }]}>
+          <Ionicons name="camera" size={BADGE * 0.52} color="#fff" />
         </View>
       )}
-    </TouchableOpacity>
+    </View>
   )
 }
 
@@ -271,7 +290,7 @@ function EditProfileModal({
 // ---------------------------------------------------------------------------
 
 export default function ProfileScreen() {
-  const { user, logout, updateProfile, refreshUser } = useAuth()
+  const { user, logout, updateProfile, patchUser } = useAuth()
   const { items } = useUserContent()
 
   const [userStats,       setUserStats]       = useState<UserStats | null>(null)
@@ -295,50 +314,70 @@ export default function ProfileScreen() {
   // Avatar upload
   // ---------------------------------------------------------------------------
   const handlePickAvatar = useCallback(async () => {
+    // 1. Verificar permissão de galeria
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (status !== 'granted') {
-      Alert.alert('Permissão necessária', 'Permita o acesso à galeria para trocar a foto.')
+      Alert.alert(
+        'Permissão necessária',
+        'O acesso à galeria é necessário para trocar a foto de perfil. Habilite nas Configurações do dispositivo.',
+        [{ text: 'OK' }],
+      )
       return
     }
 
+    // 2. Abrir picker (crop quadrado 1:1, qualidade 0.7)
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
     })
-
     if (result.canceled || !result.assets[0]) return
 
     const asset = result.assets[0]
     setUploadingAvatar(true)
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+
     try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+      // 3. Montar FormData
+      const ext = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg'
+      const formData = new FormData()
+      formData.append('avatar', {
+        uri:  asset.uri,
+        name: `avatar.${ext}`,
+        type: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
+      } as unknown as Blob)
 
-      // Fetch blob
-      const response = await fetch(asset.uri)
-      const blob     = await response.blob()
-      const ext      = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg'
-      const path     = `avatars/${user!.id}.${ext}`
+      // 4. Token de autenticação
+      const { data: { session: authSession } } = await supabase.auth.getSession()
+      const authHeader = authSession?.access_token
+        ? { Authorization: `Bearer ${authSession.access_token}` }
+        : {}
 
-      const { error: uploadError } = await supabase.storage
-        .from('user-avatars')
-        .upload(path, blob, { upsert: true, contentType: `image/${ext}` })
+      // 5. Enviar para a API (sem Content-Type manual — fetch define o boundary)
+      const res = await fetch(`${CHAT_URL}/api/user/avatar`, {
+        method:  'POST',
+        headers: { ...authHeader },
+        body:    formData,
+      })
 
-      if (uploadError) throw uploadError
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }))
+        throw new Error(err?.error ?? `HTTP ${res.status}`)
+      }
 
-      const { data } = supabase.storage.from('user-avatars').getPublicUrl(path)
-      // cache-bust para forçar recarregamento
-      const avatarUrl = `${data.publicUrl}?t=${Date.now()}`
+      const { avatarUrl } = await res.json()
 
-      await updateProfile({ avatarUrl })
+      // 6. Atualizar estado global instantaneamente (sem re-fetch)
+      patchUser({ avatarUrl })
     } catch (e) {
       console.error('[Avatar upload]', e)
-      Alert.alert('Erro', 'Não foi possível enviar a foto. Tente novamente.')
+      const msg = e instanceof Error ? e.message : 'Tente novamente.'
+      Alert.alert('Erro no upload', msg)
     } finally {
       setUploadingAvatar(false)
     }
-  }, [user, updateProfile])
+  }, [patchUser])
 
   // ---------------------------------------------------------------------------
   // Logout
@@ -388,15 +427,11 @@ export default function ProfileScreen() {
           <View style={styles.userCardTop}>
             {/* Avatar */}
             <View style={styles.avatarWrap}>
-              {uploadingAvatar && (
-                <View style={styles.avatarLoading}>
-                  <ActivityIndicator color="#0EA5E9" />
-                </View>
-              )}
               <Avatar
                 name={user.name}
                 avatarUrl={user.avatarUrl}
                 size={80}
+                isUploading={uploadingAvatar}
                 onPress={handlePickAvatar}
               />
             </View>
@@ -591,27 +626,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '800',
   },
-  avatarOverlay: {
+  cameraBadge: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.65)',
+    backgroundColor: '#0EA5E9',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: '#131f24',
-  },
-  avatarLoading: {
-    position: 'absolute',
-    inset: 0,
-    zIndex: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 40,
   },
   userInfo: {
     flex: 1,

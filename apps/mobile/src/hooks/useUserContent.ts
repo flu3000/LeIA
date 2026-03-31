@@ -16,13 +16,23 @@ export interface SaveItem {
   category: string
 }
 
+export interface SavedBook {
+  saved_book_id: string
+  user_id: string
+  edition_id: string
+  saved_as: string
+  pages_read?: number
+  notes?: string
+}
+
 export function useUserContent() {
   const { user } = useAuth()
   const [items, setItems] = useState<UserContent[]>([])
+  const [savedBooks, setSavedBooks] = useState<SavedBook[]>([])
   const [isSyncing, setIsSyncing] = useState(false)
 
   const fetchLibrary = useCallback(async () => {
-    if (!user) return
+    if (!user?.hasCompletedProfile) return
     setIsSyncing(true)
     try {
       const data = await api.get<UserContent[]>('/api/user-content')
@@ -34,9 +44,26 @@ export function useUserContent() {
     }
   }, [user?.id])
 
+  const fetchSavedBooks = useCallback(async () => {
+    if (!user?.hasCompletedProfile) return
+    setIsSyncing(true)
+    try {
+      const data = await api.get<SavedBook[]>('/user-content')
+      setSavedBooks(data)
+    } catch (err) {
+      console.error('[useUserContent] fetchLibrary:', err)
+    } finally {
+      setIsSyncing(false)
+    }
+  }, [user?.id])
+
   useEffect(() => {
-    if (user) fetchLibrary()
-  }, [user, fetchLibrary])
+    if (user?.hasCompletedProfile) fetchLibrary()
+  }, [user?.hasCompletedProfile, fetchLibrary])
+
+  useEffect(() => {
+    if (user?.hasCompletedProfile) fetchSavedBooks()
+  }, [user?.hasCompletedProfile, fetchSavedBooks])
 
   const toggleSave = async (item: SaveItem) => {
     if (!user) return
