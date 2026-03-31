@@ -54,7 +54,8 @@ export default function AppLayout() {
         },
       }}
       screenListeners={{
-        tabPress: () => Haptics.selectionAsync(),
+        // tabPress: () => Haptics.selectionAsync(),
+        tabPress: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light),
       }}
     >
       <Tabs.Screen

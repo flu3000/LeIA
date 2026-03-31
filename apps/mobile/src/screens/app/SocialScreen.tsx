@@ -52,7 +52,7 @@ export default function SocialScreen() {
 
   const switchMainTab = useCallback((tab: MainTab) => {
     if (tab === mainTab) return
-    Haptics.selectionAsync()
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     Animated.timing(fadeAnim, { toValue: 0, duration: 80, useNativeDriver: true })
       .start(() => {
         setMainTab(tab)
