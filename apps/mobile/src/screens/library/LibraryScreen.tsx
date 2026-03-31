@@ -19,11 +19,6 @@ export default function LibraryScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Biblioteca</Text>
-      </View>
-
       {/* Toggle top bar */}
       <View style={styles.toggleBar}>
         <TouchableOpacity
@@ -57,16 +52,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#131f24',
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 12,
-  },
-  title: {
-    color: '#F0EEE6',
-    fontSize: 26,
-    fontWeight: '800',
   },
   toggleBar: {
     flexDirection: 'row',

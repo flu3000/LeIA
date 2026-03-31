@@ -1,6 +1,9 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import Reanimated, {
+  useSharedValue, useAnimatedStyle, withTiming, Easing,
+} from 'react-native-reanimated'
 import * as Haptics from 'expo-haptics'
 
 import { colors } from '@/src/constants/colors'
@@ -18,27 +21,37 @@ const TABS: { key: Tab; label: string }[] = [
 
 export default function LibraryScreen() {
   const [activeTab, setActiveTab] = useState<Tab>('acervo')
+  const [barWidth, setBarWidth] = useState(0)
+  const indicatorX = useSharedValue(0)
 
-  const handleTabPress = async (tab: Tab) => {
+  const tabWidth = barWidth > 0 ? (barWidth - 8) / TABS.length : 0
+
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: indicatorX.value }],
+  }))
+
+  const handleTabPress = async (tab: Tab, idx: number) => {
     if (tab === activeTab) return
     await Haptics.selectionAsync()
+    indicatorX.value = withTiming(idx * tabWidth, { duration: 200, easing: Easing.out(Easing.quad) })
     setActiveTab(tab)
   }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Biblioteca</Text>
-      </View>
-
       {/* Toggle de 3 abas */}
-      <View style={styles.toggleBar}>
-        {TABS.map(({ key, label }) => (
+      <View
+        style={styles.toggleBar}
+        onLayout={(e) => setBarWidth(e.nativeEvent.layout.width)}
+      >
+        {barWidth > 0 && (
+          <Reanimated.View style={[styles.toggleIndicator, indicatorStyle, { width: tabWidth }]} />
+        )}
+        {TABS.map(({ key, label }, idx) => (
           <TouchableOpacity
             key={key}
-            style={[styles.toggleBtn, activeTab === key && styles.toggleBtnActive]}
-            onPress={() => handleTabPress(key)}
+            style={styles.toggleBtn}
+            onPress={() => handleTabPress(key, idx)}
             activeOpacity={0.8}
           >
             <Text style={[styles.toggleText, activeTab === key && styles.toggleTextActive]}>
@@ -63,40 +76,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 12,
-  },
-  title: {
-    color: colors.text,
-    fontSize: 26,
-    fontWeight: '800',
-  },
   toggleBar: {
     flexDirection: 'row',
-    marginHorizontal: 16,
+    marginHorizontal: 20,
+    marginTop: 12,
     marginBottom: 14,
     backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 4,
-    borderWidth: 1,
-    borderColor: colors.border,
+  },
+  toggleIndicator: {
+    position: 'absolute',
+    top: 4,
+    bottom: 4,
+    left: 4,
+    borderRadius: 9,
+    backgroundColor: colors.accent,
   },
   toggleBtn: {
     flex: 1,
-    paddingVertical: 9,
+    paddingVertical: 10,
     borderRadius: 9,
     alignItems: 'center',
-  },
-  toggleBtnActive: {
-    backgroundColor: colors.accent,
+    zIndex: 1,
   },
   toggleText: {
     color: colors.dimmed,
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    fontSize: 14,
+    fontWeight: '600',
   },
   toggleTextActive: {
     color: '#fff',

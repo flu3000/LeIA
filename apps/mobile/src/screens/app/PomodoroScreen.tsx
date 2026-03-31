@@ -1,7 +1,10 @@
 import {
-  View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet, Dimensions,
+  View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet, Dimensions, TextInput,
 } from 'react-native'
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
+import Reanimated, {
+  useSharedValue, useAnimatedStyle, withTiming, Easing,
+} from 'react-native-reanimated'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Svg, { Circle } from 'react-native-svg'
 import * as Haptics from 'expo-haptics'
@@ -23,6 +26,7 @@ function DurationStepper({
   onChange,
   min = 1,
   max = 90,
+  unit = 'min',
 }: {
   label: string
   icon: React.ReactNode
@@ -30,7 +34,25 @@ function DurationStepper({
   onChange: (v: number) => void
   min?: number
   max?: number
+  unit?: string
 }) {
+  const [raw, setRaw] = useState(String(value))
+  const [editing, setEditing] = useState(false)
+
+  useEffect(() => {
+    if (!editing) setRaw(String(value))
+  }, [value, editing])
+
+  const commit = () => {
+    const parsed = parseInt(raw, 10)
+    if (!isNaN(parsed) && parsed >= min && parsed <= max) {
+      onChange(parsed)
+    } else {
+      setRaw(String(value))
+    }
+    setEditing(false)
+  }
+
   return (
     <View style={styles.stepper}>
       <View style={styles.stepperLabelWrap}>
@@ -45,7 +67,20 @@ function DurationStepper({
         >
           <Text style={styles.stepBtnText}>−</Text>
         </TouchableOpacity>
-        <Text style={styles.stepperValue}>{value} min</Text>
+        <View style={styles.stepperInputWrap}>
+          <TextInput
+            style={styles.stepperInput}
+            value={raw}
+            onChangeText={setRaw}
+            onFocus={() => setEditing(true)}
+            onBlur={commit}
+            onSubmitEditing={commit}
+            keyboardType="number-pad"
+            maxLength={3}
+            selectTextOnFocus
+          />
+          {unit ? <Text style={styles.stepperUnit}>{unit}</Text> : null}
+        </View>
         <TouchableOpacity
           style={[styles.stepBtn, value >= max && styles.stepBtnDisabled]}
           onPress={() => { if (value < max) onChange(value + 1) }}
@@ -74,6 +109,13 @@ export default function PomodoroScreen() {
   } = usePomodoro(handleFocusComplete)
 
   const [showCompleteModal, setShowCompleteModal] = useState(false)
+  const [switcherWidth, setSwitcherWidth] = useState(0)
+  const indicatorX = useSharedValue(0)
+
+  const tabWidth = switcherWidth > 0 ? (switcherWidth - 8) / 2 : 0
+  const indicatorStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: indicatorX.value }],
+  }))
 
   const isFocus      = mode === 'focus'
   const accentColor  = isFocus ? '#E11D48' : '#10B981'
@@ -91,7 +133,9 @@ export default function PomodoroScreen() {
   }
 
   const handleSwitch = async (m: PomodoroMode) => {
+    if (m === mode) return
     await Haptics.selectionAsync()
+    indicatorX.value = withTiming(m === 'focus' ? 0 : tabWidth, { duration: 200, easing: Easing.out(Easing.quad) })
     switchMode(m)
   }
 
@@ -106,37 +150,43 @@ export default function PomodoroScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Header */}
+
+        {/* Mode switcher */}
+        <View
+          style={styles.modeSwitcher}
+          onLayout={(e) => setSwitcherWidth(e.nativeEvent.layout.width)}
+        >
+          {switcherWidth > 0 && (
+            <Reanimated.View
+              style={[styles.modeIndicator, indicatorStyle, { width: tabWidth, backgroundColor: accentColor }]}
+            />
+          )}
+          <TouchableOpacity
+            style={styles.modeTab}
+            onPress={() => handleSwitch('focus')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.modeTabText, isFocus && styles.modeTabTextActive]}>
+              Foco
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.modeTab}
+            onPress={() => handleSwitch('break')}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.modeTabText, !isFocus && styles.modeTabTextActive]}>
+              Pausa
+            </Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.header}>
-          <Text style={styles.title}>Técnica Pomodoro</Text>
           {stats.streak > 0 && (
             <View style={styles.streakBadge}>
               <Ionicons name="flame-outline" size={14} color="#fbbf24" />
               <Text style={styles.streakText}> {stats.streak}</Text>
             </View>
           )}
-        </View>
-
-        {/* Mode switcher */}
-        <View style={styles.modeSwitcher}>
-          <TouchableOpacity
-            style={[styles.modeTab, isFocus && styles.modeTabFocus]}
-            onPress={() => handleSwitch('focus')}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.modeTabText, isFocus && styles.modeTabTextFocus]}>
-              Foco
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.modeTab, !isFocus && styles.modeTabBreak]}
-            onPress={() => handleSwitch('break')}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.modeTabText, !isFocus && styles.modeTabTextBreak]}>
-              Pausa
-            </Text>
-          </TouchableOpacity>
         </View>
 
         {/* SVG Ring */}
@@ -231,15 +281,15 @@ export default function PomodoroScreen() {
             )}
           </View>
           <View style={styles.progressBar}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${Math.min(100, (stats.sessionsToday / stats.dailyGoal) * 100)}%` as `${number}%`,
-                  backgroundColor: accentColor,
-                },
-              ]}
-            />
+            {Array.from({ length: stats.dailyGoal }).map((_, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.progressSegment,
+                  { backgroundColor: i < stats.sessionsToday ? accentColor : '#243640' },
+                ]}
+              />
+            ))}
           </View>
         </View>
 
@@ -265,6 +315,7 @@ export default function PomodoroScreen() {
             value={stats.dailyGoal}
             onChange={saveDailyGoal}
             max={20}
+            unit=""
           />
         </View>
       </ScrollView>
@@ -316,6 +367,7 @@ const styles = StyleSheet.create({
   scroll: {
     paddingHorizontal: 20,
     paddingBottom: 40,
+    marginTop: 12
   },
   header: {
     flexDirection: 'row',
@@ -352,27 +404,26 @@ const styles = StyleSheet.create({
     padding: 4,
     marginBottom: 32,
   },
+  modeIndicator: {
+    position: 'absolute',
+    top: 4,
+    bottom: 4,
+    left: 4,
+    borderRadius: 9,
+  },
   modeTab: {
     flex: 1,
     paddingVertical: 10,
     alignItems: 'center',
     borderRadius: 9,
-  },
-  modeTabFocus: {
-    backgroundColor: '#E11D48',
-  },
-  modeTabBreak: {
-    backgroundColor: '#10B981',
+    zIndex: 1,
   },
   modeTabText: {
     color: '#94A3B8',
     fontSize: 14,
     fontWeight: '600',
   },
-  modeTabTextFocus: {
-    color: '#fff',
-  },
-  modeTabTextBreak: {
+  modeTabTextActive: {
     color: '#fff',
   },
   ringContainer: {
@@ -469,14 +520,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   progressBar: {
-    height: 6,
-    backgroundColor: '#1B2C33',
-    borderRadius: 3,
-    overflow: 'hidden',
+    flexDirection: 'row',
+    gap: 4,
   },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
+  progressSegment: {
+    flex: 1,
+    height: 8,
+    borderRadius: 4,
   },
   settingsSection: {
     backgroundColor: '#1B2C33',
@@ -530,12 +580,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
-  stepperValue: {
+  stepperInputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    minWidth: 52,
+    justifyContent: 'center',
+  },
+  stepperInput: {
     color: '#F0EEE6',
     fontSize: 14,
     fontWeight: '600',
-    minWidth: 52,
     textAlign: 'center',
+    minWidth: 28,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.15)',
+  },
+  stepperUnit: {
+    color: '#64748B',
+    fontSize: 13,
   },
   // Modal
   modalOverlay: {
