@@ -1,16 +1,19 @@
 import {
   View, Text, TouchableOpacity, ScrollView, Alert, Image,
   ActivityIndicator, StyleSheet, TextInput, Modal, Switch,
+  Pressable, Animated,
 } from 'react-native'
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import Svg, { Circle } from 'react-native-svg'
 import * as ImagePicker from 'expo-image-picker'
 import * as Haptics from 'expo-haptics'
 import { Ionicons, Feather } from '@expo/vector-icons'
 
+import { useRouter } from 'expo-router'
 import { useAuth } from '@/src/context/AuthContext'
 import { supabase } from '@/src/lib/supabase'
-import { CHAT_URL } from '@/src/lib/apiClient'
+import { BACKEND_URL } from '@/src/lib/apiClient'
 import { useUserContent } from '@/src/hooks/useUserContent'
 import { getLevelForXP, getProgressToNext } from '@/src/data/levels'
 import MedalsSection from '@/src/components/MedalsSection'
@@ -23,6 +26,57 @@ interface UserStats {
   total_xp: number
   sessions_count: number
   focused_sessions: number
+}
+
+// ---------------------------------------------------------------------------
+// XP Ring (SVG circular progress)
+// ---------------------------------------------------------------------------
+
+function XPRing({
+  progress,
+  color,
+  size,
+  strokeWidth,
+  children,
+}: {
+  progress: number
+  color: string
+  size: number
+  strokeWidth: number
+  children: React.ReactNode
+}) {
+  const r = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * r
+  const offset = circumference * (1 - Math.min(Math.max(progress, 0), 1))
+
+  return (
+    <View style={{ width: size, height: size }}>
+      <Svg width={size} height={size} style={StyleSheet.absoluteFillObject}>
+        {/* Track */}
+        <Circle
+          cx={size / 2} cy={size / 2} r={r}
+          stroke="rgba(255,255,255,0.08)"
+          strokeWidth={strokeWidth}
+          fill="none"
+        />
+        {/* Progress arc */}
+        <Circle
+          cx={size / 2} cy={size / 2} r={r}
+          stroke={color}
+          strokeWidth={strokeWidth}
+          fill="none"
+          strokeDasharray={`${circumference} ${circumference}`}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          rotation="-90"
+          origin={`${size / 2}, ${size / 2}`}
+        />
+      </Svg>
+      <View style={{ position: 'absolute', width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+        {children}
+      </View>
+    </View>
+  )
 }
 
 // ---------------------------------------------------------------------------
@@ -48,20 +102,17 @@ function Avatar({
     .map((w) => w[0]?.toUpperCase() ?? '')
     .join('')
 
-  const BADGE = Math.round(size * 0.34)
+  const BADGE = Math.round(size * 0.28)
 
   return (
     <View style={{ width: size, height: size }}>
-      {/* Círculo principal */}
       <TouchableOpacity
         onPress={isUploading ? undefined : onPress}
-        activeOpacity={0.8}
+        activeOpacity={0.85}
         style={{
           width: size,
           height: size,
           borderRadius: size / 2,
-          borderWidth: 3,
-          borderColor: 'rgba(14,165,233,0.4)',
           overflow: 'hidden',
           opacity: isUploading ? 0.45 : 1,
         }}
@@ -75,17 +126,15 @@ function Avatar({
         )}
       </TouchableOpacity>
 
-      {/* Spinner de upload (centrado) */}
       {isUploading && (
         <View style={[StyleSheet.absoluteFillObject, { alignItems: 'center', justifyContent: 'center' }]}>
           <ActivityIndicator color="#0EA5E9" size="small" />
         </View>
       )}
 
-      {/* Badge câmera (canto inferior direito) */}
       {!isUploading && !!onPress && (
-        <View style={[styles.cameraBadge, { width: BADGE, height: BADGE, borderRadius: BADGE / 2 }]}>
-          <Ionicons name="camera" size={BADGE * 0.52} color="#fff" />
+        <View style={[styles.cameraBadge, { width: BADGE, height: BADGE, borderRadius: BADGE / 2, bottom: 2, right: 2 }]}>
+          <Feather name="edit-2" size={BADGE * 0.46} color="#fff" />
         </View>
       )}
     </View>
@@ -93,16 +142,39 @@ function Avatar({
 }
 
 // ---------------------------------------------------------------------------
-// StatCard
+// StatCard (2-column, 3D depth, scale press)
 // ---------------------------------------------------------------------------
 
-function StatCard({ icon, value, label }: { icon: React.ReactNode; value: string | number; label: string }) {
+function StatCard({
+  icon,
+  value,
+  label,
+  accentColor,
+  onPress,
+}: {
+  icon: React.ReactNode
+  value: string | number
+  label: string
+  accentColor: string
+  onPress?: () => void
+}) {
+  const scale = useRef(new Animated.Value(1)).current
+
+  const onPressIn = () =>
+    Animated.timing(scale, { toValue: 0.96, duration: 80, useNativeDriver: true }).start()
+  const onPressOut = () =>
+    Animated.timing(scale, { toValue: 1, duration: 120, useNativeDriver: true }).start()
+
   return (
-    <View style={styles.statCard}>
-      <View style={styles.statIcon}>{icon}</View>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
+    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress} style={styles.statCardWrapper}>
+      <Animated.View style={[styles.statCard, { borderBottomColor: accentColor, transform: [{ scale }] }]}>
+        <View style={[styles.statIconWrap, { backgroundColor: accentColor + '18' }]}>
+          {icon}
+        </View>
+        <Text style={styles.statValue}>{value}</Text>
+        <Text style={styles.statLabel}>{label}</Text>
+      </Animated.View>
+    </Pressable>
   )
 }
 
@@ -178,7 +250,6 @@ function EditProfileModal({
   const [saving,   setSaving]   = useState(false)
   const [error,    setError]    = useState('')
 
-  // sync with latest values when opening
   useEffect(() => {
     if (visible) {
       setName(initialName)
@@ -214,7 +285,6 @@ function EditProfileModal({
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={styles.modalRoot}>
-        {/* Handle bar */}
         <View style={styles.modalHandle} />
 
         <View style={styles.modalHeader}>
@@ -290,6 +360,7 @@ function EditProfileModal({
 // ---------------------------------------------------------------------------
 
 export default function ProfileScreen() {
+  const router = useRouter()
   const { user, logout, updateProfile, patchUser } = useAuth()
   const { items } = useUserContent()
 
@@ -299,7 +370,6 @@ export default function ProfileScreen() {
   const [editModalOpen,   setEditModalOpen]   = useState(false)
   const [darkMode,        setDarkMode]        = useState(true)
 
-  // Fetch stats
   useEffect(() => {
     if (!user?.id) return
     supabase
@@ -314,7 +384,6 @@ export default function ProfileScreen() {
   // Avatar upload
   // ---------------------------------------------------------------------------
   const handlePickAvatar = useCallback(async () => {
-    // 1. Verificar permissão de galeria
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (status !== 'granted') {
       Alert.alert(
@@ -325,7 +394,6 @@ export default function ProfileScreen() {
       return
     }
 
-    // 2. Abrir picker (crop quadrado 1:1, qualidade 0.7)
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
@@ -339,7 +407,6 @@ export default function ProfileScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
 
     try {
-      // 3. Montar FormData
       const ext = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg'
       const formData = new FormData()
       formData.append('avatar', {
@@ -348,14 +415,12 @@ export default function ProfileScreen() {
         type: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
       } as unknown as Blob)
 
-      // 4. Token de autenticação
       const { data: { session: authSession } } = await supabase.auth.getSession()
       const authHeader = authSession?.access_token
         ? { Authorization: `Bearer ${authSession.access_token}` }
         : {}
 
-      // 5. Enviar para a API (sem Content-Type manual — fetch define o boundary)
-      const res = await fetch(`${CHAT_URL}/api/user/avatar`, {
+      const res = await fetch(`${BACKEND_URL}/api/user/avatar`, {
         method:  'POST',
         headers: { ...authHeader },
         body:    formData,
@@ -367,8 +432,6 @@ export default function ProfileScreen() {
       }
 
       const { avatarUrl } = await res.json()
-
-      // 6. Atualizar estado global instantaneamente (sem re-fetch)
       patchUser({ avatarUrl })
     } catch (e) {
       console.error('[Avatar upload]', e)
@@ -409,108 +472,127 @@ export default function ProfileScreen() {
   const readCount  = items.filter((i) => i.is_read).length
 
   const joinedDate = user
-    ? new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
+    ? new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' })
         .format(new Date(user.joinedAt))
     : ''
 
   if (!user) return null
 
+  // Ring size slightly larger than avatar to show the arc outside
+  const RING_SIZE = 120
+  const AVATAR_SIZE = 96
+  const STROKE = 4
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* ── Header ── */}
-        <Text style={styles.pageTitle}>Perfil</Text>
+        {/* ── Hero ── */}
+        <View style={styles.hero}>
+          {/* XP Ring + Avatar */}
+          <XPRing progress={xpProgress} color={lvl.color} size={RING_SIZE} strokeWidth={STROKE}>
+            <Avatar
+              name={user.name}
+              avatarUrl={user.avatarUrl}
+              size={AVATAR_SIZE}
+              isUploading={uploadingAvatar}
+              onPress={handlePickAvatar}
+            />
+          </XPRing>
 
-        {/* ── Cartão do usuário ── */}
-        <View style={styles.userCard}>
-          <View style={styles.userCardTop}>
-            {/* Avatar */}
-            <View style={styles.avatarWrap}>
-              <Avatar
-                name={user.name}
-                avatarUrl={user.avatarUrl}
-                size={80}
-                isUploading={uploadingAvatar}
-                onPress={handlePickAvatar}
-              />
-            </View>
-
-            {/* Info */}
-            <View style={styles.userInfo}>
-              <Text style={styles.userName} numberOfLines={1}>{user.name}</Text>
-              {user.username && (
-                <Text style={styles.userHandle}>@{user.username}</Text>
-              )}
-              <Text style={styles.userEmail} numberOfLines={1}>{user.email}</Text>
-              <Text style={styles.userJoined}>Membro desde {joinedDate}</Text>
-            </View>
-
-            {/* Nível */}
-            <View style={styles.levelBadge}>
-              <Text style={[styles.levelTitle, { color: lvl.color }]}>{lvl.title}</Text>
-              <Text style={styles.levelNum}>Nível {lvl.level}</Text>
-            </View>
+          {/* Level pill */}
+          <View style={[styles.levelPill, { borderColor: lvl.color + '55', backgroundColor: lvl.color + '18' }]}>
+            <Text style={[styles.levelPillText, { color: lvl.color }]}>
+              Nível {lvl.level} · {lvl.title}
+            </Text>
           </View>
+
+          {/* XP progress text */}
+          <Text style={styles.xpText}>
+            {totalXP.toLocaleString('pt-BR')} XP
+            {nextLvl ? `  →  ${nextLvl.minXP.toLocaleString('pt-BR')} XP para ${nextLvl.title}` : '  · Nível máximo'}
+          </Text>
+
+          {/* Name */}
+          <Text style={styles.heroName}>{user.name}</Text>
+
+          {/* Username & email */}
+          {user.username && (
+            <Text style={styles.heroUsername}>@{user.username}</Text>
+          )}
+          <Text style={styles.heroEmail}>{user.email}</Text>
+          <Text style={styles.heroJoined}>Membro desde {joinedDate}</Text>
 
           {/* Bio */}
           {user.bio ? (
-            <Text style={styles.userBio}>"{user.bio}"</Text>
+            <View style={styles.bioCard}>
+              <Text style={styles.bioText}>"{user.bio}"</Text>
+            </View>
           ) : null}
 
-          {/* Botão editar */}
+          {/* Followers row */}
+          <View style={styles.followRow}>
+            <TouchableOpacity style={styles.followChip} activeOpacity={0.7}>
+              <Text style={styles.followCount}>0</Text>
+              <Text style={styles.followLabel}>Seguidores</Text>
+            </TouchableOpacity>
+            <View style={styles.followDivider} />
+            <TouchableOpacity style={styles.followChip} activeOpacity={0.7}>
+              <Text style={styles.followCount}>0</Text>
+              <Text style={styles.followLabel}>Seguindo</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Edit button */}
           <TouchableOpacity
             style={styles.editBtn}
             onPress={() => setEditModalOpen(true)}
-            activeOpacity={0.7}
+            activeOpacity={0.8}
           >
             <Feather name="edit-2" size={13} color="#0EA5E9" />
-            <Text style={styles.editBtnText}>Editar perfil</Text>
+            <Text style={styles.editBtnText}>Editar Perfil</Text>
           </TouchableOpacity>
+        </View>
 
-          {/* XP bar */}
-          <View style={styles.xpSection}>
-            <View style={styles.xpHeader}>
-              <View style={styles.xpLeft}>
-                <Feather name="zap" size={13} color="#0EA5E9" />
-                <Text style={styles.xpXPText}>{totalXP.toLocaleString('pt-BR')} XP</Text>
-              </View>
-              {nextLvl && (
-                <Text style={styles.xpNext}>→ {nextLvl.minXP.toLocaleString('pt-BR')} XP · {nextLvl.title}</Text>
-              )}
-            </View>
-            <View style={styles.xpBar}>
-              <View style={[styles.xpFill, { width: `${Math.round(xpProgress * 100)}%` as `${number}%`, backgroundColor: lvl.color }]} />
-            </View>
+        {/* ── Stats 2x2 ── */}
+        <View style={styles.statsGrid}>
+          <View style={styles.statsRow}>
+            <StatCard
+              icon={<Ionicons name="chatbubbles-outline" size={22} color="#00D1FF" />}
+              value={userStats?.sessions_count ?? 0}
+              label="Sessões"
+              accentColor="#00D1FF"
+              onPress={() => router.push('/(app)/chat')}
+            />
+            <StatCard
+              icon={<Ionicons name="bookmark-outline" size={22} color="#00DB80" />}
+              value={savedCount}
+              label="Salvos"
+              accentColor="#00DB80"
+              onPress={() => router.push('/(app)/library')}
+            />
+          </View>
+          <View style={styles.statsRow}>
+            <StatCard
+              icon={<Ionicons name="book-outline" size={22} color="#A855F7" />}
+              value={readCount}
+              label="Lidos"
+              accentColor="#A855F7"
+              onPress={() => router.push('/(app)/library')}
+            />
+            <StatCard
+              icon={<Ionicons name="trophy-outline" size={22} color="#FBBF24" />}
+              value={totalXP.toLocaleString('pt-BR')}
+              label="XP Total"
+              accentColor="#FBBF24"
+            />
           </View>
         </View>
 
-        {/* ── Stats ── */}
-        <View style={styles.statsGrid}>
-          <StatCard
-            icon={<Feather name="message-square" size={20} color="#0EA5E9" />}
-            value={userStats?.sessions_count ?? 0}
-            label="Sessões"
-          />
-          <StatCard
-            icon={<Feather name="bookmark" size={20} color="#0EA5E9" />}
-            value={savedCount}
-            label="Salvos"
-          />
-          <StatCard
-            icon={<Feather name="book-open" size={20} color="#10B981" />}
-            value={readCount}
-            label="Lidos"
-          />
-          <StatCard
-            icon={<Ionicons name="trophy-outline" size={20} color="#FBBF24" />}
-            value={`Nv ${lvl.level}`}
-            label="Nível"
-          />
-        </View>
-
         {/* ── Medalhas ── */}
-        <MedalsSection />
+        <View style={{ marginHorizontal: 16 }}>
+          <MedalsSection />
+        </View>
 
         {/* ── Preferências ── */}
         <Text style={styles.sectionTitle}>Preferências</Text>
@@ -588,35 +670,128 @@ const styles = StyleSheet.create({
     backgroundColor: '#131f24',
   },
   scroll: {
-    paddingHorizontal: 20,
     paddingBottom: 48,
   },
-  pageTitle: {
+
+  // ── Hero ──
+  hero: {
+    alignItems: 'center',
+    paddingTop: 24,
+    paddingBottom: 28,
+    paddingHorizontal: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+    marginBottom: 20,
+  },
+  levelPill: {
+    marginTop: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginBottom: 6,
+  },
+  levelPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  xpText: {
+    color: '#4B6070',
+    fontSize: 11,
+    marginBottom: 14,
+    textAlign: 'center',
+  },
+  heroName: {
     color: '#F0EEE6',
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '800',
-    paddingTop: 8,
-    paddingBottom: 16,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  heroUsername: {
+    color: '#0EA5E9',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 3,
+  },
+  heroEmail: {
+    color: '#4B6070',
+    fontSize: 12,
+    marginBottom: 2,
+  },
+  heroJoined: {
+    color: '#344554',
+    fontSize: 11,
+    marginBottom: 14,
   },
 
-  // ── Cartão do usuário ──
-  userCard: {
+  // Bio card
+  bioCard: {
     backgroundColor: '#1B2C33',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: 'rgba(255,255,255,0.05)',
+    width: '100%',
   },
-  userCardTop: {
+  bioText: {
+    color: '#64748B',
+    fontSize: 13,
+    fontStyle: 'italic',
+    lineHeight: 19,
+    textAlign: 'center',
+  },
+
+  // Followers
+  followRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: 18,
+    gap: 0,
   },
-  avatarWrap: {
-    position: 'relative',
+  followChip: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 6,
   },
+  followCount: {
+    color: '#F0EEE6',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  followLabel: {
+    color: '#4B6070',
+    fontSize: 11,
+    marginTop: 1,
+  },
+  followDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+
+  // Edit button
+  editBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(14,165,233,0.35)',
+    backgroundColor: 'rgba(14,165,233,0.08)',
+  },
+  editBtnText: {
+    color: '#0EA5E9',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // ── Avatar ──
   avatarFallback: {
     backgroundColor: '#0EA5E9',
     alignItems: 'center',
@@ -628,131 +803,56 @@ const styles = StyleSheet.create({
   },
   cameraBadge: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
     backgroundColor: '#0EA5E9',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#131f24',
   },
-  userInfo: {
-    flex: 1,
-    minWidth: 0,
-  },
-  userName: {
-    color: '#F0EEE6',
-    fontSize: 17,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  userHandle: {
-    color: '#0EA5E9',
-    fontSize: 13,
-    marginBottom: 2,
-  },
-  userEmail: {
-    color: '#94A3B8',
-    fontSize: 12,
-    marginBottom: 2,
-  },
-  userJoined: {
-    color: '#4B6070',
-    fontSize: 11,
-  },
-  levelBadge: {
-    alignItems: 'flex-end',
-  },
-  levelTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  levelNum: {
-    color: '#4B6070',
-    fontSize: 11,
-    marginTop: 2,
-  },
-  userBio: {
-    color: '#64748B',
-    fontSize: 13,
-    fontStyle: 'italic',
-    marginBottom: 10,
-    lineHeight: 18,
-  },
-  editBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    alignSelf: 'flex-start',
-    marginBottom: 14,
-  },
-  editBtnText: {
-    color: '#0EA5E9',
-    fontSize: 13,
-    fontWeight: '600',
-  },
 
-  // XP bar
-  xpSection: {},
-  xpHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  xpLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  xpXPText: {
-    color: '#94A3B8',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  xpNext: {
-    color: '#4B6070',
-    fontSize: 11,
-  },
-  xpBar: {
-    height: 6,
-    backgroundColor: '#131f24',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  xpFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-
-  // ── Stats ──
+  // ── Stats 2x2 ──
   statsGrid: {
+    marginHorizontal: 16,
+    gap: 12,
+    marginBottom: 24,
+  },
+  statsRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: 20,
+    gap: 12,
+  },
+  statCardWrapper: {
+    flex: 1,
   },
   statCard: {
     flex: 1,
     backgroundColor: '#1B2C33',
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 14,
+    padding: 16,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
+    borderBottomWidth: 3,
   },
-  statIcon: {
-    marginBottom: 6,
+  statIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
   },
   statValue: {
     color: '#F0EEE6',
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: '800',
     marginBottom: 2,
   },
   statLabel: {
-    color: '#94A3B8',
-    fontSize: 10,
-    textAlign: 'center',
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 
   // ── Settings ──
@@ -763,7 +863,8 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 8,
-    marginLeft: 4,
+    marginLeft: 20,
+    marginTop: 4,
   },
   settingsGroup: {
     backgroundColor: '#1B2C33',
@@ -772,6 +873,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
     marginBottom: 24,
+    marginHorizontal: 16,
   },
   settingsRow: {
     flexDirection: 'row',
