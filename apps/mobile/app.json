@@ -53,7 +53,8 @@
         {
           "photosPermission": "O LeIA precisa acessar sua galeria para você trocar a foto de perfil."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

@@ -4,6 +4,7 @@ import 'react-native-reanimated'
 import { useEffect, useState } from 'react'
 import { Alert } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
+import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import * as SplashScreen from 'expo-splash-screen'
@@ -15,6 +16,8 @@ import { LoadingScreen } from '@/src/components/LoadingScreen'
 
 // Mantém o splash nativo visível até o Gatekeeper dar o sinal verde
 SplashScreen.preventAutoHideAsync()
+
+
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -141,11 +144,21 @@ function RootLayoutNav() {
    */
   const [isReady, setIsReady] = useState(false)
 
+  const [fontsLoaded, fontError] = useFonts({
+    'ClashDisplay-Bold': require('../assets/fonts/ClashDisplay-Bold.otf'), // Ajuste o caminho se necessário
+    'ClashDisplay-Semibold': require('../assets/fonts/ClashDisplay-Semibold.otf'),
+    'ClashDisplay-Medium': require('../assets/fonts/ClashDisplay-Medium.otf'),
+    'ClashDisplay-Regular': require('../assets/fonts/ClashDisplay-Regular.otf'),
+    'ClashDisplay-Light': require('../assets/fonts/ClashDisplay-Light.otf'),
+    'ClashDisplay-Extralight': require('../assets/fonts/ClashDisplay-Extralight.otf'),
+  });
+
   // Portão combinado:
   //   isLoading         → AuthContext ainda aguarda confirmação da sessão + perfil
   //   isProcessingLink  → deep link ainda sendo processado (null = incerto = bloqueado)
   //   !isReady          → router.replace() ainda não foi chamado
-  const isGated = isLoading || isProcessingLink !== false || !isReady
+  //   !fontsLoaded      → fontes ainda não carregadas
+const isGated = isLoading || isProcessingLink !== false || !isReady || (!fontsLoaded && !fontError);
 
   // ── Cold-start: app estava fechado quando o link chegou ──────────────────
   // getInitialURL() NUNCA pode ficar pendente indefinidamente — usamos um timeout
@@ -181,7 +194,7 @@ function RootLayoutNav() {
   //   1. isLoading = false   (sessão + perfil confirmados)
   //   2. isProcessingLink = false   (nenhum deep link em voo)
   useEffect(() => {
-    if (isLoading || isProcessingLink !== false) return
+    if (isLoading || isProcessingLink !== false || (!fontsLoaded && !fontError)) return
 
     const inAuthGroup = segments[0] === '(auth)'
     const inAppGroup  = segments[0] === '(app)'

@@ -63,9 +63,6 @@ export default function LoginScreen() {
                 Enviamos um link de acesso para{'\n'}
                 <Text style={styles.sentEmail}>{email.trim().toLowerCase()}</Text>
               </Text>
-              <Text style={styles.sentHint}>
-                Abra o e-mail e toque no link. O app abrirá automaticamente e você estará dentro.
-              </Text>
               <TouchableOpacity
                 style={styles.resendBtn}
                 onPress={() => setSent(false)}
@@ -149,6 +146,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.text,
     letterSpacing: 2,
+    fontFamily: 'ClashDisplay-Bold',
   },
   logoSub: {
     fontSize: 14,
@@ -165,6 +163,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
     marginBottom: 8,
+    fontFamily: 'ClashDisplay-Semibold',
   },
   cardSub: {
     fontSize: 14,
@@ -200,6 +199,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     color: colors.text,
     fontSize: 15,
+    fontFamily: 'ClashDisplay-Medium',
   },
   submitBtn: {
     backgroundColor: colors.accent,
@@ -216,6 +216,7 @@ const styles = StyleSheet.create({
     color: '#EAE0C8',
     fontSize: 16,
     fontWeight: '700',
+    fontFamily: 'ClashDisplay-Semibold',
   },
   /* Sent state */
   sentWrap: {
@@ -227,6 +228,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: colors.text,
     marginBottom: 12,
+    fontFamily: 'ClashDisplay-Semibold',
   },
   sentBody: {
     fontSize: 14,
@@ -234,6 +236,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 16,
+    fontFamily: 'ClashDisplay-Medium',
   },
   sentEmail: {
     color: colors.text,
@@ -245,6 +248,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 19,
     marginBottom: 24,
+    fontFamily: 'ClashDisplay-Medium',
   },
   resendBtn: {
     paddingVertical: 10,
@@ -257,6 +261,7 @@ const styles = StyleSheet.create({
     color: colors.accent,
     fontSize: 14,
     fontWeight: '600',
+    fontFamily: 'ClashDisplay-Semibold',
   },
   footer: {
     color: colors.dimmed,
@@ -264,5 +269,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 24,
     lineHeight: 16,
+    fontFamily: 'ClashDisplay-Medium',
   },
 })

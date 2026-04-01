@@ -285,6 +285,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '800',
     letterSpacing: 1,
+    fontFamily: 'ClashDisplay-Bold',
   },
   headerSub: {
     color: '#94A3B8',

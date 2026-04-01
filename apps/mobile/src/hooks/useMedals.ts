@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/src/lib/supabase'
+import { api } from '@/src/services/api'
 import { useAuth } from '@/src/context/AuthContext'
 import { MEDALS, type Medal } from '@/src/data/medals'
 
@@ -8,18 +8,21 @@ export interface UserMedal extends Medal {
   isFeatured: boolean
 }
 
+interface MedalRow {
+  medal_key: string
+  unlocked_at: string
+  is_featured: boolean
+}
+
 export function useMedals() {
   const { user } = useAuth()
   const [unlocked, setUnlocked] = useState<UserMedal[]>([])
 
   useEffect(() => {
     if (!user) return
-    supabase
-      .from('user_medals')
-      .select('medal_key, unlocked_at, is_featured')
-      .eq('user_id', user.id)
+
+    api.get<MedalRow[]>('/medals')
       .then(({ data }) => {
-        if (!data) return
         const medals: UserMedal[] = data.flatMap((row) => {
           const def = MEDALS.find((m) => m.key === row.medal_key)
           if (!def) return []
@@ -27,6 +30,7 @@ export function useMedals() {
         })
         setUnlocked(medals)
       })
+      .catch((err) => console.error('[useMedals] load:', err))
   }, [user?.id])
 
   const toggleFeatured = useCallback(
@@ -38,15 +42,21 @@ export function useMedals() {
       if (!medal.isFeatured && featuredCount >= 5) return
 
       const newFeatured = !medal.isFeatured
-      await supabase
-        .from('user_medals')
-        .update({ is_featured: newFeatured })
-        .eq('user_id', user.id)
-        .eq('medal_key', medalKey)
 
+      // Optimistic update
       setUnlocked((prev) =>
         prev.map((m) => (m.key === medalKey ? { ...m, isFeatured: newFeatured } : m))
       )
+
+      try {
+        await api.patch(`/medals/${medalKey}`, { is_featured: newFeatured })
+      } catch (err) {
+        console.error('[useMedals] toggleFeatured:', err)
+        // Revert on error
+        setUnlocked((prev) =>
+          prev.map((m) => (m.key === medalKey ? { ...m, isFeatured: medal.isFeatured } : m))
+        )
+      }
     },
     [user, unlocked]
   )
