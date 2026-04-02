@@ -708,6 +708,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginBottom: 4,
     textAlign: 'center',
+    fontFamily: 'ClashDisplay-Semibold',
   },
   heroUsername: {
     color: '#0EA5E9',
@@ -865,6 +866,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginLeft: 20,
     marginTop: 4,
+    fontFamily: 'ClashDisplay-Semibold',
   },
   settingsGroup: {
     backgroundColor: '#1B2C33',
@@ -902,6 +904,7 @@ const styles = StyleSheet.create({
     color: '#F0EEE6',
     fontSize: 14,
     fontWeight: '500',
+    fontFamily: 'ClashDisplay-Medium',
   },
   settingsLabelDanger: {
     color: '#E11D48',

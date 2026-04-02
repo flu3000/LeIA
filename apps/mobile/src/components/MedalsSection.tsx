@@ -157,6 +157,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     marginBottom: 10,
+    fontFamily: 'ClashDisplay-Bold',
   },
   tabs: {
     flexDirection: 'row',

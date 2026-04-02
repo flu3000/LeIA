@@ -77,5 +77,6 @@ const styles = StyleSheet.create({
   emptyText: {
     color: colors.dimmed,
     fontSize: 14,
+    fontFamily: 'ClashDisplay-Medium',
   },
 })

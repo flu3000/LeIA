@@ -31,7 +31,7 @@ export interface Book {
   title: string
   author: string
   difficulty: Difficulty | null
-  description: string | null
+  description?: string | null
   tags: string[] | null
   category_id: number | null
   categories?: {
@@ -40,7 +40,10 @@ export interface Book {
     pillar_id: number
     pillars?: Pick<Pillar, 'pillar_id' | 'pillar_name'>
   }
-  book_editions?: Edition[]
+  // book_editions?: Edition[]
+  main_cover?: {
+    cover_url: string | null
+  }
 }
 
 export interface Edition {
@@ -88,7 +91,6 @@ export interface BookFilters {
 
 export interface BooksResponse {
   books: Book[]
-  hasMore: boolean
 }
 
 export interface PillarDetail {

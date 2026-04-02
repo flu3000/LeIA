@@ -422,9 +422,11 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 14,
     fontWeight: '600',
+    fontFamily: 'ClashDisplay-Medium',
   },
   modeTabTextActive: {
     color: '#fff',
+    fontFamily: 'ClashDisplay-Bold',
   },
   ringContainer: {
     alignSelf: 'center',
@@ -443,6 +445,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
     letterSpacing: 2,
+    fontFamily: 'ClashDisplay-Bold',
   },
   timerModeRow: {
     flexDirection: 'row',
@@ -452,11 +455,13 @@ const styles = StyleSheet.create({
   timerMode: {
     color: '#94A3B8',
     fontSize: 14,
+    fontFamily: 'ClashDisplay-Medium',
   },
   sessionsText: {
     color: '#4B6070',
     fontSize: 12,
     marginTop: 2,
+    fontFamily: 'ClashDisplay-Bold',
   },
   warningBanner: {
     backgroundColor: 'rgba(251,191,36,0.1)',
@@ -509,6 +514,7 @@ const styles = StyleSheet.create({
   progressLabel: {
     color: '#94A3B8',
     fontSize: 13,
+    fontFamily: 'ClashDisplay-Medium',
   },
   saveStatusRow: {
     flexDirection: 'row',
@@ -518,6 +524,7 @@ const styles = StyleSheet.create({
   saveStatus: {
     color: '#94A3B8',
     fontSize: 12,
+    fontFamily: 'ClashDisplay-Medium',
   },
   progressBar: {
     flexDirection: 'row',
@@ -540,6 +547,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     marginBottom: 14,
+    fontFamily: 'ClashDisplay-Bold',
   },
   stepper: {
     flexDirection: 'row',
@@ -558,6 +566,7 @@ const styles = StyleSheet.create({
   stepperLabel: {
     color: '#94A3B8',
     fontSize: 14,
+    fontFamily: 'ClashDisplay-Medium',
   },
   stepperControls: {
     flexDirection: 'row',
@@ -579,6 +588,7 @@ const styles = StyleSheet.create({
     color: '#F0EEE6',
     fontSize: 18,
     fontWeight: '700',
+    fontFamily: 'ClashDisplay-Bold',
   },
   stepperInputWrap: {
     flexDirection: 'row',
@@ -597,10 +607,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.15)',
+    fontFamily: 'ClashDisplay-Semibold',
   },
   stepperUnit: {
     color: '#64748B',
     fontSize: 13,
+    fontFamily: 'ClashDisplay-Medium',
   },
   // Modal
   modalOverlay: {

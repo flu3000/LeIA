@@ -190,9 +190,9 @@ const styles = StyleSheet.create({
   },
   mainTabLabel: {
     fontSize: 10,
-    fontWeight: '700',
     color: '#4A5568',
     letterSpacing: 0.2,
+    fontFamily: 'ClashDisplay-Medium',
   },
   mainTabUnderline: {
     position: 'absolute',
@@ -218,12 +218,12 @@ const styles = StyleSheet.create({
   },
   subTabText: {
     fontSize: 13,
-    fontWeight: '600',
     color: '#4A5568',
+    fontFamily: 'ClashDisplay-Medium',
   },
   subTabTextActive: {
     color: '#8B5CF6',
-    fontWeight: '700',
+    fontFamily: 'ClashDisplay-Semibold',
   },
   subTabIndicator: {
     position: 'absolute',

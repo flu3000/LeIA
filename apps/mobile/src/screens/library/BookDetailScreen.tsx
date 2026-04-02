@@ -31,16 +31,16 @@ export default function BookDetailScreen() {
   const { book, isLoading } = useBookDetail(id)
   const { getSavedByBook, getSavedByEdition, saveBook, unsaveBook } = useSavedBooks()
 
-  const editions = book?.book_editions ?? []
+  const editions = book?.main_cover?.cover_url ?? []
   const [selectedEdition, setSelectedEdition] = useState<Edition | null>(null)
   const [showEditions, setShowEditions]       = useState(false)
 
   // Pré-seleciona a primeira edição ao carregar
-  useEffect(() => {
-    if (editions.length > 0 && !selectedEdition) {
-      setSelectedEdition(editions[0])
-    }
-  }, [editions])
+  //useEffect(() => {
+  //  if (editions.length > 0 && !selectedEdition) {
+  //    setSelectedEdition(editions[0])
+  //  }
+  //}, [editions])
 
   // Atualiza título do header
   useEffect(() => {
@@ -56,9 +56,9 @@ export default function BookDetailScreen() {
     if (isSaved && savedEntry) {
       await unsaveBook(savedEntry.saved_book_id)
     } else {
-      const editionId = selectedEdition?.edition_id ?? editions[0]?.edition_id
-      if (!editionId) return
-      await saveBook(editionId)
+      // const editionId = selectedEdition?.edition_id ?? editions[0]?.edition_id
+      // if (!editionId) return
+      // await saveBook(editionId)
     }
   }, [isSaved, savedEntry, selectedEdition, editions, saveBook, unsaveBook])
 
@@ -245,13 +245,13 @@ export default function BookDetailScreen() {
       </ScrollView>
 
       {/* Modal de edições */}
-      <EditionModal
+      { /*<EditionModal
         visible={showEditions}
-        editions={editions}
+        // editions={editions}
         selectedId={selectedEdition?.edition_id ?? null}
         onSelect={(ed) => setSelectedEdition(ed)}
         onClose={() => setShowEditions(false)}
-      />
+      /> */}
     </>
   )
 }

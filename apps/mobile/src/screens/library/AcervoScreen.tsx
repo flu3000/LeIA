@@ -68,6 +68,7 @@ export default function AcervoScreen() {
 
   const handlePress = useCallback(async (book: Book) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    console.log('Clicou no livro:', book.book_id)
     router.push(`/library/book/${book.book_id}`)
   }, [router])
 
@@ -77,7 +78,7 @@ export default function AcervoScreen() {
     if (saved) {
       await unsaveBook(saved.saved_book_id)
     } else {
-      const firstEditionId = book.book_editions?.[0]?.edition_id
+      const firstEditionId = book.main_cover?.cover_url
       if (firstEditionId) {
         await saveBook(firstEditionId)
       }
@@ -268,11 +269,13 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 17,
     fontWeight: '700',
+    fontFamily: 'ClashDisplay-Semibold',
   },
   emptySubtitle: {
     color: colors.muted,
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+    fontFamily: 'ClashDisplay-Medium',
   },
 })

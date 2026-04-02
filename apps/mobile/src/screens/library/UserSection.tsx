@@ -203,6 +203,7 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 12,
     fontWeight: '600',
+    fontFamily: 'ClashDisplay-Bold',
   },
   filterTextActive: { color: '#fff' },
   refreshBtn: {

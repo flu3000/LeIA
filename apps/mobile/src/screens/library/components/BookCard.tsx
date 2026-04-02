@@ -48,7 +48,7 @@ interface BookCardProps {
 }
 
 export function BookCard({ book, onPress, isSaved, onToggleSave }: BookCardProps) {
-  const cover        = book.book_editions?.[0]?.cover_url
+  const cover        = book.main_cover?.cover_url
   const categoryName = book.categories?.category_name
 
   return (

@@ -291,6 +291,7 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 10,
     marginTop: 1,
+    fontFamily: 'ClashDisplay-Medium',
   },
 
   messageList: {

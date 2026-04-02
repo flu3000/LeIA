@@ -104,9 +104,11 @@ const styles = StyleSheet.create({
     color: colors.dimmed,
     fontSize: 14,
     fontWeight: '600',
+    fontFamily: 'ClashDisplay-Medium',
   },
   toggleTextActive: {
     color: '#fff',
+    fontFamily: 'ClashDisplay-Bold',
   },
   content: {
     flex: 1,

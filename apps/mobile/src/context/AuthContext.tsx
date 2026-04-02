@@ -332,6 +332,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loadUser(session.user)
           .then((full) => {
             console.log('[Auth] Finalizando loading. User:', true, 'HasProfile:', full.hasCompletedProfile)
+            console.log('[Auth] User token:', session.access_token ? session.access_token : 'none')
             setUser(full)
           })
           .catch((e) => {
