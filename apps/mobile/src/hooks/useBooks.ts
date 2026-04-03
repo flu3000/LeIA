@@ -15,7 +15,7 @@ function buildBooksUrl(offset: number, search: string, filters: BookFilters): st
   params.set('limit', String(PAGE_SIZE));
   params.set('offset', String(offset));
   
-  return `/books/getAll?${params.toString()}`;
+  return `/library/books?${params.toString()}`;
 }
 
 export function useBooks(search: string = '', filters: BookFilters = {}) {
@@ -98,7 +98,7 @@ export function useBookDetail(bookId: string) {
     const loadDetail = async () => {
       setIsLoading(true);
       try {
-        const response = await api.get<Book>(`/books/getById/${bookId}`);
+        const response = await api.get<Book>(`/library/books/${bookId}`);
         setBook(response);
       } catch (e) {
         console.error('[useBookDetail] Erro:', e);
