@@ -68,7 +68,7 @@ export default function AcervoScreen() {
 
   const handlePress = useCallback(async (book: Book) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    console.log('Clicou no livro:', book.book_id)
+    // console.log('Clicou no livro:', book.book_id)
     router.push(`/library/book/${book.book_id}`)
   }, [router])
 

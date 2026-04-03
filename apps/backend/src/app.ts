@@ -7,6 +7,9 @@ import savedBooksRouter  from './routes/savedBooks'
 import insightsRouter    from './routes/insights'
 import socialRouter      from './routes/social'
 import userContentRouter from './routes/userContent'
+import userProfileRouter from './routes/userProfile'
+import pomodoroRouter    from './routes/pomodoro'
+import medalsRouter      from './routes/medals'
 
 /**
  * Factory: configura e retorna o app Express sem iniciar o listener.
@@ -40,6 +43,9 @@ export function buildApp() {
   app.use('/insights',     insightsRouter)
   app.use('/social',       socialRouter)
   app.use('/user-content', userContentRouter)
+  app.use('/user',         userProfileRouter)
+  app.use('/pomodoro',     pomodoroRouter)
+  app.use('/medals',       medalsRouter)
 
   // ── Health check ────────────────────────────────────────────────────────────
   app.get('/health', (_req, res) => res.json({ ok: true }))

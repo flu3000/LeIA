@@ -20,15 +20,19 @@ function detectaQuebraDeTema(mensagem) {
   return KEYWORDS_QUEBRA_TEMA.some((kw) => lower.includes(kw));
 }
 
-export const conversarComBibliotecario = async (userId, novaMensagem, historicoFrontend = []) => {
+export const conversarComBibliotecario = async (userId, novaMensagem, historicoFrontend = [], sessionId = null) => {
   // 1. Histórico do Supabase; usa o do frontend como fallback
   // Busca apenas as últimas 4 mensagens (2 pares user/assistant) para evitar poluição de contexto
-  const { data: historicoDb } = await supabase
+  let histQuery = supabase
     .from('chat_messages')
     .select('role, content')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
     .limit(4);
+
+  if (sessionId) histQuery = histQuery.eq('session_id', sessionId);
+
+  const { data: historicoDb } = await histQuery;
 
   // Inverte para ordem cronológica
   const historicoDbOrdenado = (historicoDb ?? []).reverse();
@@ -125,8 +129,9 @@ export const conversarComBibliotecario = async (userId, novaMensagem, historicoF
 
   // 4. Persistir conversa — armazena só o texto (guia_contextual) como conteúdo do assistente
   //    para que o histórico enviado à IA seja Markdown limpo, não JSON bruto.
-  await supabase.from('chat_messages').insert({ user_id: userId, role: 'user', content: novaMensagem });
-  await supabase.from('chat_messages').insert({ user_id: userId, role: 'assistant', content: respostaIA.guia_contextual });
+  const sessionData = sessionId ? { session_id: sessionId } : {};
+  await supabase.from('chat_messages').insert({ user_id: userId, role: 'user',      content: novaMensagem,                ...sessionData });
+  await supabase.from('chat_messages').insert({ user_id: userId, role: 'assistant', content: respostaIA.guia_contextual, ...sessionData });
 
   // 5. Upsert dos cards (fontes)
   if (respostaIA.fontes?.length > 0) {
