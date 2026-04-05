@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router'
 import { Platform, View, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
+import { colors } from '@/src/constants/colors'
 
 // ── Paleta dopaminérgica ──────────────────────────────────────────────────────
 
@@ -45,7 +46,7 @@ export default function AppLayout() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: '#131f24',
+          backgroundColor: colors.background,
           borderTopColor:  'rgba(255,255,255,0.06)',
           borderTopWidth:  1,
           paddingTop:      6,

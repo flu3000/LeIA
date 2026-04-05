@@ -14,6 +14,7 @@ import { useChatSessions } from '@/src/hooks/useChatSessions'
 import { useUserContent } from '@/src/hooks/useUserContent'
 import SourceCard from '@/src/components/SourceCard'
 import ChatDrawer from '@/src/components/ChatDrawer'
+import { colors } from '@/src/constants/colors'
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -35,11 +36,6 @@ function MessageBubble({ message }: { message: Message }) {
       entering={FadeInDown.duration(300).springify()}
       style={[styles.messageRow, isUser ? styles.userRow : styles.assistantRow]}
     >
-      {!isUser && (
-        <View style={styles.avatar}>
-          <Ionicons name="school-outline" size={20} color="#0EA5E9" />
-        </View>
-      )}
 
       <View style={[styles.bubble, isUser ? styles.userBubble : styles.assistantBubble]}>
         <Text style={[styles.bubbleText, isUser ? styles.userText : styles.assistantText]}>
@@ -257,7 +253,7 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#131f24',
+    backgroundColor: colors.background,
   },
   flex: { flex: 1 },
 
@@ -268,7 +264,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.06)',
-    backgroundColor: '#131f24',
+    backgroundColor: colors.background,
   },
   headerBtn: {
     width: 40,
@@ -281,7 +277,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    color: '#F0EEE6',
+    color: colors.accent,
     fontSize: 20,
     fontWeight: '800',
     letterSpacing: 1,
@@ -375,14 +371,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: Platform.OS === 'ios' ? 8 : 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.06)',
-    backgroundColor: '#131f24',
+    backgroundColor: colors.background,
     gap: 10,
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#1B2C33',
+    backgroundColor: colors.background,
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingTop: 12,

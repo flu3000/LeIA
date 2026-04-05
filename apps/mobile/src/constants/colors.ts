@@ -1,15 +1,18 @@
 /** Paleta Oxford Modern — LeIA Mobile */
 export const colors = {
   // Fundos
-  background:  '#131f24',
+  // background:  '#131f24',
+  background: '#001015',
   //background:  '#020f14',
   surface:     '#1B2C33',
   surfaceDeep: '#243640',
   dark:        '#0F1C22',
 
   // Destaque
-  accent:      '#0EA5E9',
-  accentDim:   'rgba(14,165,233,0.15)',
+  // accent:      '#0EA5E9',
+  accent:       '#00BCF6',
+  accentOrange: '#FF4519',
+  accentDim:   'rgba(0, 148, 194, 0.15)',
 
   // Texto
   text:        '#EAE0C8',

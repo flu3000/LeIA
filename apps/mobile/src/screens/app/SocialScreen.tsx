@@ -12,6 +12,7 @@ import * as Haptics from 'expo-haptics'
 import InsightsTab, { type InsightSubTab } from '@/src/screens/social/InsightsTab'
 import RankingsTab from '@/src/screens/social/RankingsTab'
 import CommunitiesTab from '@/src/screens/social/CommunitiesTab'
+import { colors } from '@/src/constants/colors'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -162,7 +163,7 @@ export default function SocialScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#131f24',
+    backgroundColor: colors.background,
   },
 
   // ── Main tab bar (Nível 1) ────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import {
   View, Text, FlatList, TouchableOpacity, TextInput,
-  Alert, ActivityIndicator, StyleSheet, Dimensions,
+  Alert, ActivityIndicator, StyleSheet, Dimensions, Image,
 } from 'react-native'
 import { useState, useEffect, useCallback } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -12,6 +12,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import * as Haptics from 'expo-haptics'
 
 import { type ChatSession } from '@/src/hooks/useChatSessions'
+import { colors } from '../constants/colors'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -243,7 +244,11 @@ export default function ChatDrawer({
             {/* Header */}
             <View style={styles.drawerHeader}>
               <View style={styles.logoRow}>
-                <Ionicons name="library" size={18} color={CYAN} />
+                <Image 
+                  source={require('../assets/logo_definitiva_core.png')} // Ajuste o caminho até a pasta da imagem
+                  style={styles.logoImage} 
+                  resizeMode="contain"
+                />
                 <Text style={styles.logoText}>LeIA</Text>
               </View>
               <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
@@ -341,7 +346,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   logoText: {
-    color: '#F0EEE6',
+    color: colors.accent,
     fontSize: 18,
     fontWeight: '800',
     letterSpacing: 1,
@@ -442,5 +447,9 @@ const styles = StyleSheet.create({
   emptyText: {
     color: '#3A5060',
     fontSize: 13,
+  },
+  logoImage: {
+    width: 22,  // Ajuste conforme necessário
+    height: 22, // Ajuste conforme necessário
   },
 })

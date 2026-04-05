@@ -17,6 +17,7 @@ import { BACKEND_URL } from '@/src/lib/apiClient'
 import { useUserContent } from '@/src/hooks/useUserContent'
 import { getLevelForXP, getProgressToNext } from '@/src/data/levels'
 import MedalsSection from '@/src/components/MedalsSection'
+import { colors } from '@/src/constants/colors'
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -667,7 +668,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#131f24',
+    backgroundColor: colors.background,
   },
   scroll: {
     paddingBottom: 48,

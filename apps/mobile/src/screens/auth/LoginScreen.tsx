@@ -14,6 +14,8 @@ export default function LoginScreen() {
   const [email,     setEmail]     = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [sent,      setSent]      = useState(false)
+  const [isFocused, setIsFocused] = useState(false)
+
 
   const canSubmit = email.trim().length > 0 && email.includes('@')
 
@@ -45,7 +47,7 @@ export default function LoginScreen() {
         {/* Logo */}
         <View style={styles.logoArea}>
           <Image 
-            source={require('../../assets/logo_login.png')} // Ajuste o caminho até a pasta da imagem
+            source={require('../../assets/logo_definitiva_core.png')} // Ajuste o caminho até a pasta da imagem
             style={styles.logoImage} 
             resizeMode="contain"
           />
@@ -74,12 +76,16 @@ export default function LoginScreen() {
           ) : (
             /* ── Email input state ── */
             <>
-              <Text style={styles.cardTitle}>Entrar</Text>
               <View style={styles.fieldGroup}>
-                <View style={styles.inputRow}>
+                <View
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  style={[styles.inputRow, (isFocused) && styles.inputRowFocused]}
+                >
                   <Ionicons name="mail-outline" size={18} color={colors.dimmed} style={styles.inputIcon} />
                   <TextInput
                     style={styles.inputWithIcon}
+                    selectionColor={colors.accent}
                     placeholder="seu@email.com"
                     placeholderTextColor={colors.dimmed}
                     value={email}
@@ -102,8 +108,8 @@ export default function LoginScreen() {
                 {isLoading
                   ? <ActivityIndicator color="#fff" />
                   : <>
-                      <Ionicons name="send-outline" size={18} color="#EAE0C8" style={{ marginRight: 8 }} />
-                      <Text style={styles.submitBtnText}>Receber Link de Acesso</Text>
+                      <Ionicons name="send-outline" size={18} color="colors.background" style={{ marginRight: 8 }} />
+                      <Text style={styles.submitBtnText}>Entrar</Text>
                     </>
                 }
               </TouchableOpacity>
@@ -127,24 +133,27 @@ const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingBottom: 80,
     justifyContent: 'center',
     minHeight: '100%',
   },
   logoArea: {
     alignItems: 'center',
-    marginBottom: 36,
-    marginTop: 60,
+    marginBottom: 40,
+    marginTop: 0,
+    borderRadius: 16,
+    padding: 8,
   },
   logoImage: {
-    width: 109,  // Ajuste conforme necessário
-    height: 129, // Ajuste conforme necessário
-    marginBottom: 8,
+    width: 175,  // Ajuste conforme necessário
+    height: 155, // Ajuste conforme necessário
+    marginBottom: 32,
   },
   logoText: {
     fontSize: 40,
     fontWeight: '800',
-    color: colors.text,
+    color: colors.accent,
+    // color: "#ff4519",
     letterSpacing: 2,
     fontFamily: 'ClashDisplay-Bold',
   },
@@ -155,7 +164,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: "transparent",
-    borderRadius: 20,
+    borderRadius: 16,
     padding: 24,
   },
   cardTitle: {
@@ -187,8 +196,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.background,
     borderRadius: 12,
-    borderWidth: 1,
+    borderBottomWidth: 2,
     borderColor: colors.border,
+  },
+  inputRowFocused: {
+    borderBottomWidth: 2,
+    borderColor: colors.accent,
   },
   inputIcon: {
     marginLeft: 14,
@@ -203,17 +216,19 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     backgroundColor: colors.accent,
+    // backgroundColor: "#0094C2",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
+    
   },
   submitBtnDisabled: {
     opacity: 0.45,
   },
   submitBtnText: {
-    color: '#EAE0C8',
+    color: colors.background,
     fontSize: 16,
     fontWeight: '700',
     fontFamily: 'ClashDisplay-Semibold',

@@ -12,6 +12,7 @@ import { Feather, Ionicons } from '@expo/vector-icons'
 
 import { usePomodoro, type PomodoroMode } from '@/src/hooks/usePomodoro'
 import { usePomodoroSettings } from '@/src/hooks/usePomodoroSettings'
+import { colors } from '@/src/constants/colors'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 const RING_SIZE   = Math.min(SCREEN_WIDTH * 0.65, 240)
@@ -362,7 +363,7 @@ export default function PomodoroScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#131f24',
+    backgroundColor: colors.background,
   },
   scroll: {
     paddingHorizontal: 20,
