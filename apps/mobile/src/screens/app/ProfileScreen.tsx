@@ -3,7 +3,7 @@ import {
   ActivityIndicator, StyleSheet, TextInput, Modal, Switch,
   Pressable, Animated,
 } from 'react-native'
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, use } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Svg, { Circle } from 'react-native-svg'
 import * as ImagePicker from 'expo-image-picker'
@@ -104,7 +104,8 @@ function Avatar({
     .join('')
 
   const BADGE = Math.round(size * 0.28)
-
+  const color = colors()
+  const style = styles(color)
   return (
     <View style={{ width: size, height: size }}>
       <TouchableOpacity
@@ -121,8 +122,8 @@ function Avatar({
         {avatarUrl ? (
           <Image source={{ uri: avatarUrl }} style={{ width: size, height: size }} resizeMode="cover" />
         ) : (
-          <View style={[styles.avatarFallback, { width: size, height: size, borderRadius: size / 2 }]}>
-            <Text style={[styles.avatarInitials, { fontSize: size * 0.34 }]}>{initials || '?'}</Text>
+          <View style={[style.avatarFallback, { width: size, height: size, borderRadius: size / 2 }]}>
+            <Text style={[style.avatarInitials, { fontSize: size * 0.34 }]}>{initials || '?'}</Text>
           </View>
         )}
       </TouchableOpacity>
@@ -134,7 +135,7 @@ function Avatar({
       )}
 
       {!isUploading && !!onPress && (
-        <View style={[styles.cameraBadge, { width: BADGE, height: BADGE, borderRadius: BADGE / 2, bottom: 2, right: 2 }]}>
+        <View style={[style.cameraBadge, { width: BADGE, height: BADGE, borderRadius: BADGE / 2, bottom: 2, right: 2 }]}>
           <Feather name="edit-2" size={BADGE * 0.46} color="#fff" />
         </View>
       )}
@@ -166,14 +167,16 @@ function StatCard({
   const onPressOut = () =>
     Animated.timing(scale, { toValue: 1, duration: 120, useNativeDriver: true }).start()
 
+  const color = colors()
+  const style = styles(color)
   return (
-    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress} style={styles.statCardWrapper}>
-      <Animated.View style={[styles.statCard, { borderBottomColor: accentColor, transform: [{ scale }] }]}>
-        <View style={[styles.statIconWrap, { backgroundColor: accentColor + '18' }]}>
+    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress} style={style.statCardWrapper}>
+      <Animated.View style={[style.statCard, { borderBottomColor: accentColor, transform: [{ scale }] }]}>
+        <View style={[style.statIconWrap, { backgroundColor: accentColor + '18' }]}>
           {icon}
         </View>
-        <Text style={styles.statValue}>{value}</Text>
-        <Text style={styles.statLabel}>{label}</Text>
+        <Text style={style.statValue}>{value}</Text>
+        <Text style={style.statLabel}>{label}</Text>
       </Animated.View>
     </Pressable>
   )
@@ -200,24 +203,26 @@ function SettingsRow({
   danger?: boolean
   rightElement?: React.ReactNode
 }) {
+  const color = colors()
+  const style = styles(color)
   return (
     <TouchableOpacity
-      style={styles.settingsRow}
+      style={style.settingsRow}
       onPress={onPress}
       activeOpacity={onPress ? 0.7 : 1}
       disabled={!onPress && !rightElement}
     >
-      <View style={[styles.settingsIconWrap, danger && styles.settingsIconDanger]}>
+      <View style={[style.settingsIconWrap, danger && style.settingsIconDanger]}>
         <Ionicons name={iconName as never} size={16} color={danger ? '#E11D48' : '#94A3B8'} />
       </View>
-      <View style={styles.settingsLabelWrap}>
-        <Text style={[styles.settingsLabel, danger && styles.settingsLabelDanger]}>{label}</Text>
-        {description ? <Text style={styles.settingsDescription}>{description}</Text> : null}
+      <View style={style.settingsLabelWrap}>
+        <Text style={[style.settingsLabel, danger && style.settingsLabelDanger]}>{label}</Text>
+        {description ? <Text style={style.settingsDescription}>{description}</Text> : null}
       </View>
-      <View style={styles.settingsRight}>
+      <View style={style.settingsRight}>
         {rightElement ?? (
           <>
-            {value ? <Text style={styles.settingsValue}>{value}</Text> : null}
+            {value ? <Text style={style.settingsValue}>{value}</Text> : null}
             {onPress && !danger && <Ionicons name="chevron-forward" size={14} color="#4B6070" />}
           </>
         )}
@@ -250,6 +255,8 @@ function EditProfileModal({
   const [bio,      setBio]      = useState(initialBio)
   const [saving,   setSaving]   = useState(false)
   const [error,    setError]    = useState('')
+  const color = colors()
+  const style = styles(color)
 
   useEffect(() => {
     if (visible) {
@@ -283,35 +290,53 @@ function EditProfileModal({
     }
   }
 
+  const handleTheme = async () => {
+    setSaving(true)
+    setError('')
+    try {
+      await onSave(name.trim(), username.trim().toLowerCase(), bio.trim())
+      onClose()
+    } catch (e: unknown) {
+      const err = e as { code?: string; message?: string }
+      if (err.code === 'USERNAME_TAKEN') {
+        setError('Este username já está em uso.')
+      } else {
+        setError('Erro ao salvar. Tente novamente.')
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={styles.modalRoot}>
-        <View style={styles.modalHandle} />
+      <View style={style.modalRoot}>
+        <View style={style.modalHandle} />
 
-        <View style={styles.modalHeader}>
-          <TouchableOpacity onPress={onClose} style={styles.modalCloseBtn}>
+        <View style={style.modalHeader}>
+          <TouchableOpacity onPress={onClose} style={style.modalCloseBtn}>
             <Ionicons name="close" size={22} color="#94A3B8" />
           </TouchableOpacity>
-          <Text style={styles.modalTitle}>Editar Perfil</Text>
-          <TouchableOpacity onPress={handleSave} disabled={saving} style={styles.modalSaveBtn}>
+          <Text style={style.modalTitle}>Editar Perfil</Text>
+          <TouchableOpacity onPress={handleSave} disabled={saving} style={style.modalSaveBtn}>
             {saving
               ? <ActivityIndicator size="small" color="#0EA5E9" />
-              : <Text style={styles.modalSaveText}>Salvar</Text>
+              : <Text style={style.modalSaveText}>Salvar</Text>
             }
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.modalBody} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={style.modalBody} keyboardShouldPersistTaps="handled">
           {error ? (
-            <View style={styles.errorBanner}>
+            <View style={style.errorBanner}>
               <Feather name="alert-triangle" size={14} color="#fbbf24" />
-              <Text style={styles.errorText}>{error}</Text>
+              <Text style={style.errorText}>{error}</Text>
             </View>
           ) : null}
 
-          <Text style={styles.fieldLabel}>Nome de exibição</Text>
+          <Text style={style.fieldLabel}>Nome de exibição</Text>
           <TextInput
-            style={styles.fieldInput}
+            style={style.fieldInput}
             value={name}
             onChangeText={setName}
             placeholder="Seu nome"
@@ -320,11 +345,11 @@ function EditProfileModal({
             returnKeyType="next"
           />
 
-          <Text style={styles.fieldLabel}>Username</Text>
-          <View style={styles.usernameRow}>
-            <Text style={styles.usernameAt}>@</Text>
+          <Text style={style.fieldLabel}>Username</Text>
+          <View style={style.usernameRow}>
+            <Text style={style.usernameAt}>@</Text>
             <TextInput
-              style={[styles.fieldInput, styles.usernameInput]}
+              style={[style.fieldInput, style.usernameInput]}
               value={username}
               onChangeText={(t) => setUsername(t.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
               placeholder="seu_username"
@@ -335,11 +360,11 @@ function EditProfileModal({
               maxLength={20}
             />
           </View>
-          <Text style={styles.fieldHint}>3–20 caracteres, letras minúsculas, números e _</Text>
+          <Text style={style.fieldHint}>3–20 caracteres, letras minúsculas, números e _</Text>
 
-          <Text style={styles.fieldLabel}>Bio</Text>
+          <Text style={style.fieldLabel}>Bio</Text>
           <TextInput
-            style={[styles.fieldInput, styles.bioInput]}
+            style={[style.fieldInput, style.bioInput]}
             value={bio}
             onChangeText={setBio}
             placeholder="Conte um pouco sobre você..."
@@ -349,7 +374,7 @@ function EditProfileModal({
             maxLength={160}
             returnKeyType="done"
           />
-          <Text style={styles.fieldHint}>{bio.length}/160</Text>
+          <Text style={style.fieldHint}>{bio.length}/160</Text>
         </ScrollView>
       </View>
     </Modal>
@@ -364,12 +389,28 @@ export default function ProfileScreen() {
   const router = useRouter()
   const { user, logout, updateProfile, patchUser } = useAuth()
   const { items } = useUserContent()
+  const color = colors()
+  const style = styles(color)
 
   const [userStats,       setUserStats]       = useState<UserStats | null>(null)
   const [isLoggingOut,    setIsLoggingOut]    = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [editModalOpen,   setEditModalOpen]   = useState(false)
-  const [darkMode,        setDarkMode]        = useState(true)
+  const [darkMode,        setDarkMode]        = useState(user?.theme === 'dark' ? true : false)
+
+  const [theme,           setTheme]           = useState(user?.theme)
+  useEffect(() => {
+    if (darkMode === true) {
+    setTheme('dark')
+  } else {
+    setTheme('light')
+  }
+  }, [darkMode])
+
+  useEffect(() => {
+    if (!user?.theme || user?.theme === undefined) return
+    updateProfile({ theme: theme })
+  }, [theme])
 
   useEffect(() => {
     if (!user?.id) return
@@ -485,11 +526,11 @@ export default function ProfileScreen() {
   const STROKE = 4
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={style.container} edges={['top']}>
+      <ScrollView contentContainerStyle={style.scroll} showsVerticalScrollIndicator={false}>
 
         {/* ── Hero ── */}
-        <View style={styles.hero}>
+        <View style={style.hero}>
           {/* XP Ring + Avatar */}
           <XPRing progress={xpProgress} color={lvl.color} size={RING_SIZE} strokeWidth={STROKE}>
             <Avatar
@@ -502,62 +543,62 @@ export default function ProfileScreen() {
           </XPRing>
 
           {/* Level pill */}
-          <View style={[styles.levelPill, { borderColor: lvl.color + '55', backgroundColor: lvl.color + '18' }]}>
-            <Text style={[styles.levelPillText, { color: lvl.color }]}>
+          <View style={[style.levelPill, { borderColor: lvl.color + '55', backgroundColor: lvl.color + '18' }]}>
+            <Text style={[style.levelPillText, { color: lvl.color }]}>
               Nível {lvl.level} · {lvl.title}
             </Text>
           </View>
 
           {/* XP progress text */}
-          <Text style={styles.xpText}>
+          <Text style={style.xpText}>
             {totalXP.toLocaleString('pt-BR')} XP
             {nextLvl ? `  →  ${nextLvl.minXP.toLocaleString('pt-BR')} XP para ${nextLvl.title}` : '  · Nível máximo'}
           </Text>
 
           {/* Name */}
-          <Text style={styles.heroName}>{user.name}</Text>
+          <Text style={style.heroName}>{user.name}</Text>
 
           {/* Username & email */}
           {user.username && (
-            <Text style={styles.heroUsername}>@{user.username}</Text>
+            <Text style={style.heroUsername}>@{user.username}</Text>
           )}
-          <Text style={styles.heroEmail}>{user.email}</Text>
-          <Text style={styles.heroJoined}>Membro desde {joinedDate}</Text>
+          <Text style={style.heroEmail}>{user.email}</Text>
+          <Text style={style.heroJoined}>Membro desde {joinedDate}</Text>
 
           {/* Bio */}
           {user.bio ? (
-            <View style={styles.bioCard}>
-              <Text style={styles.bioText}>"{user.bio}"</Text>
+            <View style={style.bioCard}>
+              <Text style={style.bioText}>"{user.bio}"</Text>
             </View>
           ) : null}
 
           {/* Followers row */}
-          <View style={styles.followRow}>
-            <TouchableOpacity style={styles.followChip} activeOpacity={0.7}>
-              <Text style={styles.followCount}>0</Text>
-              <Text style={styles.followLabel}>Seguidores</Text>
+          <View style={style.followRow}>
+            <TouchableOpacity style={style.followChip} activeOpacity={0.7}>
+              <Text style={style.followCount}>0</Text>
+              <Text style={style.followLabel}>Seguidores</Text>
             </TouchableOpacity>
-            <View style={styles.followDivider} />
-            <TouchableOpacity style={styles.followChip} activeOpacity={0.7}>
-              <Text style={styles.followCount}>0</Text>
-              <Text style={styles.followLabel}>Seguindo</Text>
+            <View style={style.followDivider} />
+            <TouchableOpacity style={style.followChip} activeOpacity={0.7}>
+              <Text style={style.followCount}>0</Text>
+              <Text style={style.followLabel}>Seguindo</Text>
             </TouchableOpacity>
           </View>
 
           {/* Edit button */}
           <TouchableOpacity
-            style={styles.editBtn}
+            style={style.editBtn}
             onPress={() => setEditModalOpen(true)}
             activeOpacity={0.8}
           >
             <Feather name="edit-2" size={13} color="#0EA5E9" />
-            <Text style={styles.editBtnText}>Editar Perfil</Text>
+            <Text style={style.editBtnText}>Editar Perfil</Text>
           </TouchableOpacity>
         </View>
 
         {/* ── Stats 2x2 ── */}
-        <View style={styles.statsGrid}>
-          <View style={styles.statsRow}>
+        <View style={style.statsGrid}>
+          <View style={style.statsRow}>
             <StatCard
               icon={<Ionicons name="chatbubbles-outline" size={22} color="#00D1FF" />}
               value={userStats?.sessions_count ?? 0}
@@ -573,7 +614,7 @@ export default function ProfileScreen() {
               onPress={() => router.push('/(app)/library')}
             />
           </View>
-          <View style={styles.statsRow}>
+          <View style={style.statsRow}>
             <StatCard
               icon={<Ionicons name="book-outline" size={22} color="#A855F7" />}
               value={readCount}
@@ -596,8 +637,8 @@ export default function ProfileScreen() {
         </View>
 
         {/* ── Preferências ── */}
-        <Text style={styles.sectionTitle}>Preferências</Text>
-        <View style={styles.settingsGroup}>
+        <Text style={style.sectionTitle}>Preferências</Text>
+        <View style={style.settingsGroup}>
           <SettingsRow
             iconName="color-palette-outline"
             label="Aparência"
@@ -606,8 +647,8 @@ export default function ProfileScreen() {
               <Switch
                 value={darkMode}
                 onValueChange={setDarkMode}
-                trackColor={{ false: '#334155', true: 'rgba(14,165,233,0.4)' }}
-                thumbColor={darkMode ? '#0EA5E9' : '#94A3B8'}
+                trackColor={{ false: '#334155', true: color.accentDim }}
+                thumbColor={darkMode ? color.accent : '#94A3B8'}
               />
             }
           />
@@ -626,8 +667,8 @@ export default function ProfileScreen() {
         </View>
 
         {/* ── Conta ── */}
-        <Text style={styles.sectionTitle}>Conta</Text>
-        <View style={styles.settingsGroup}>
+        <Text style={style.sectionTitle}>Conta</Text>
+        <View style={style.settingsGroup}>
           <SettingsRow
             iconName="information-circle-outline"
             label="Sobre o LeIA"
@@ -643,7 +684,7 @@ export default function ProfileScreen() {
           />
         </View>
 
-        <Text style={styles.version}>LeIA v1.0 • Todos os direitos reservados</Text>
+        <Text style={style.version}>LeIA v1.0 • Todos os direitos reservados</Text>
       </ScrollView>
 
       {/* ── Modal de edição ── */}
@@ -664,11 +705,10 @@ export default function ProfileScreen() {
 // ---------------------------------------------------------------------------
 // Styles
 // ---------------------------------------------------------------------------
-
-const styles = StyleSheet.create({
+const styles = (color: any ) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: color.background,
   },
   scroll: {
     paddingBottom: 48,
@@ -730,13 +770,11 @@ const styles = StyleSheet.create({
 
   // Bio card
   bioCard: {
-    backgroundColor: '#1B2C33',
+    backgroundColor: 'transparent',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 11,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
     width: '100%',
   },
   bioText: {
@@ -870,11 +908,9 @@ const styles = StyleSheet.create({
     fontFamily: 'ClashDisplay-Semibold',
   },
   settingsGroup: {
-    backgroundColor: '#1B2C33',
-    borderRadius: 16,
+    backgroundColor: 'transparent',
+    // borderRadius: 16,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
     marginBottom: 24,
     marginHorizontal: 16,
   },
@@ -883,8 +919,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 13,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.04)',
     gap: 12,
   },
   settingsIconWrap: {

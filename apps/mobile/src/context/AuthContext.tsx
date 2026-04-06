@@ -225,6 +225,7 @@ export function useAuth() {
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 import Constants from 'expo-constants';
 import { supabase } from '@/src/lib/supabase'
+import { colors } from '../constants/colors';
 
 export interface User {
   id: string
@@ -235,6 +236,7 @@ export interface User {
   username?: string
   bio?: string
   hasCompletedProfile: boolean
+  theme?: string
 }
 
 interface AuthContextType {
@@ -265,7 +267,7 @@ async function loadUser(supabaseUser: SupabaseUser): Promise<User> {
 
   const { data: settings, error } = await supabase
     .from('user_settings')
-    .select('display_name, username, avatar_url, bio')
+    .select('display_name, username, avatar_url, bio, theme')
     .eq('id', supabaseUser.id)
     .maybeSingle()
 
@@ -289,6 +291,7 @@ async function loadUser(supabaseUser: SupabaseUser): Promise<User> {
     joinedAt:            supabaseUser.created_at,
     username,
     bio:                 settings?.bio ?? undefined,
+    theme:              settings?.theme ?? undefined,
     hasCompletedProfile,
   }
 }

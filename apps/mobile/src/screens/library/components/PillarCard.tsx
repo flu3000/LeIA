@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors } from '@/src/constants/colors'
+import { useColors } from '@/src/constants/colors'
+const colors = useColors()
 import type { Pillar } from '@/src/types/library'
 
 interface PillarCardProps {

@@ -5,17 +5,17 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/users/:user_id
+  url: {{baseUrl}}/users/:userId
   body: none
-  auth: none
+  auth: bearer
 }
 
 params:path {
-  user_id: uuid-do-usuario
+  userId: 8fc7f98e-5790-4a33-a89b-f534708b21e1
 }
 
-headers {
-  Authorization: Bearer {{authToken}}
+auth:bearer {
+  token: eyJhbGciOiJFUzI1NiIsImtpZCI6IjYwYjVmZjIwLWRlODgtNDJmNC1hOTdlLThlZGUxZGQyNzk4OCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2hudHBudGNqeWJ2eXhhdndhcWprLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI4ZmM3Zjk4ZS01NzkwLTRhMzMtYTg5Yi1mNTM0NzA4YjIxZTEiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc1NDg0ODE3LCJpYXQiOjE3NzU0ODEyMTcsImVtYWlsIjoiYW50b25pb3BfcmV6ZW5kZUBpY2xvdWQuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbCI6ImFudG9uaW9wX3JlemVuZGVAaWNsb3VkLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInN1YiI6IjhmYzdmOThlLTU3OTAtNGEzMy1hODliLWY1MzQ3MDhiMjFlMSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6Im90cCIsInRpbWVzdGFtcCI6MTc3NTQwNzI5NX1dLCJzZXNzaW9uX2lkIjoiMjQyOWQyMDMtOTRjNi00YTQzLTkwZWQtNTNhY2ZmYjcwOTA5IiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.zNU-2dKXe_EMh2-uyV9hbqTR7YB1_hkwafzkDy0ioBYfaUwuCS-NONBfhIIxXxf1MQMl0OPzao5LR-AE4yeZ8g
 }
 
 assert {

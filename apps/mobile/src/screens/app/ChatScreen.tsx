@@ -19,9 +19,11 @@ import { colors } from '@/src/constants/colors'
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function TypingDots() {
+  const color = colors()
+  const style = styles(color)
   return (
-    <View style={styles.typingBubble}>
-      <Text style={styles.typingText}>LeIA está pensando...</Text>
+    <View style={style.typingBubble}>
+      <Text style={style.typingText}>LeIA está pensando...</Text>
       <ActivityIndicator size="small" color="#0EA5E9" style={{ marginLeft: 8 }} />
     </View>
   )
@@ -30,20 +32,22 @@ function TypingDots() {
 function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === 'user'
   const { toggleSave, isFavourite } = useUserContent()
+  const color = colors()
+  const style = styles(color)
 
   return (
     <Animated.View
       entering={FadeInDown.duration(300).springify()}
-      style={[styles.messageRow, isUser ? styles.userRow : styles.assistantRow]}
+      style={[style.messageRow, isUser ? style.userRow : style.assistantRow]}
     >
 
-      <View style={[styles.bubble, isUser ? styles.userBubble : styles.assistantBubble]}>
-        <Text style={[styles.bubbleText, isUser ? styles.userText : styles.assistantText]}>
+      <View style={[style.bubble, isUser ? style.userBubble : style.assistantBubble]}>
+        <Text style={[style.bubbleText, isUser ? style.userText : style.assistantText]}>
           {message.content}
         </Text>
 
         {message.sources && message.sources.length > 0 && (
-          <View style={styles.sourcesContainer}>
+          <View style={style.sourcesContainer}>
             {message.sources.map((fonte: Fonte, i: number) => (
               <SourceCard
                 key={fonte.id_externo ?? i}
@@ -62,10 +66,10 @@ function MessageBubble({ message }: { message: Message }) {
         )}
 
         {message.citations && message.citations.length > 0 && (
-          <View style={styles.citationsRow}>
+          <View style={style.citationsRow}>
             {message.citations.slice(0, 3).map((url, i) => (
-              <View key={i} style={styles.citationBadge}>
-                <Text style={styles.citationText} numberOfLines={1}>
+              <View key={i} style={style.citationBadge}>
+                <Text style={style.citationText} numberOfLines={1}>
                   [{i + 1}] {new URL(url).hostname}
                 </Text>
               </View>
@@ -84,6 +88,8 @@ export default function ChatScreen() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [input, setInput] = useState('')
   const listRef = useRef<FlatList>(null)
+  const color = colors()
+  const style = styles(color)
 
   const {
     sessions, isLoading: isLoadingSessions,
@@ -166,29 +172,29 @@ export default function ChatScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView style={style.container} edges={['top']}>
 
         {/* Header */}
-        <View style={styles.header}>
+        <View style={style.header}>
           <TouchableOpacity
-            style={styles.headerBtn}
+            style={style.headerBtn}
             onPress={() => { Haptics.selectionAsync(); setDrawerOpen(true) }}
             activeOpacity={0.7}
           >
             <Ionicons name="menu" size={22} color="#94A3B8" />
           </TouchableOpacity>
 
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>LeIA</Text>
-            <Text style={styles.headerSub}>Bibliotecário Inteligente</Text>
+          <View style={style.headerCenter}>
+            <Text style={style.headerTitle}>LeIA</Text>
+            <Text style={style.headerSub}>Bibliotecário Inteligente</Text>
           </View>
 
           {/* Espaço espelho para centralizar o título */}
-          <View style={styles.headerBtn} />
+          <View style={style.headerBtn} />
         </View>
 
         <KeyboardAvoidingView
-          style={styles.flex}
+          style={style.flex}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={0}
         >
@@ -197,15 +203,15 @@ export default function ChatScreen() {
             data={messages}
             keyExtractor={(m) => m.id}
             renderItem={({ item }) => <MessageBubble message={item} />}
-            contentContainerStyle={styles.messageList}
+            contentContainerStyle={style.messageList}
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
             showsVerticalScrollIndicator={false}
             ListFooterComponent={isTyping ? <TypingDots /> : null}
           />
 
-          <View style={styles.inputBar}>
+          <View style={style.inputBar}>
             <TextInput
-              style={styles.textInput}
+              style={style.textInput}
               value={input}
               onChangeText={setInput}
               placeholder="Sobre o que quer aprender?"
@@ -216,7 +222,7 @@ export default function ChatScreen() {
               blurOnSubmit={false}
             />
             <TouchableOpacity
-              style={[styles.sendBtn, (!input.trim() || isTyping) && styles.sendBtnDisabled]}
+              style={[style.sendBtn, (!input.trim() || isTyping) && style.sendBtnDisabled]}
               onPress={handleSend}
               disabled={!input.trim() || isTyping}
               activeOpacity={0.8}
@@ -229,7 +235,7 @@ export default function ChatScreen() {
 
       {/* Left-edge swipe zone (20px wide, behind drawer) */}
       <GestureDetector gesture={edgeGesture}>
-        <View style={styles.edgeZone} />
+        <View style={style.edgeZone} />
       </GestureDetector>
 
       {/* Drawer (absolute overlay, rendered last = on top) */}
@@ -250,10 +256,10 @@ export default function ChatScreen() {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const styles = (color: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: color.background,
   },
   flex: { flex: 1 },
 
@@ -264,7 +270,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.06)',
-    backgroundColor: colors.background,
+    backgroundColor: color.background,
   },
   headerBtn: {
     width: 40,
@@ -277,7 +283,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    color: colors.accent,
+    color: color.accent,
     fontSize: 20,
     fontWeight: '800',
     letterSpacing: 1,
@@ -371,12 +377,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: Platform.OS === 'ios' ? 8 : 12,
-    backgroundColor: colors.background,
+    backgroundColor: color.background,
     gap: 10,
   },
   textInput: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: color.background,
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingTop: 12,

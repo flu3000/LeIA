@@ -40,13 +40,14 @@ function TabIcon({
 // ── Layout ────────────────────────────────────────────────────────────────────
 
 export default function AppLayout() {
+  const color = colors()
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: colors.background,
+          backgroundColor: color.background,
           borderTopColor:  'rgba(255,255,255,0.06)',
           borderTopWidth:  1,
           paddingTop:      6,

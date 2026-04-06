@@ -4,7 +4,8 @@ import {
 } from 'react-native'
 import Animated, { SlideInDown, SlideOutDown, Easing, runOnJS, useAnimatedStyle } from 'react-native-reanimated'
 import { Ionicons } from '@expo/vector-icons'
-import { colors } from '@/src/constants/colors'
+import { useColors } from '@/src/constants/colors'
+const colors = useColors()
 import type { Pillar, Difficulty, BookFilters } from '@/src/types/library'
 
 const DIFFICULTIES: Difficulty[] = ['Iniciante', 'Intermediário', 'Avançado']

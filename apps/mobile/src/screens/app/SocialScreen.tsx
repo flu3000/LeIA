@@ -37,6 +37,8 @@ export default function SocialScreen() {
   const [mainTab, setMainTab]     = useState<MainTab>('insights')
   const [subTabIdx, setSubTabIdx] = useState(0)
   const [subBarWidth, setSubBarWidth] = useState(0)
+  const color = colors()
+  const style = styles(color)
 
   // Fade animation for main tab content switch (React Native Animated)
   const fadeAnim = useRef(new Animated.Value(1)).current
@@ -74,22 +76,22 @@ export default function SocialScreen() {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
+    <SafeAreaView style={style.safeArea} edges={['top']}>
 
       {/* ── Nível 1: Ícones grandes das abas principais ── */}
-      <View style={[styles.mainTabBar, { borderBottomColor: activeColor + '33' }]}>
+      <View style={[style.mainTabBar, { borderBottomColor: activeColor + '33' }]}>
         {MAIN_TABS.map((tab) => {
           const isActive = mainTab === tab.key
           return (
             <TouchableOpacity
               key={tab.key}
-              style={styles.mainTabBtn}
+              style={style.mainTabBtn}
               onPress={() => switchMainTab(tab.key)}
               activeOpacity={0.75}
             >
               {/* Glow circle when active */}
               <View style={[
-                styles.mainTabIconWrap,
+                style.mainTabIconWrap,
                 isActive && { backgroundColor: tab.color + '22' },
               ]}>
                 <Ionicons
@@ -98,12 +100,12 @@ export default function SocialScreen() {
                   color={isActive ? tab.color : '#4A5568'}
                 />
               </View>
-              <Text style={[styles.mainTabLabel, isActive && { color: tab.color }]}>
+              <Text style={[style.mainTabLabel, isActive && { color: tab.color }]}>
                 {tab.label}
               </Text>
               {/* Active underline */}
               {isActive && (
-                <View style={[styles.mainTabUnderline, { backgroundColor: tab.color }]} />
+                <View style={[style.mainTabUnderline, { backgroundColor: tab.color }]} />
               )}
             </TouchableOpacity>
           )
@@ -113,7 +115,7 @@ export default function SocialScreen() {
       {/* ── Nível 2: Sub-abas de texto (só para Insights) ── */}
       {mainTab === 'insights' && (
         <View
-          style={styles.subTabBar}
+          style={style.subTabBar}
           onLayout={(e) => setSubBarWidth(e.nativeEvent.layout.width)}
         >
           {INSIGHT_SUB_TABS.map((tab, idx) => {
@@ -121,11 +123,11 @@ export default function SocialScreen() {
             return (
               <TouchableOpacity
                 key={tab.key}
-                style={styles.subTabBtn}
+                style={style.subTabBtn}
                 onPress={() => switchSubTab(idx)}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.subTabText, isActive && styles.subTabTextActive]}>
+                <Text style={[style.subTabText, isActive && style.subTabTextActive]}>
                   {tab.label}
                 </Text>
               </TouchableOpacity>
@@ -136,7 +138,7 @@ export default function SocialScreen() {
           {subBarWidth > 0 && (
             <Reanimated.View
               style={[
-                styles.subTabIndicator,
+                style.subTabIndicator,
                 indicatorStyle,
                 { width: tabWidth },
               ]}
@@ -146,7 +148,7 @@ export default function SocialScreen() {
       )}
 
       {/* ── Content ── */}
-      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+      <Animated.View style={[style.content, { opacity: fadeAnim }]}>
         {mainTab === 'insights' && (
           <InsightsTab subTab={INSIGHT_SUB_TABS[subTabIdx].key} />
         )}
@@ -160,10 +162,10 @@ export default function SocialScreen() {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const styles = (color: any) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: color.background,
   },
 
   // ── Main tab bar (Nível 1) ────────────────────────────────────────────────

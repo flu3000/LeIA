@@ -3,7 +3,8 @@ import {
 } from 'react-native'
 import Animated, { SlideInDown, SlideOutDown } from 'react-native-reanimated'
 import { Ionicons } from '@expo/vector-icons'
-import { colors } from '@/src/constants/colors'
+import { useColors } from '@/src/constants/colors'
+const colors = useColors()
 import type { Edition } from '@/src/types/library'
 
 interface EditionModalProps {

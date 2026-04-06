@@ -6,7 +6,6 @@ import { colors } from '@/src/constants/colors'
 import type { Book, Difficulty } from '@/src/types/library'
 
 // ── Badge de dificuldade ──────────────────────────────────────────────────────
-
 const DIFFICULTY_COLOR: Record<Difficulty, string> = {
   Iniciante:     colors.success,
   Intermediário: colors.warning,
@@ -15,9 +14,11 @@ const DIFFICULTY_COLOR: Record<Difficulty, string> = {
 
 function DifficultyBadge({ level }: { level: Difficulty | null }) {
   if (!level) return null
+  const color = colors()
+  const style = styles(color)
   return (
-    <View style={[styles.badge, { backgroundColor: DIFFICULTY_COLOR[level] + '22' }]}>
-      <Text style={[styles.badgeText, { color: DIFFICULTY_COLOR[level] }]}>{level}</Text>
+    <View style={[style.badge, { backgroundColor: DIFFICULTY_COLOR[level] + '22' }]}>
+      <Text style={[style.badgeText, { color: DIFFICULTY_COLOR[level] }]}>{level}</Text>
     </View>
   )
 }
@@ -25,6 +26,8 @@ function DifficultyBadge({ level }: { level: Difficulty | null }) {
 // ── Capa do livro ─────────────────────────────────────────────────────────────
 
 function BookCover({ url, size = 56 }: { url: string | null | undefined; size?: number }) {
+  const color = colors()
+  const style = styles(color)
   return url ? (
     <Image
       source={{ uri: url }}
@@ -32,7 +35,7 @@ function BookCover({ url, size = 56 }: { url: string | null | undefined; size?: 
       resizeMode="cover"
     />
   ) : (
-    <View style={[styles.coverPlaceholder, { width: size, height: size * 1.4 }]}>
+    <View style={[style.coverPlaceholder, { width: size, height: size * 1.4 }]}>
       <Ionicons name="book" size={size * 0.4} color={colors.dimmed} />
     </View>
   )
@@ -50,19 +53,22 @@ interface BookCardProps {
 export function BookCard({ book, onPress, isSaved, onToggleSave }: BookCardProps) {
   const cover        = book.main_cover?.cover_url
   const categoryName = book.categories?.category_name
+  const categoryId   = book.category_id
+  const color = colors()
+  const style = styles(color)
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity style={style.card} onPress={onPress} activeOpacity={0.8}>
       <BookCover url={cover} size={56} />
-      <View style={styles.info}>
-        <Text style={styles.title} numberOfLines={2}>{book.title}</Text>
-        <Text style={styles.author} numberOfLines={1}>{book.author}</Text>
+      <View style={style.info}>
+        <Text style={style.title} numberOfLines={2}>{book.title}</Text>
+        <Text style={style.author} numberOfLines={1}>{book.author}</Text>
 
-        <View style={styles.metaRow}>
+        <View style={style.metaRow}>
           <DifficultyBadge level={book.difficulty} />
-          {categoryName && (
-            <View style={styles.categoryBadge}>
-              <Text style={styles.categoryText} numberOfLines={1}>{categoryName}</Text>
+          {categoryId && (
+            <View style={style.categoryBadge}>
+              <Text style={style.categoryText} numberOfLines={1}>{categoryId}</Text>
             </View>
           )}
         </View>
@@ -70,7 +76,7 @@ export function BookCard({ book, onPress, isSaved, onToggleSave }: BookCardProps
 
       {onToggleSave !== undefined && (
         <TouchableOpacity
-          style={styles.heartBtn}
+          style={style.heartBtn}
           onPress={onToggleSave}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           activeOpacity={0.7}
@@ -95,31 +101,33 @@ interface BookCardSmallProps {
 
 export function BookCardSmall({ book, onPress }: BookCardSmallProps) {
   const cover = book.book_editions?.[0]?.cover_url
+  const color = colors()
+  const style = styles(color)
 
   return (
-    <TouchableOpacity style={styles.smallCard} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity style={style.smallCard} onPress={onPress} activeOpacity={0.8}>
       <BookCover url={cover} size={72} />
-      <Text style={styles.smallTitle} numberOfLines={2}>{book.title}</Text>
-      <Text style={styles.smallAuthor} numberOfLines={1}>{book.author}</Text>
+      <Text style={style.smallTitle} numberOfLines={2}>{book.title}</Text>
+      <Text style={style.smallAuthor} numberOfLines={1}>{book.author}</Text>
     </TouchableOpacity>
   )
 }
 
-const styles = StyleSheet.create({
+const styles = (color: any) => StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: color.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: color.border,
     gap: 14,
   },
   coverPlaceholder: {
     borderRadius: 6,
-    backgroundColor: colors.surfaceDeep,
+    backgroundColor: color.surfaceDeep,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -134,7 +142,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   author: {
-    color: colors.muted,
+    color: color.muted,
     fontSize: 13,
   },
   metaRow: {
@@ -156,10 +164,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    backgroundColor: colors.accentDim,
+    backgroundColor: color.accentDim,
   },
   categoryText: {
-    color: colors.accent,
+    color: color.accent,
     fontSize: 11,
     fontWeight: '600',
   },
@@ -173,14 +181,14 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   smallTitle: {
-    color: colors.text,
+    color: color.text,
     fontSize: 12,
     fontWeight: '700',
     marginTop: 6,
     lineHeight: 16,
   },
   smallAuthor: {
-    color: colors.muted,
+    color: color.muted,
     fontSize: 11,
     marginTop: 2,
   },

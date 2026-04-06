@@ -138,10 +138,8 @@ const TILE_SIZE = 72
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1B2C33',
+    backgroundColor: 'transparent',
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
     overflow: 'hidden',
     marginBottom: 24,
   },
