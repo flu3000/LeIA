@@ -4,16 +4,16 @@ import type { Book, BookFilters } from '@/src/types/library';
 
 const PAGE_SIZE = 20;
 
-function buildBooksUrl(offset: number, search: string, filters: BookFilters): string {
+function buildBooksUrl(page: number, search: string, filters: BookFilters): string {
   const params = new URLSearchParams();
   if (search.trim()) params.set('search', search.trim());
   if (filters.category_id) params.set('category_id', String(filters.category_id));
   if (filters.difficulty)  params.set('difficulty', filters.difficulty);
 
-  params.set('limit', String(PAGE_SIZE));
-  params.set('offset', String(offset));
+  // params.set('limit', String(PAGE_SIZE));
+  params.set('page', String(page));
 
-  return `/library/books?${params.toString()}`;
+  return `/books/getAll?${params.toString()}`;
 }
 
 export function useBooks(search: string = '', filters: BookFilters = {}) {
@@ -22,12 +22,11 @@ export function useBooks(search: string = '', filters: BookFilters = {}) {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore]           = useState(true);
 
-  const offsetRef        = useRef(0);
+  const pageRef = useRef(0);
   // Refs para guards de concorrência — leitura sempre atual, sem stale closure.
   // Ao contrário de state, refs não causam re-render ao mudar, eliminando a
   // cascata: estado muda → novo fetchMore → FlatList rebinda → dispara de novo.
   const isFetchingRef    = useRef(false);
-  const isFetchingMoreRef = useRef(false);
   const hasMoreRef       = useRef(true);
 
   // String estável derivada dos filtros: só muda quando os VALORES mudam de fato.
@@ -41,18 +40,16 @@ export function useBooks(search: string = '', filters: BookFilters = {}) {
 
     isFetchingRef.current = true;
     setIsLoading(true);
-    offsetRef.current = 0;
+    pageRef.current = 0;
     // Reseta o ref de paginação junto com o estado — garantia de sincronia
     hasMoreRef.current = true;
     setHasMore(true);
+    const url = buildBooksUrl(0, search, filters);
 
     try {
-      const url = buildBooksUrl(0, search, filters);
       const response = await api.get<Book[]>(url);
       setBooks(response);
-      const more = response.length >= PAGE_SIZE;
-      hasMoreRef.current = more;
-      setHasMore(more);
+      setHasMore(response.length === PAGE_SIZE);
     } catch (e) {
       console.error('[useBooks] erro ao carregar:', e);
     } finally {
@@ -68,24 +65,22 @@ export function useBooks(search: string = '', filters: BookFilters = {}) {
     // Guards via refs: sem stale closure, sem re-render em cascata ao mudar.
     // Usando state aqui, duas chamadas rápidas passariam pelo guard antes que
     // setIsLoadingMore(true) propagasse para o próximo render.
-    if (isFetchingMoreRef.current || !hasMoreRef.current) return;
+    if (isFetchingRef.current || !hasMore) return;
 
-    isFetchingMoreRef.current = true;
+    isFetchingRef.current = true;
     setIsLoadingMore(true);
-    const nextOffset = offsetRef.current + PAGE_SIZE;
+    const nextPage = pageRef.current + 1;
+    const url = buildBooksUrl(nextPage, search, filters);
 
     try {
-      const url = buildBooksUrl(nextOffset, search, filters);
       const response = await api.get<Book[]>(url);
 
       if (response.length > 0) {
         setBooks((prev) => [...prev, ...response]);
-        offsetRef.current = nextOffset;
+        pageRef.current = nextPage;
       }
 
-      const more = response.length >= PAGE_SIZE;
-      hasMoreRef.current = more;
-      setHasMore(more);
+      setHasMore(response.length === PAGE_SIZE);
     } catch (e) {
       console.error('[useBooks] erro ao carregar mais:', e);
       // Interrompe o loop: em falha persistente a FlatList pararia de chamar
@@ -93,10 +88,10 @@ export function useBooks(search: string = '', filters: BookFilters = {}) {
       hasMoreRef.current = false;
       setHasMore(false);
     } finally {
-      isFetchingMoreRef.current = false;
+      isFetchingRef.current = false;
       setIsLoadingMore(false);
     }
-  }, [filterKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [hasMore, filterKey]); // eslint-disable-line react-hooks/exhaustive-deps
   // isLoadingMore e hasMore deliberadamente fora das deps: o guard usa refs,
   // que são sempre atuais. Incluí-los aqui criaria novo fetchMore a cada fetch,
   // disparando re-bind na FlatList e potencial chamada extra de onEndReached.

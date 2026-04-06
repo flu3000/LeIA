@@ -16,14 +16,25 @@ const BOOK_DETAIL_COLS =
 // GET /books — list with optional filters
 router.get('/getAll', async (req, res) => {
   const { category_id, difficulty, search } = req.query as Record<string, string>
+  const page = parseInt(req.query.page as string) || 0;
+  const limit = 20;
 
-  let query = supabase.from('books').select(BOOK_SUMMARY_COLS).order('title')
+  // Cálculo do intervalo: 
+  // Página 0: de 0 até 24
+  // Página 1: de 25 até 49
+  const from = page * limit;
+  const to = from + limit - 1;
+
+  let query = supabase.from('books').select(BOOK_SUMMARY_COLS)
 
   if (category_id)      query = query.eq('category_id', category_id)
   if (difficulty) query = query.eq('difficulty', difficulty)
   if (search)     query = query.ilike('title', `%${search}%`)
 
+  query = query.order('title', { ascending: true }).range(from, to)
+  
   const { data, error } = await query
+
   if (error) {
     console.error('[GET /api/books/getAll]', error)
     res.status(500).json({ error: error.message })
