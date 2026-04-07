@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router'
 import { Platform, View, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
-import { colors } from '@/src/constants/colors'
+import { useTheme } from '@/src/context/ThemeContext'
 
 // ── Paleta dopaminérgica ──────────────────────────────────────────────────────
 
@@ -40,14 +40,14 @@ function TabIcon({
 // ── Layout ────────────────────────────────────────────────────────────────────
 
 export default function AppLayout() {
-  const color = colors()
+  const theme = useTheme() // Chamada correta: dentro do componente
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: color.background,
+          backgroundColor: theme.background,
           borderTopColor:  'rgba(255,255,255,0.06)',
           borderTopWidth:  1,
           paddingTop:      6,

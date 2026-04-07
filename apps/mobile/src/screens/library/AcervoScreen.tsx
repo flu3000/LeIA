@@ -2,13 +2,13 @@ import {
   View, Text, TextInput, TouchableOpacity,
   FlatList, ActivityIndicator, StyleSheet,
 } from 'react-native'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 
-import { colors } from '@/src/constants/colors'
+import { useTheme } from '@/src/context/ThemeContext'
 import { useBooks } from '@/src/hooks/useBooks'
 import { usePillars } from '@/src/hooks/usePillars'
 import { useSavedBooks } from '@/src/hooks/useSavedBooks'
@@ -27,6 +27,10 @@ function ActiveFilterChips({
   pillars: Pillar[]
   onRemove: (key: keyof BookFilters) => void
 }) {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const chips: { key: keyof BookFilters; label: string }[] = []
   if (filters.difficulty) chips.push({ key: 'difficulty', label: filters.difficulty })
   if (filters.pillar_id) {
@@ -34,6 +38,7 @@ function ActiveFilterChips({
     if (p) chips.push({ key: 'pillar_id', label: p.pillar_name })
   }
   if (chips.length === 0) return null
+  // const style = styles(colors)
 
   return (
     <View style={styles.chipRow}>
@@ -45,7 +50,7 @@ function ActiveFilterChips({
           activeOpacity={0.8}
         >
           <Text style={styles.chipText}>{label}</Text>
-          <Ionicons name="close" size={12} color={colors.accent} />
+          <Ionicons name="close" size={12} color={theme.accent} />
         </TouchableOpacity>
       ))}
     </View>
@@ -55,6 +60,10 @@ function ActiveFilterChips({
 // ── Tela ─────────────────────────────────────────────────────────────────────
 
 export default function AcervoScreen() {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const router  = useRouter()
   const [search, setSearch]         = useState('')
   const [filters, setFilters]       = useState<BookFilters>({})
@@ -93,11 +102,11 @@ export default function AcervoScreen() {
       {/* Barra de busca */}
       <View style={styles.searchRow}>
         <View style={styles.searchBox}>
-          <Ionicons name="search" size={16} color={colors.dimmed} style={{ marginRight: 8 }} />
+          <Ionicons name="search" size={16} color={theme.dimmed} style={{ marginRight: 8 }} />
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar por título ou autor..."
-            placeholderTextColor={colors.dimmed}
+            placeholderTextColor={theme.dimmed}
             value={search}
             onChangeText={setSearch}
             returnKeyType="search"
@@ -105,7 +114,7 @@ export default function AcervoScreen() {
           />
           {search.length > 0 && (
             <TouchableOpacity onPress={() => setSearch('')} style={{ padding: 4 }}>
-              <Ionicons name="close-circle" size={16} color={colors.dimmed} />
+              <Ionicons name="close-circle" size={16} color={theme.dimmed} />
             </TouchableOpacity>
           )}
         </View>
@@ -119,7 +128,7 @@ export default function AcervoScreen() {
           <Ionicons
             name="options"
             size={20}
-            color={hasActiveFilters ? '#fff' : colors.muted}
+            color={hasActiveFilters ? '#fff' : theme.muted}
           />
         </TouchableOpacity>
       </View>
@@ -134,7 +143,7 @@ export default function AcervoScreen() {
       {/* Lista */}
       {isLoading ? (
         <View style={styles.loadingCenter}>
-          <ActivityIndicator color={colors.accent} />
+          <ActivityIndicator color={theme.accent} />
         </View>
       ) : (
         <FlatList
@@ -156,12 +165,12 @@ export default function AcervoScreen() {
           onEndReachedThreshold={0.3}
           ListFooterComponent={
             isLoadingMore ? (
-              <ActivityIndicator color={colors.accent} style={{ paddingVertical: 16 }} />
+              <ActivityIndicator color={theme.accent} style={{ paddingVertical: 16 }} />
             ) : null
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="book-outline" size={48} color={colors.dimmed} />
+              <Ionicons name="book-outline" size={48} color={theme.dimmed} />
               <Text style={styles.emptyTitle}>Nenhum livro encontrado</Text>
               <Text style={styles.emptySubtitle}>
                 {hasActiveFilters || search
@@ -185,10 +194,10 @@ export default function AcervoScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
   },
   searchRow: {
     flexDirection: 'row',
@@ -201,15 +210,15 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: theme.surface,
     borderRadius: 12,
     paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.border,
   },
   searchInput: {
     flex: 1,
-    color: colors.text,
+    color: theme.text,
     fontSize: 14,
     paddingVertical: 11,
   },
@@ -217,15 +226,15 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: colors.surface,
+    backgroundColor: theme.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   filterBtnActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
+    backgroundColor: theme.accent,
+    borderColor: theme.accent,
   },
   chipRow: {
     flexDirection: 'row',
@@ -241,12 +250,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 20,
-    backgroundColor: colors.accentDim,
+    backgroundColor: theme.accentDim,
     borderWidth: 1,
-    borderColor: colors.accent + '44',
+    borderColor: theme.accent + '44',
   },
   chipText: {
-    color: colors.accent,
+    color: theme.accent,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -266,13 +275,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   emptyTitle: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 17,
     fontWeight: '700',
     fontFamily: 'ClashDisplay-Semibold',
   },
   emptySubtitle: {
-    color: colors.muted,
+    color: theme.muted,
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,

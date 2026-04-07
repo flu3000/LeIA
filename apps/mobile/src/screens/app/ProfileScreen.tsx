@@ -3,7 +3,7 @@ import {
   ActivityIndicator, StyleSheet, TextInput, Modal, Switch,
   Pressable, Animated,
 } from 'react-native'
-import React, { useState, useEffect, useCallback, useRef, use } from 'react'
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Svg, { Circle } from 'react-native-svg'
 import * as ImagePicker from 'expo-image-picker'
@@ -17,7 +17,8 @@ import { BACKEND_URL } from '@/src/lib/apiClient'
 import { useUserContent } from '@/src/hooks/useUserContent'
 import { getLevelForXP, getProgressToNext } from '@/src/data/levels'
 import MedalsSection from '@/src/components/MedalsSection'
-import { colors } from '@/src/constants/colors'
+import { useTheme } from '@/src/context/ThemeContext'
+import { ColorSpace } from 'react-native-reanimated'
 
 // ---------------------------------------------------------------------------
 // Tipos
@@ -46,6 +47,10 @@ function XPRing({
   strokeWidth: number
   children: React.ReactNode
 }) {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const r = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * r
   const offset = circumference * (1 - Math.min(Math.max(progress, 0), 1))
@@ -97,6 +102,10 @@ function Avatar({
   isUploading?: boolean
   onPress?: () => void
 }) {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const initials = name
     .split(' ')
     .slice(0, 2)
@@ -104,8 +113,6 @@ function Avatar({
     .join('')
 
   const BADGE = Math.round(size * 0.28)
-  const color = colors()
-  const style = styles(color)
   return (
     <View style={{ width: size, height: size }}>
       <TouchableOpacity
@@ -122,20 +129,20 @@ function Avatar({
         {avatarUrl ? (
           <Image source={{ uri: avatarUrl }} style={{ width: size, height: size }} resizeMode="cover" />
         ) : (
-          <View style={[style.avatarFallback, { width: size, height: size, borderRadius: size / 2 }]}>
-            <Text style={[style.avatarInitials, { fontSize: size * 0.34 }]}>{initials || '?'}</Text>
+          <View style={[styles.avatarFallback, { width: size, height: size, borderRadius: size / 2 }]}>
+            <Text style={[styles.avatarInitials, { fontSize: size * 0.34 }]}>{initials || '?'}</Text>
           </View>
         )}
       </TouchableOpacity>
 
       {isUploading && (
         <View style={[StyleSheet.absoluteFillObject, { alignItems: 'center', justifyContent: 'center' }]}>
-          <ActivityIndicator color="#0EA5E9" size="small" />
+          <ActivityIndicator color={theme.accent} size="small" />
         </View>
       )}
 
       {!isUploading && !!onPress && (
-        <View style={[style.cameraBadge, { width: BADGE, height: BADGE, borderRadius: BADGE / 2, bottom: 2, right: 2 }]}>
+        <View style={[styles.cameraBadge, { width: BADGE, height: BADGE, borderRadius: BADGE / 2, bottom: 2, right: 2 }]}>
           <Feather name="edit-2" size={BADGE * 0.46} color="#fff" />
         </View>
       )}
@@ -160,6 +167,10 @@ function StatCard({
   accentColor: string
   onPress?: () => void
 }) {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const scale = useRef(new Animated.Value(1)).current
 
   const onPressIn = () =>
@@ -167,16 +178,14 @@ function StatCard({
   const onPressOut = () =>
     Animated.timing(scale, { toValue: 1, duration: 120, useNativeDriver: true }).start()
 
-  const color = colors()
-  const style = styles(color)
   return (
-    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress} style={style.statCardWrapper}>
-      <Animated.View style={[style.statCard, { borderBottomColor: accentColor, transform: [{ scale }] }]}>
-        <View style={[style.statIconWrap, { backgroundColor: accentColor + '18' }]}>
+    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress} style={styles.statCardWrapper}>
+      <Animated.View style={[styles.statCard, { borderBottomColor: accentColor, transform: [{ scale }] }]}>
+        <View style={[styles.statIconWrap, { backgroundColor: accentColor + '18' }]}>
           {icon}
         </View>
-        <Text style={style.statValue}>{value}</Text>
-        <Text style={style.statLabel}>{label}</Text>
+        <Text style={styles.statValue}>{value}</Text>
+        <Text style={styles.statLabel}>{label}</Text>
       </Animated.View>
     </Pressable>
   )
@@ -203,26 +212,28 @@ function SettingsRow({
   danger?: boolean
   rightElement?: React.ReactNode
 }) {
-  const color = colors()
-  const style = styles(color)
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   return (
     <TouchableOpacity
-      style={style.settingsRow}
+      style={styles.settingsRow}
       onPress={onPress}
       activeOpacity={onPress ? 0.7 : 1}
       disabled={!onPress && !rightElement}
     >
-      <View style={[style.settingsIconWrap, danger && style.settingsIconDanger]}>
-        <Ionicons name={iconName as never} size={16} color={danger ? '#E11D48' : '#94A3B8'} />
+      <View style={[styles.settingsIconWrap, danger && styles.settingsIconDanger]}>
+        <Ionicons name={iconName as never} size={16} color={danger ? theme.danger : theme.muted} />
       </View>
-      <View style={style.settingsLabelWrap}>
-        <Text style={[style.settingsLabel, danger && style.settingsLabelDanger]}>{label}</Text>
-        {description ? <Text style={style.settingsDescription}>{description}</Text> : null}
+      <View style={styles.settingsLabelWrap}>
+        <Text style={[styles.settingsLabel, danger && styles.settingsLabelDanger]}>{label}</Text>
+        {description ? <Text style={styles.settingsDescription}>{description}</Text> : null}
       </View>
-      <View style={style.settingsRight}>
+      <View style={styles.settingsRight}>
         {rightElement ?? (
           <>
-            {value ? <Text style={style.settingsValue}>{value}</Text> : null}
+            {value ? <Text style={styles.settingsValue}>{value}</Text> : null}
             {onPress && !danger && <Ionicons name="chevron-forward" size={14} color="#4B6070" />}
           </>
         )}
@@ -250,13 +261,15 @@ function EditProfileModal({
   onClose: () => void
   onSave: (name: string, username: string, bio: string) => Promise<void>
 }) {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const [name,     setName]     = useState(initialName)
   const [username, setUsername] = useState(initialUsername)
   const [bio,      setBio]      = useState(initialBio)
   const [saving,   setSaving]   = useState(false)
   const [error,    setError]    = useState('')
-  const color = colors()
-  const style = styles(color)
 
   useEffect(() => {
     if (visible) {
@@ -290,53 +303,35 @@ function EditProfileModal({
     }
   }
 
-  const handleTheme = async () => {
-    setSaving(true)
-    setError('')
-    try {
-      await onSave(name.trim(), username.trim().toLowerCase(), bio.trim())
-      onClose()
-    } catch (e: unknown) {
-      const err = e as { code?: string; message?: string }
-      if (err.code === 'USERNAME_TAKEN') {
-        setError('Este username já está em uso.')
-      } else {
-        setError('Erro ao salvar. Tente novamente.')
-      }
-    } finally {
-      setSaving(false)
-    }
-  }
-
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={style.modalRoot}>
-        <View style={style.modalHandle} />
+      <View style={styles.modalRoot}>
+        <View style={styles.modalHandle} />
 
-        <View style={style.modalHeader}>
-          <TouchableOpacity onPress={onClose} style={style.modalCloseBtn}>
+        <View style={styles.modalHeader}>
+          <TouchableOpacity onPress={onClose} style={styles.modalCloseBtn}>
             <Ionicons name="close" size={22} color="#94A3B8" />
           </TouchableOpacity>
-          <Text style={style.modalTitle}>Editar Perfil</Text>
-          <TouchableOpacity onPress={handleSave} disabled={saving} style={style.modalSaveBtn}>
+          <Text style={styles.modalTitle}>Editar Perfil</Text>
+          <TouchableOpacity onPress={handleSave} disabled={saving} style={styles.modalSaveBtn}>
             {saving
               ? <ActivityIndicator size="small" color="#0EA5E9" />
-              : <Text style={style.modalSaveText}>Salvar</Text>
+              : <Text style={styles.modalSaveText}>Salvar</Text>
             }
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={style.modalBody} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.modalBody} keyboardShouldPersistTaps="handled">
           {error ? (
-            <View style={style.errorBanner}>
+            <View style={styles.errorBanner}>
               <Feather name="alert-triangle" size={14} color="#fbbf24" />
-              <Text style={style.errorText}>{error}</Text>
+              <Text style={styles.errorText}>{error}</Text>
             </View>
           ) : null}
 
-          <Text style={style.fieldLabel}>Nome de exibição</Text>
+          <Text style={styles.fieldLabel}>Nome de exibição</Text>
           <TextInput
-            style={style.fieldInput}
+            style={styles.fieldInput}
             value={name}
             onChangeText={setName}
             placeholder="Seu nome"
@@ -345,11 +340,11 @@ function EditProfileModal({
             returnKeyType="next"
           />
 
-          <Text style={style.fieldLabel}>Username</Text>
-          <View style={style.usernameRow}>
-            <Text style={style.usernameAt}>@</Text>
+          <Text style={styles.fieldLabel}>Username</Text>
+          <View style={styles.usernameRow}>
+            <Text style={styles.usernameAt}>@</Text>
             <TextInput
-              style={[style.fieldInput, style.usernameInput]}
+              style={[styles.fieldInput, styles.usernameInput]}
               value={username}
               onChangeText={(t) => setUsername(t.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
               placeholder="seu_username"
@@ -360,11 +355,11 @@ function EditProfileModal({
               maxLength={20}
             />
           </View>
-          <Text style={style.fieldHint}>3–20 caracteres, letras minúsculas, números e _</Text>
+          <Text style={styles.fieldHint}>3–20 caracteres, letras minúsculas, números e _</Text>
 
-          <Text style={style.fieldLabel}>Bio</Text>
+          <Text style={styles.fieldLabel}>Bio</Text>
           <TextInput
-            style={[style.fieldInput, style.bioInput]}
+            style={[styles.fieldInput, styles.bioInput]}
             value={bio}
             onChangeText={setBio}
             placeholder="Conte um pouco sobre você..."
@@ -374,7 +369,7 @@ function EditProfileModal({
             maxLength={160}
             returnKeyType="done"
           />
-          <Text style={style.fieldHint}>{bio.length}/160</Text>
+          <Text style={styles.fieldHint}>{bio.length}/160</Text>
         </ScrollView>
       </View>
     </Modal>
@@ -386,31 +381,26 @@ function EditProfileModal({
 // ---------------------------------------------------------------------------
 
 export default function ProfileScreen() {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const router = useRouter()
   const { user, logout, updateProfile, patchUser } = useAuth()
   const { items } = useUserContent()
-  const color = colors()
-  const style = styles(color)
 
   const [userStats,       setUserStats]       = useState<UserStats | null>(null)
   const [isLoggingOut,    setIsLoggingOut]    = useState(false)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [editModalOpen,   setEditModalOpen]   = useState(false)
-  const [darkMode,        setDarkMode]        = useState(user?.theme === 'dark' ? true : false)
+  const [darkMode,        setDarkMode]        = useState(user?.theme !== 'light')
 
-  const [theme,           setTheme]           = useState(user?.theme)
-  useEffect(() => {
-    if (darkMode === true) {
-    setTheme('dark')
-  } else {
-    setTheme('light')
-  }
-  }, [darkMode])
-
-  useEffect(() => {
-    if (!user?.theme || user?.theme === undefined) return
-    updateProfile({ theme: theme })
-  }, [theme])
+  const handleThemeToggle = useCallback(async (value: boolean) => {
+    const newTheme = value ? 'dark' : 'light'
+    setDarkMode(value)
+    patchUser({ theme: newTheme })
+    await updateProfile({ theme: newTheme })
+  }, [patchUser, updateProfile])
 
   useEffect(() => {
     if (!user?.id) return
@@ -526,11 +516,11 @@ export default function ProfileScreen() {
   const STROKE = 4
 
   return (
-    <SafeAreaView style={style.container} edges={['top']}>
-      <ScrollView contentContainerStyle={style.scroll} showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
         {/* ── Hero ── */}
-        <View style={style.hero}>
+        <View style={styles.hero}>
           {/* XP Ring + Avatar */}
           <XPRing progress={xpProgress} color={lvl.color} size={RING_SIZE} strokeWidth={STROKE}>
             <Avatar
@@ -543,62 +533,62 @@ export default function ProfileScreen() {
           </XPRing>
 
           {/* Level pill */}
-          <View style={[style.levelPill, { borderColor: lvl.color + '55', backgroundColor: lvl.color + '18' }]}>
-            <Text style={[style.levelPillText, { color: lvl.color }]}>
+          <View style={[styles.levelPill, { borderColor: lvl.color + '55', backgroundColor: lvl.color + '18' }]}>
+            <Text style={[styles.levelPillText, { color: lvl.color }]}>
               Nível {lvl.level} · {lvl.title}
             </Text>
           </View>
 
           {/* XP progress text */}
-          <Text style={style.xpText}>
+          <Text style={styles.xpText}>
             {totalXP.toLocaleString('pt-BR')} XP
             {nextLvl ? `  →  ${nextLvl.minXP.toLocaleString('pt-BR')} XP para ${nextLvl.title}` : '  · Nível máximo'}
           </Text>
 
           {/* Name */}
-          <Text style={style.heroName}>{user.name}</Text>
+          <Text style={styles.heroName}>{user.name}</Text>
 
           {/* Username & email */}
           {user.username && (
-            <Text style={style.heroUsername}>@{user.username}</Text>
+            <Text style={styles.heroUsername}>@{user.username}</Text>
           )}
-          <Text style={style.heroEmail}>{user.email}</Text>
-          <Text style={style.heroJoined}>Membro desde {joinedDate}</Text>
+          <Text style={styles.heroEmail}>{user.email}</Text>
+          <Text style={styles.heroJoined}>Membro desde {joinedDate}</Text>
 
           {/* Bio */}
           {user.bio ? (
-            <View style={style.bioCard}>
-              <Text style={style.bioText}>"{user.bio}"</Text>
+            <View style={styles.bioCard}>
+              <Text style={styles.bioText}>"{user.bio}"</Text>
             </View>
           ) : null}
 
           {/* Followers row */}
-          <View style={style.followRow}>
-            <TouchableOpacity style={style.followChip} activeOpacity={0.7}>
-              <Text style={style.followCount}>0</Text>
-              <Text style={style.followLabel}>Seguidores</Text>
+          <View style={styles.followRow}>
+            <TouchableOpacity style={styles.followChip} activeOpacity={0.7}>
+              <Text style={styles.followCount}>0</Text>
+              <Text style={styles.followLabel}>Seguidores</Text>
             </TouchableOpacity>
-            <View style={style.followDivider} />
-            <TouchableOpacity style={style.followChip} activeOpacity={0.7}>
-              <Text style={style.followCount}>0</Text>
-              <Text style={style.followLabel}>Seguindo</Text>
+            <View style={styles.followDivider} />
+            <TouchableOpacity style={styles.followChip} activeOpacity={0.7}>
+              <Text style={styles.followCount}>0</Text>
+              <Text style={styles.followLabel}>Seguindo</Text>
             </TouchableOpacity>
           </View>
 
           {/* Edit button */}
           <TouchableOpacity
-            style={style.editBtn}
+            style={styles.editBtn}
             onPress={() => setEditModalOpen(true)}
             activeOpacity={0.8}
           >
             <Feather name="edit-2" size={13} color="#0EA5E9" />
-            <Text style={style.editBtnText}>Editar Perfil</Text>
+            <Text style={styles.editBtnText}>Editar Perfil</Text>
           </TouchableOpacity>
         </View>
 
         {/* ── Stats 2x2 ── */}
-        <View style={style.statsGrid}>
-          <View style={style.statsRow}>
+        <View style={styles.statsGrid}>
+          <View style={styles.statsRow}>
             <StatCard
               icon={<Ionicons name="chatbubbles-outline" size={22} color="#00D1FF" />}
               value={userStats?.sessions_count ?? 0}
@@ -614,7 +604,7 @@ export default function ProfileScreen() {
               onPress={() => router.push('/(app)/library')}
             />
           </View>
-          <View style={style.statsRow}>
+          <View style={styles.statsRow}>
             <StatCard
               icon={<Ionicons name="book-outline" size={22} color="#A855F7" />}
               value={readCount}
@@ -637,8 +627,8 @@ export default function ProfileScreen() {
         </View>
 
         {/* ── Preferências ── */}
-        <Text style={style.sectionTitle}>Preferências</Text>
-        <View style={style.settingsGroup}>
+        <Text style={styles.sectionTitle}>Preferências</Text>
+        <View style={styles.settingsGroup}>
           <SettingsRow
             iconName="color-palette-outline"
             label="Aparência"
@@ -646,9 +636,9 @@ export default function ProfileScreen() {
             rightElement={
               <Switch
                 value={darkMode}
-                onValueChange={setDarkMode}
-                trackColor={{ false: '#334155', true: color.accentDim }}
-                thumbColor={darkMode ? color.accent : '#94A3B8'}
+                onValueChange={handleThemeToggle}
+                trackColor={{ false: theme.surfaceDeep, true: theme.accentDim }}
+                thumbColor={darkMode ? theme.accent : theme.muted}
               />
             }
           />
@@ -667,8 +657,8 @@ export default function ProfileScreen() {
         </View>
 
         {/* ── Conta ── */}
-        <Text style={style.sectionTitle}>Conta</Text>
-        <View style={style.settingsGroup}>
+        <Text style={styles.sectionTitle}>Conta</Text>
+        <View style={styles.settingsGroup}>
           <SettingsRow
             iconName="information-circle-outline"
             label="Sobre o LeIA"
@@ -684,7 +674,7 @@ export default function ProfileScreen() {
           />
         </View>
 
-        <Text style={style.version}>LeIA v1.0 • Todos os direitos reservados</Text>
+        <Text style={styles.version}>LeIA v1.0 • Todos os direitos reservados</Text>
       </ScrollView>
 
       {/* ── Modal de edição ── */}
@@ -705,10 +695,10 @@ export default function ProfileScreen() {
 // ---------------------------------------------------------------------------
 // Styles
 // ---------------------------------------------------------------------------
-const styles = (color: any ) => StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: color.background,
+    backgroundColor: theme.background,
   },
   scroll: {
     paddingBottom: 48,
@@ -721,7 +711,7 @@ const styles = (color: any ) => StyleSheet.create({
     paddingBottom: 28,
     paddingHorizontal: 24,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: theme.border,
     marginBottom: 20,
   },
   levelPill: {
@@ -738,13 +728,13 @@ const styles = (color: any ) => StyleSheet.create({
     letterSpacing: 0.3,
   },
   xpText: {
-    color: '#4B6070',
+    color: theme.dimmed,
     fontSize: 11,
     marginBottom: 14,
     textAlign: 'center',
   },
   heroName: {
-    color: '#F0EEE6',
+    color: theme.text,
     fontSize: 24,
     fontWeight: '800',
     marginBottom: 4,
@@ -752,18 +742,18 @@ const styles = (color: any ) => StyleSheet.create({
     fontFamily: 'ClashDisplay-Semibold',
   },
   heroUsername: {
-    color: '#0EA5E9',
+    color: theme.accent,
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 3,
   },
   heroEmail: {
-    color: '#4B6070',
+    color: theme.dimmed,
     fontSize: 12,
     marginBottom: 2,
   },
   heroJoined: {
-    color: '#344554',
+    color: theme.dimmed,
     fontSize: 11,
     marginBottom: 14,
   },
@@ -778,7 +768,7 @@ const styles = (color: any ) => StyleSheet.create({
     width: '100%',
   },
   bioText: {
-    color: '#64748B',
+    color: theme.muted,
     fontSize: 13,
     fontStyle: 'italic',
     lineHeight: 19,
@@ -798,19 +788,19 @@ const styles = (color: any ) => StyleSheet.create({
     paddingVertical: 6,
   },
   followCount: {
-    color: '#F0EEE6',
+    color: theme.text,
     fontSize: 18,
     fontWeight: '800',
   },
   followLabel: {
-    color: '#4B6070',
+    color: theme.dimmed,
     fontSize: 11,
     marginTop: 1,
   },
   followDivider: {
     width: 1,
     height: 28,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: theme.border,
   },
 
   // Edit button
@@ -822,18 +812,18 @@ const styles = (color: any ) => StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(14,165,233,0.35)',
-    backgroundColor: 'rgba(14,165,233,0.08)',
+    borderColor: theme.accent + '59',
+    backgroundColor: theme.accentDim,
   },
   editBtnText: {
-    color: '#0EA5E9',
+    color: theme.accent,
     fontSize: 13,
     fontWeight: '600',
   },
 
   // ── Avatar ──
   avatarFallback: {
-    backgroundColor: '#0EA5E9',
+    backgroundColor: theme.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -843,11 +833,11 @@ const styles = (color: any ) => StyleSheet.create({
   },
   cameraBadge: {
     position: 'absolute',
-    backgroundColor: '#0EA5E9',
+    backgroundColor: theme.accent,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#131f24',
+    borderColor: theme.background,
   },
 
   // ── Stats 2x2 ──
@@ -865,12 +855,12 @@ const styles = (color: any ) => StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#1B2C33',
+    backgroundColor: theme.surfaceDeep,
     borderRadius: 14,
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: theme.border,
     borderBottomWidth: 3,
   },
   statIconWrap: {
@@ -882,13 +872,13 @@ const styles = (color: any ) => StyleSheet.create({
     marginBottom: 10,
   },
   statValue: {
-    color: '#F0EEE6',
+    color: theme.text,
     fontSize: 22,
     fontWeight: '800',
     marginBottom: 2,
   },
   statLabel: {
-    color: '#64748B',
+    color: theme.muted,
     fontSize: 11,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -897,7 +887,7 @@ const styles = (color: any ) => StyleSheet.create({
 
   // ── Settings ──
   sectionTitle: {
-    color: '#94A3B8',
+    color: theme.muted,
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -909,7 +899,6 @@ const styles = (color: any ) => StyleSheet.create({
   },
   settingsGroup: {
     backgroundColor: 'transparent',
-    // borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 24,
     marginHorizontal: 16,
@@ -925,27 +914,27 @@ const styles = (color: any ) => StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: theme.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   settingsIconDanger: {
-    backgroundColor: 'rgba(225,29,72,0.12)',
+    backgroundColor: theme.danger + '1F',
   },
   settingsLabelWrap: {
     flex: 1,
   },
   settingsLabel: {
-    color: '#F0EEE6',
+    color: theme.text,
     fontSize: 14,
     fontWeight: '500',
     fontFamily: 'ClashDisplay-Medium',
   },
   settingsLabelDanger: {
-    color: '#E11D48',
+    color: theme.danger,
   },
   settingsDescription: {
-    color: '#4B6070',
+    color: theme.dimmed,
     fontSize: 11,
     marginTop: 1,
   },
@@ -955,16 +944,16 @@ const styles = (color: any ) => StyleSheet.create({
     gap: 6,
   },
   settingsValue: {
-    color: '#4B6070',
+    color: theme.dimmed,
     fontSize: 12,
-    backgroundColor: '#243640',
+    backgroundColor: theme.surfaceDeep,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
   },
 
   version: {
-    color: '#4B6070',
+    color: theme.dimmed,
     fontSize: 11,
     textAlign: 'center',
     marginTop: 8,
@@ -973,13 +962,13 @@ const styles = (color: any ) => StyleSheet.create({
   // ── Modal de edição ──
   modalRoot: {
     flex: 1,
-    backgroundColor: '#131f24',
+    backgroundColor: theme.surface,
   },
   modalHandle: {
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#334155',
+    backgroundColor: theme.borderStrong,
     alignSelf: 'center',
     marginTop: 10,
     marginBottom: 4,
@@ -990,7 +979,7 @@ const styles = (color: any ) => StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.07)',
+    borderBottomColor: theme.border,
   },
   modalCloseBtn: {
     width: 36,
@@ -1000,7 +989,7 @@ const styles = (color: any ) => StyleSheet.create({
   },
   modalTitle: {
     flex: 1,
-    color: '#F0EEE6',
+    color: theme.text,
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
@@ -1012,7 +1001,7 @@ const styles = (color: any ) => StyleSheet.create({
     justifyContent: 'center',
   },
   modalSaveText: {
-    color: '#0EA5E9',
+    color: theme.accent,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -1024,20 +1013,20 @@ const styles = (color: any ) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(251,191,36,0.1)',
+    backgroundColor: theme.warning + '1A',
     borderRadius: 10,
     padding: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(251,191,36,0.25)',
+    borderColor: theme.warning + '40',
   },
   errorText: {
-    color: '#fbbf24',
+    color: theme.warning,
     fontSize: 13,
     flex: 1,
   },
   fieldLabel: {
-    color: '#94A3B8',
+    color: theme.muted,
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -1046,14 +1035,14 @@ const styles = (color: any ) => StyleSheet.create({
     marginTop: 16,
   },
   fieldInput: {
-    backgroundColor: '#1B2C33',
+    backgroundColor: theme.surfaceDeep,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 13,
-    color: '#F0EEE6',
+    color: theme.text,
     fontSize: 15,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: theme.border,
   },
   usernameRow: {
     flexDirection: 'row',
@@ -1061,7 +1050,7 @@ const styles = (color: any ) => StyleSheet.create({
     gap: 6,
   },
   usernameAt: {
-    color: '#4B6070',
+    color: theme.dimmed,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -1074,7 +1063,7 @@ const styles = (color: any ) => StyleSheet.create({
     paddingTop: 12,
   },
   fieldHint: {
-    color: '#4B6070',
+    color: theme.dimmed,
     fontSize: 11,
     marginTop: 4,
   },

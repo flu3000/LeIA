@@ -1,29 +1,34 @@
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native'
-import { colors } from '@/src/constants/colors'
+import { useTheme } from '../context/ThemeContext'
+import { useMemo } from 'react';
 
 export function LoadingScreen() {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  
   return (
     <View style={styles.container}>
       <Text style={styles.logo}>LeIA</Text>
       <ActivityIndicator
         size="small"
-        color={colors.accent}
+        color={theme.accent}
         style={styles.spinner}
       />
     </View>
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 24,
   },
   logo: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 36,
     fontWeight: '700',
     letterSpacing: 4,

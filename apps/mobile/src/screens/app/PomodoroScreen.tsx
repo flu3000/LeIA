@@ -1,7 +1,7 @@
 import {
   View, Text, TouchableOpacity, ScrollView, Modal, StyleSheet, Dimensions, TextInput,
 } from 'react-native'
-import React, { useState, useCallback, useEffect, useRef } from 'react'
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import Reanimated, {
   useSharedValue, useAnimatedStyle, withTiming, Easing,
 } from 'react-native-reanimated'
@@ -12,7 +12,7 @@ import { Feather, Ionicons } from '@expo/vector-icons'
 
 import { usePomodoro, type PomodoroMode } from '@/src/hooks/usePomodoro'
 import { usePomodoroSettings } from '@/src/hooks/usePomodoroSettings'
-import { colors } from '@/src/constants/colors'
+import { useTheme } from '@/src/context/ThemeContext'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 const RING_SIZE   = Math.min(SCREEN_WIDTH * 0.65, 240)
@@ -37,10 +37,12 @@ function DurationStepper({
   max?: number
   unit?: string
 }) {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const [raw, setRaw] = useState(String(value))
   const [editing, setEditing] = useState(false)
-  const color = colors()
-  const style = styles(color)
 
   useEffect(() => {
     if (!editing) setRaw(String(value))
@@ -57,22 +59,22 @@ function DurationStepper({
   }
 
   return (
-    <View style={style.stepper}>
-      <View style={style.stepperLabelWrap}>
+    <View style={styles.stepper}>
+      <View style={styles.stepperLabelWrap}>
         {icon}
-        <Text style={style.stepperLabel}>{label}</Text>
+        <Text style={styles.stepperLabel}>{label}</Text>
       </View>
-      <View style={style.stepperControls}>
+      <View style={styles.stepperControls}>
         <TouchableOpacity
-          style={[style.stepBtn, value <= min && style.stepBtnDisabled]}
+          style={[styles.stepBtn, value <= min && styles.stepBtnDisabled]}
           onPress={() => { if (value > min) onChange(value - 1) }}
           activeOpacity={0.7}
         >
-          <Text style={style.stepBtnText}>−</Text>
+          <Text style={styles.stepBtnText}>−</Text>
         </TouchableOpacity>
-        <View style={style.stepperInputWrap}>
+        <View style={styles.stepperInputWrap}>
           <TextInput
-            style={style.stepperInput}
+            style={styles.stepperInput}
             value={raw}
             onChangeText={setRaw}
             onFocus={() => setEditing(true)}
@@ -82,14 +84,14 @@ function DurationStepper({
             maxLength={3}
             selectTextOnFocus
           />
-          {unit ? <Text style={style.stepperUnit}>{unit}</Text> : null}
+          {unit ? <Text style={styles.stepperUnit}>{unit}</Text> : null}
         </View>
         <TouchableOpacity
-          style={[style.stepBtn, value >= max && style.stepBtnDisabled]}
+          style={[styles.stepBtn, value >= max && styles.stepBtnDisabled]}
           onPress={() => { if (value < max) onChange(value + 1) }}
           activeOpacity={0.7}
         >
-          <Text style={style.stepBtnText}>+</Text>
+          <Text style={styles.stepBtnText}>+</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -97,6 +99,10 @@ function DurationStepper({
 }
 
 export default function PomodoroScreen() {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const { stats, saveStatus, saveDurations, saveDailyGoal, completeSession, isLoadingSettings } = usePomodoroSettings()
 
   const handleFocusComplete = useCallback(async (data: { durationMinutes: number; maintainedFocus: boolean }) => {
@@ -149,52 +155,51 @@ export default function PomodoroScreen() {
 
   // Goal celebration toast
   const goalJustReached = stats.goalJustReached
-  const color = colors()
-  const style = styles(color)
+
   return (
-    <SafeAreaView style={style.container} edges={['top']}>
-      <ScrollView contentContainerStyle={style.scroll} showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
 
         {/* Mode switcher */}
         <View
-          style={style.modeSwitcher}
+          style={styles.modeSwitcher}
           onLayout={(e) => setSwitcherWidth(e.nativeEvent.layout.width)}
         >
           {switcherWidth > 0 && (
             <Reanimated.View
-              style={[style.modeIndicator, indicatorStyle, { width: tabWidth, backgroundColor: accentColor }]}
+              style={[styles.modeIndicator, indicatorStyle, { width: tabWidth, backgroundColor: accentColor }]}
             />
           )}
           <TouchableOpacity
-            style={style.modeTab}
+            style={styles.modeTab}
             onPress={() => handleSwitch('focus')}
             activeOpacity={0.7}
           >
-            <Text style={[style.modeTabText, isFocus && style.modeTabTextActive]}>
+            <Text style={[styles.modeTabText, isFocus && styles.modeTabTextActive]}>
               Foco
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={style.modeTab}
+            style={styles.modeTab}
             onPress={() => handleSwitch('break')}
             activeOpacity={0.7}
           >
-            <Text style={[style.modeTabText, !isFocus && style.modeTabTextActive]}>
+            <Text style={[styles.modeTabText, !isFocus && styles.modeTabTextActive]}>
               Pausa
             </Text>
           </TouchableOpacity>
         </View>
-        <View style={style.header}>
+        <View style={styles.header}>
           {stats.streak > 0 && (
-            <View style={style.streakBadge}>
+            <View style={styles.streakBadge}>
               <Ionicons name="flame-outline" size={14} color="#fbbf24" />
-              <Text style={style.streakText}> {stats.streak}</Text>
+              <Text style={styles.streakText}> {stats.streak}</Text>
             </View>
           )}
         </View>
 
         {/* SVG Ring */}
-        <View style={style.ringContainer}>
+        <View style={styles.ringContainer}>
           <Svg
             width={RING_SIZE}
             height={RING_SIZE}
@@ -225,34 +230,34 @@ export default function PomodoroScreen() {
           </Svg>
 
           {/* Timer inside ring */}
-          <View style={[style.timerOverlay, { width: RING_SIZE, height: RING_SIZE }]}>
-            <Text style={[style.timerText, { color: accentColor }]}>
+          <View style={[styles.timerOverlay, { width: RING_SIZE, height: RING_SIZE }]}>
+            <Text style={[styles.timerText, { color: accentColor }]}>
               {pad(minutes)}:{pad(seconds)}
             </Text>
-            <View style={style.timerModeRow}>
+            <View style={styles.timerModeRow}>
               {isFocus ? <Feather name="target" size={14} color="#94A3B8" /> : <Feather name="coffee" size={14} color="#94A3B8" />}
-              <Text style={style.timerMode}>{isFocus ? ' Foco' : ' Pausa'}</Text>
+              <Text style={styles.timerMode}>{isFocus ? ' Foco' : ' Pausa'}</Text>
             </View>
             {sessions > 0 && (
-              <Text style={style.sessionsText}>{sessions} sessões hoje</Text>
+              <Text style={styles.sessionsText}>{sessions} sessões hoje</Text>
             )}
           </View>
         </View>
 
         {/* Interrupted warning */}
         {focusInterrupted && (
-          <TouchableOpacity style={style.warningBanner} onPress={dismissInterrupted}>
-            <View style={style.warningRow}>
+          <TouchableOpacity style={styles.warningBanner} onPress={dismissInterrupted}>
+            <View style={styles.warningRow}>
               <Feather name="alert-triangle" size={14} color="#fbbf24" />
-              <Text style={style.warningText}> Foco interrompido — o app foi para segundo plano</Text>
+              <Text style={styles.warningText}> Foco interrompido — o app foi para segundo plano</Text>
             </View>
           </TouchableOpacity>
         )}
 
         {/* Controls */}
-        <View style={style.controls}>
+        <View style={styles.controls}>
           <TouchableOpacity
-            style={style.resetBtn}
+            style={styles.resetBtn}
             onPress={handleReset}
             activeOpacity={0.7}
           >
@@ -260,36 +265,36 @@ export default function PomodoroScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[style.playBtn, { backgroundColor: accentColor }]}
+            style={[styles.playBtn, { backgroundColor: accentColor }]}
             onPress={handleToggle}
             activeOpacity={0.85}
           >
             {isRunning ? <Feather name="pause" size={28} color="#fff" /> : <Feather name="play" size={28} color="#fff" />}
           </TouchableOpacity>
 
-          <View style={style.resetBtn} />
+          <View style={styles.resetBtn} />
         </View>
 
         {/* Session progress */}
-        <View style={style.progressSection}>
-          <View style={style.progressHeader}>
-            <Text style={style.progressLabel}>
+        <View style={styles.progressSection}>
+          <View style={styles.progressHeader}>
+            <Text style={styles.progressLabel}>
               Sessões hoje: {stats.sessionsToday} / {stats.dailyGoal}
             </Text>
-            {saveStatus === 'saving' && <Text style={style.saveStatus}>Salvando...</Text>}
+            {saveStatus === 'saving' && <Text style={styles.saveStatus}>Salvando...</Text>}
             {saveStatus === 'saved'  && (
-              <View style={style.saveStatusRow}>
+              <View style={styles.saveStatusRow}>
                 <Feather name="check" size={12} color="#10B981" />
-                <Text style={[style.saveStatus, { color: '#10B981' }]}> Salvo</Text>
+                <Text style={[styles.saveStatus, { color: '#10B981' }]}> Salvo</Text>
               </View>
             )}
           </View>
-          <View style={style.progressBar}>
+          <View style={styles.progressBar}>
             {Array.from({ length: stats.dailyGoal }).map((_, i) => (
               <View
                 key={i}
                 style={[
-                  style.progressSegment,
+                  styles.progressSegment,
                   { backgroundColor: i < stats.sessionsToday ? accentColor : '#243640' },
                 ]}
               />
@@ -298,8 +303,8 @@ export default function PomodoroScreen() {
         </View>
 
         {/* Duration settings */}
-        <View style={style.settingsSection}>
-          <Text style={style.settingsTitle}>Durações</Text>
+        <View style={styles.settingsSection}>
+          <Text style={styles.settingsTitle}>Durações</Text>
           <DurationStepper
             label="Foco"
             icon={<Ionicons name="timer-outline" size={14} color="#94A3B8" />}
@@ -326,25 +331,25 @@ export default function PomodoroScreen() {
 
       {/* Session complete modal */}
       <Modal transparent animationType="fade" visible={showCompleteModal}>
-        <View style={style.modalOverlay}>
-          <View style={style.modalCard}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
             <Ionicons name="sparkles-outline" size={48} color="#0EA5E9" style={{ marginBottom: 12 }} />
-            <Text style={style.modalTitle}>Sessão completa!</Text>
-            <Text style={style.modalBody}>
+            <Text style={styles.modalTitle}>Sessão completa!</Text>
+            <Text style={styles.modalBody}>
               Ótimo trabalho! Você completou {stats.sessionsToday} de {stats.dailyGoal} sessões hoje.
             </Text>
             {stats.streak > 1 && (
-              <View style={style.modalStreakRow}>
+              <View style={styles.modalStreakRow}>
                 <Ionicons name="flame-outline" size={16} color="#fbbf24" />
-                <Text style={style.modalStreakText}> Sequência de {stats.streak} dias!</Text>
+                <Text style={styles.modalStreakText}> Sequência de {stats.streak} dias!</Text>
               </View>
             )}
             <TouchableOpacity
-              style={style.modalBtn}
+              style={styles.modalBtn}
               onPress={() => setShowCompleteModal(false)}
               activeOpacity={0.8}
             >
-              <Text style={style.modalBtnText}>Continuar</Text>
+              <Text style={styles.modalBtnText}>Continuar</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -352,10 +357,10 @@ export default function PomodoroScreen() {
 
       {/* Goal reached toast */}
       {goalJustReached && (
-        <View style={style.goalToast}>
-          <View style={style.goalToastRow}>
+        <View style={styles.goalToast}>
+          <View style={styles.goalToastRow}>
             <Ionicons name="trophy-outline" size={16} color="#fbbf24" />
-            <Text style={style.goalToastText}> Meta diária atingida! {stats.dailyGoal} sessões completadas!</Text>
+            <Text style={styles.goalToastText}> Meta diária atingida! {stats.dailyGoal} sessões completadas!</Text>
           </View>
         </View>
       )}
@@ -363,10 +368,10 @@ export default function PomodoroScreen() {
   )
 }
 
-const styles = (color: any) => StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: color.background,
+    backgroundColor: theme.background,
   },
   scroll: {
     paddingHorizontal: 20,

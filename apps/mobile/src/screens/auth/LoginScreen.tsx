@@ -2,22 +2,23 @@ import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   KeyboardAvoidingView, Platform, ActivityIndicator, StyleSheet, Alert, Image
 } from 'react-native'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import * as Haptics from 'expo-haptics'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/src/context/AuthContext'
-import { colors } from '@/src/constants/colors'
+import { useTheme } from '@/src/context/ThemeContext'
 
 export default function LoginScreen() {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  
   const { signInWithEmail } = useAuth()
 
   const [email,     setEmail]     = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [sent,      setSent]      = useState(false)
   const [isFocused, setIsFocused] = useState(false)
-  const color = colors()
-  const style = styles(color)
-
 
   const canSubmit = email.trim().length > 0 && email.includes('@')
 
@@ -40,56 +41,56 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={style.flex}
+      style={styles.flex}
     >
       <ScrollView
-        contentContainerStyle={style.scroll}
+        contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
       >
         {/* Logo */}
-        <View style={style.logoArea}>
+        <View style={styles.logoArea}>
           <Image 
             source={require('../../assets/logo_definitiva_core.png')} // Ajuste o caminho até a pasta da imagem
-            style={style.logoImage} 
+            style={styles.logoImage} 
             resizeMode="contain"
           />
-          <Text style={style.logoText}>LeIA</Text>
+          <Text style={styles.logoText}>LeIA</Text>
         </View>
 
         {/* Card */}
-        <View style={style.card}>
+        <View style={styles.card}>
           {sent ? (
             /* ── Confirmation state ── */
-            <View style={style.sentWrap}>
-              <Ionicons name="mail-open-outline" size={48} color={color.accent} style={{ marginBottom: 16 }} />
-              <Text style={style.sentTitle}>Link enviado!</Text>
-              <Text style={style.sentBody}>
+            <View style={styles.sentWrap}>
+              <Ionicons name="mail-open-outline" size={48} color={theme.accent} style={{ marginBottom: 16 }} />
+              <Text style={styles.sentTitle}>Link enviado!</Text>
+              <Text style={styles.sentBody}>
                 Enviamos um link de acesso para{'\n'}
-                <Text style={style.sentEmail}>{email.trim().toLowerCase()}</Text>
+                <Text style={styles.sentEmail}>{email.trim().toLowerCase()}</Text>
               </Text>
               <TouchableOpacity
-                style={style.resendBtn}
+                style={styles.resendBtn}
                 onPress={() => setSent(false)}
                 activeOpacity={0.7}
               >
-                <Text style={style.resendText}>Usar outro e-mail</Text>
+                <Text style={styles.resendText}>Usar outro e-mail</Text>
               </TouchableOpacity>
             </View>
           ) : (
             /* ── Email input state ── */
             <>
-              <View style={style.fieldGroup}>
+              <View style={styles.fieldGroup}>
                 <View
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
-                  style={[style.inputRow, (isFocused) && style.inputRowFocused]}
+                  style={[styles.inputRow, (isFocused) && styles.inputRowFocused]}
                 >
-                  <Ionicons name="mail-outline" size={18} color={color.dimmed} style={style.inputIcon} />
+                  <Ionicons name="mail-outline" size={18} color={theme.dimmed} style={styles.inputIcon} />
                   <TextInput
-                    style={style.inputWithIcon}
-                    selectionColor={color.accent}
+                    style={styles.inputWithIcon}
+                    selectionColor={theme.accent}
                     placeholder="seu@email.com"
-                    placeholderTextColor={color.dimmed}
+                    placeholderTextColor={theme.dimmed}
                     value={email}
                     onChangeText={setEmail}
                     autoCapitalize="none"
@@ -102,7 +103,7 @@ export default function LoginScreen() {
               </View>
 
               <TouchableOpacity
-                style={[style.submitBtn, (!canSubmit || isLoading) && style.submitBtnDisabled]}
+                style={[styles.submitBtn, (!canSubmit || isLoading) && styles.submitBtnDisabled]}
                 onPress={handleSubmit}
                 disabled={!canSubmit || isLoading}
                 activeOpacity={0.85}
@@ -111,7 +112,7 @@ export default function LoginScreen() {
                   ? <ActivityIndicator color="#fff" />
                   : <>
                       <Ionicons name="send-outline" size={18} color="colors.background" style={{ marginRight: 8 }} />
-                      <Text style={style.submitBtnText}>Entrar</Text>
+                      <Text style={styles.submitBtnText}>Entrar</Text>
                     </>
                 }
               </TouchableOpacity>
@@ -119,7 +120,7 @@ export default function LoginScreen() {
           )}
         </View>
 
-        <Text style={style.footer}>
+        <Text style={styles.footer}>
           Ao continuar, você concorda com nossos Termos de Uso.
         </Text>
       </ScrollView>
@@ -127,10 +128,10 @@ export default function LoginScreen() {
   )
 }
 
-const styles = (color: any) => StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   flex: {
     flex: 1,
-    backgroundColor: color.background,
+    backgroundColor: theme.background,
   },
   scroll: {
     flexGrow: 1,
@@ -154,14 +155,14 @@ const styles = (color: any) => StyleSheet.create({
   logoText: {
     fontSize: 40,
     fontWeight: '800',
-    color: color.accent,
+    color: theme.accent,
     // color: "#ff4519",
     letterSpacing: 2,
     fontFamily: 'ClashDisplay-Bold',
   },
   logoSub: {
     fontSize: 14,
-    color: color.muted,
+    color: theme.muted,
     marginTop: 6,
   },
   card: {
@@ -172,13 +173,13 @@ const styles = (color: any) => StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: color.text,
+    color: theme.text,
     marginBottom: 8,
     fontFamily: 'ClashDisplay-Semibold',
   },
   cardSub: {
     fontSize: 14,
-    color: color.muted,
+    color: theme.muted,
     lineHeight: 20,
     marginBottom: 24,
   },
@@ -186,7 +187,7 @@ const styles = (color: any) => StyleSheet.create({
     marginBottom: 20,
   },
   label: {
-    color: color.muted,
+    color: theme.muted,
     fontSize: 11,
     fontWeight: '600',
     marginBottom: 6,
@@ -196,14 +197,14 @@ const styles = (color: any) => StyleSheet.create({
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: color.background,
+    backgroundColor: theme.background,
     borderRadius: 12,
     borderBottomWidth: 2,
-    borderColor: color.border,
+    borderColor: theme.border,
   },
   inputRowFocused: {
     borderBottomWidth: 2,
-    borderColor: color.accent,
+    borderColor: theme.accent,
   },
   inputIcon: {
     marginLeft: 14,
@@ -212,12 +213,12 @@ const styles = (color: any) => StyleSheet.create({
     flex: 1,
     paddingHorizontal: 10,
     paddingVertical: 14,
-    color: color.text,
+    color: theme.text,
     fontSize: 15,
     fontFamily: 'ClashDisplay-Medium',
   },
   submitBtn: {
-    backgroundColor: color.accent,
+    backgroundColor: theme.accent,
     // backgroundColor: "#0094C2",
     borderRadius: 12,
     paddingVertical: 16,
@@ -230,7 +231,7 @@ const styles = (color: any) => StyleSheet.create({
     opacity: 0.45,
   },
   submitBtnText: {
-    color: color.background,
+    color: theme.background,
     fontSize: 16,
     fontWeight: '700',
     fontFamily: 'ClashDisplay-Semibold',
@@ -243,25 +244,25 @@ const styles = (color: any) => StyleSheet.create({
   sentTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: color.text,
+    color: theme.text,
     marginBottom: 12,
     fontFamily: 'ClashDisplay-Semibold',
   },
   sentBody: {
     fontSize: 14,
-    color: color.muted,
+    color: theme.muted,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 16,
     fontFamily: 'ClashDisplay-Medium',
   },
   sentEmail: {
-    color: color.text,
+    color: theme.text,
     fontWeight: '600',
   },
   sentHint: {
     fontSize: 13,
-    color: color.dimmed,
+    color: theme.dimmed,
     textAlign: 'center',
     lineHeight: 19,
     marginBottom: 24,
@@ -272,16 +273,16 @@ const styles = (color: any) => StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: color.border,
+    borderColor: theme.border,
   },
   resendText: {
-    color: color.accent,
+    color: theme.accent,
     fontSize: 14,
     fontWeight: '600',
     fontFamily: 'ClashDisplay-Semibold',
   },
   footer: {
-    color: color.dimmed,
+    color: theme.dimmed,
     fontSize: 11,
     textAlign: 'center',
     marginTop: 24,

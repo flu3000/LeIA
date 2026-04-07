@@ -40,7 +40,8 @@
       "Bash(/c/Programação/projetos_pessoais/LeIA/.gitignore:*)",
       "Bash(node -e \"require\\(''./node_modules/react-native-get-random-values/package.json''\\)\")",
       "Bash(ls -la \"C:\\\\Programação\\\\projetos_pessoais\\\\LeIA\\\\apps\\\\mobile\\\\app\\\\\\(app\\)\")",
-      "Bash(ls -la \"/c/Programação/projetos_pessoais/LeIA/apps/mobile/app/\\(app\\)\")"
+      "Bash(ls -la \"/c/Programação/projetos_pessoais/LeIA/apps/mobile/app/\\(app\\)\")",
+      "Bash(xargs grep:*)"
     ]
   }
 }

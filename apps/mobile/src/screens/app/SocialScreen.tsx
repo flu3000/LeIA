@@ -1,7 +1,7 @@
 import {
   View, Text, TouchableOpacity, StyleSheet, Animated,
 } from 'react-native'
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useMemo } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import Reanimated, {
@@ -12,7 +12,7 @@ import * as Haptics from 'expo-haptics'
 import InsightsTab, { type InsightSubTab } from '@/src/screens/social/InsightsTab'
 import RankingsTab from '@/src/screens/social/RankingsTab'
 import CommunitiesTab from '@/src/screens/social/CommunitiesTab'
-import { colors } from '@/src/constants/colors'
+import { useTheme } from '@/src/context/ThemeContext'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -34,11 +34,13 @@ const INSIGHT_SUB_TABS: { key: InsightSubTab; label: string }[] = [
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function SocialScreen() {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const [mainTab, setMainTab]     = useState<MainTab>('insights')
   const [subTabIdx, setSubTabIdx] = useState(0)
   const [subBarWidth, setSubBarWidth] = useState(0)
-  const color = colors()
-  const style = styles(color)
 
   // Fade animation for main tab content switch (React Native Animated)
   const fadeAnim = useRef(new Animated.Value(1)).current
@@ -76,22 +78,22 @@ export default function SocialScreen() {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <SafeAreaView style={style.safeArea} edges={['top']}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
 
       {/* ── Nível 1: Ícones grandes das abas principais ── */}
-      <View style={[style.mainTabBar, { borderBottomColor: activeColor + '33' }]}>
+      <View style={[styles.mainTabBar, { borderBottomColor: activeColor + '33' }]}>
         {MAIN_TABS.map((tab) => {
           const isActive = mainTab === tab.key
           return (
             <TouchableOpacity
               key={tab.key}
-              style={style.mainTabBtn}
+              style={styles.mainTabBtn}
               onPress={() => switchMainTab(tab.key)}
               activeOpacity={0.75}
             >
               {/* Glow circle when active */}
               <View style={[
-                style.mainTabIconWrap,
+                styles.mainTabIconWrap,
                 isActive && { backgroundColor: tab.color + '22' },
               ]}>
                 <Ionicons
@@ -100,12 +102,12 @@ export default function SocialScreen() {
                   color={isActive ? tab.color : '#4A5568'}
                 />
               </View>
-              <Text style={[style.mainTabLabel, isActive && { color: tab.color }]}>
+              <Text style={[styles.mainTabLabel, isActive && { color: tab.color }]}>
                 {tab.label}
               </Text>
               {/* Active underline */}
               {isActive && (
-                <View style={[style.mainTabUnderline, { backgroundColor: tab.color }]} />
+                <View style={[styles.mainTabUnderline, { backgroundColor: tab.color }]} />
               )}
             </TouchableOpacity>
           )
@@ -115,7 +117,7 @@ export default function SocialScreen() {
       {/* ── Nível 2: Sub-abas de texto (só para Insights) ── */}
       {mainTab === 'insights' && (
         <View
-          style={style.subTabBar}
+          style={styles.subTabBar}
           onLayout={(e) => setSubBarWidth(e.nativeEvent.layout.width)}
         >
           {INSIGHT_SUB_TABS.map((tab, idx) => {
@@ -123,11 +125,11 @@ export default function SocialScreen() {
             return (
               <TouchableOpacity
                 key={tab.key}
-                style={style.subTabBtn}
+                style={styles.subTabBtn}
                 onPress={() => switchSubTab(idx)}
                 activeOpacity={0.8}
               >
-                <Text style={[style.subTabText, isActive && style.subTabTextActive]}>
+                <Text style={[styles.subTabText, isActive && styles.subTabTextActive]}>
                   {tab.label}
                 </Text>
               </TouchableOpacity>
@@ -138,7 +140,7 @@ export default function SocialScreen() {
           {subBarWidth > 0 && (
             <Reanimated.View
               style={[
-                style.subTabIndicator,
+                styles.subTabIndicator,
                 indicatorStyle,
                 { width: tabWidth },
               ]}
@@ -148,7 +150,7 @@ export default function SocialScreen() {
       )}
 
       {/* ── Content ── */}
-      <Animated.View style={[style.content, { opacity: fadeAnim }]}>
+      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
         {mainTab === 'insights' && (
           <InsightsTab subTab={INSIGHT_SUB_TABS[subTabIdx].key} />
         )}
@@ -162,10 +164,10 @@ export default function SocialScreen() {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = (color: any) => StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: color.background,
+    backgroundColor: theme.background,
   },
 
   // ── Main tab bar (Nível 1) ────────────────────────────────────────────────

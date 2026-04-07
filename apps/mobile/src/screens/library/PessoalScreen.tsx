@@ -2,13 +2,13 @@ import {
   View, Text, TouchableOpacity, FlatList, Image,
   ActivityIndicator, StyleSheet,
 } from 'react-native'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 
-import { colors } from '@/src/constants/colors'
+import { useTheme } from '@/src/context/ThemeContext'
 import { useSavedBooks } from '@/src/hooks/useSavedBooks'
 import type { SavedBook, ReadStatus } from '@/src/types/library'
 
@@ -21,9 +21,9 @@ const STATUS_LABEL: Record<ReadStatus, string> = {
 }
 
 const STATUS_COLOR: Record<ReadStatus, string> = {
-  'a ler': colors.muted,
-  'lendo': colors.accent,
-  'lido':  colors.success,
+  'a ler': useTheme().muted,
+  'lendo': useTheme().accent,
+  'lido':  useTheme().success,
 }
 
 type FilterTab = 'todos' | ReadStatus
@@ -48,6 +48,10 @@ function SavedBookCard({
   onUnsave: () => void
   onUpdateStatus: (s: ReadStatus) => void
 }) {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const book    = item.book_editions?.books
   const edition = item.book_editions
   const cover   = edition?.cover_url
@@ -61,7 +65,7 @@ function SavedBookCard({
           <Image source={{ uri: cover }} style={styles.cover} resizeMode="cover" />
         ) : (
           <View style={[styles.cover, styles.coverPlaceholder]}>
-            <Ionicons name="book" size={24} color={colors.dimmed} />
+            <Ionicons name="book" size={24} color={theme.dimmed} />
           </View>
         )}
 
@@ -106,7 +110,7 @@ function SavedBookCard({
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           activeOpacity={0.7}
         >
-          <Ionicons name="heart" size={22} color={colors.danger} />
+          <Ionicons name="heart" size={22} color={theme.danger} />
         </TouchableOpacity>
       </TouchableOpacity>
     </Animated.View>
@@ -116,6 +120,10 @@ function SavedBookCard({
 // ── Tela ─────────────────────────────────────────────────────────────────────
 
 export default function PessoalScreen() {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const router = useRouter()
   const { savedBooks, isLoading, isSyncing, unsaveBook, updateStatus, refetch } = useSavedBooks()
   const [activeFilter, setActiveFilter] = useState<FilterTab>('todos')
@@ -161,8 +169,8 @@ export default function PessoalScreen() {
         {/* Refresh */}
         <TouchableOpacity onPress={refetch} style={styles.refreshBtn}>
           {isSyncing
-            ? <ActivityIndicator size="small" color={colors.accent} />
-            : <Ionicons name="refresh" size={18} color={colors.muted} />
+            ? <ActivityIndicator size="small" color={theme.accent} />
+            : <Ionicons name="refresh" size={18} color={theme.muted} />
           }
         </TouchableOpacity>
       </View>
@@ -170,7 +178,7 @@ export default function PessoalScreen() {
       {/* Lista */}
       {isLoading ? (
         <View style={styles.loadingCenter}>
-          <ActivityIndicator color={colors.accent} />
+          <ActivityIndicator color={theme.accent} />
         </View>
       ) : (
         <FlatList
@@ -188,7 +196,7 @@ export default function PessoalScreen() {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="heart-outline" size={48} color={colors.dimmed} />
+              <Ionicons name="heart-outline" size={48} color={theme.dimmed} />
               <Text style={styles.emptyTitle}>
                 {activeFilter === 'todos' ? 'Nenhum livro salvo' : `Nenhum livro em "${FILTER_TABS.find(f => f.key === activeFilter)?.label}"`}
               </Text>
@@ -205,10 +213,10 @@ export default function PessoalScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
   },
   filterRow: {
     flexDirection: 'row',
@@ -222,16 +230,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 20,
-    backgroundColor: colors.surface,
+    backgroundColor: theme.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.border,
   },
   filterTabActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
+    backgroundColor: theme.accent,
+    borderColor: theme.accent,
   },
   filterText: {
-    color: colors.muted,
+    color: theme.muted,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -252,12 +260,12 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: colors.surface,
+    backgroundColor: theme.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.border,
     gap: 14,
   },
   cover: {
@@ -266,7 +274,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   coverPlaceholder: {
-    backgroundColor: colors.surfaceDeep,
+    backgroundColor: theme.surfaceDeep,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -275,17 +283,17 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   title: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 15,
     fontWeight: '700',
     lineHeight: 20,
   },
   author: {
-    color: colors.muted,
+    color: theme.muted,
     fontSize: 13,
   },
   publisher: {
-    color: colors.dimmed,
+    color: theme.dimmed,
     fontSize: 12,
   },
   statusRow: {
@@ -298,12 +306,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 20,
-    backgroundColor: colors.surfaceDeep,
+    backgroundColor: theme.surfaceDeep,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.border,
   },
   statusText: {
-    color: colors.dimmed,
+    color: theme.dimmed,
     fontSize: 11,
     fontWeight: '600',
   },
@@ -322,13 +330,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   emptyTitle: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 17,
     fontWeight: '700',
     textAlign: 'center',
   },
   emptySubtitle: {
-    color: colors.muted,
+    color: theme.muted,
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,

@@ -14,16 +14,18 @@ import { useChatSessions } from '@/src/hooks/useChatSessions'
 import { useUserContent } from '@/src/hooks/useUserContent'
 import SourceCard from '@/src/components/SourceCard'
 import ChatDrawer from '@/src/components/ChatDrawer'
-import { colors } from '@/src/constants/colors'
+import { useTheme } from '@/src/context/ThemeContext'
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function TypingDots() {
-  const color = colors()
-  const style = styles(color)
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   return (
-    <View style={style.typingBubble}>
-      <Text style={style.typingText}>LeIA está pensando...</Text>
+    <View style={styles.typingBubble}>
+      <Text style={styles.typingText}>LeIA está pensando...</Text>
       <ActivityIndicator size="small" color="#0EA5E9" style={{ marginLeft: 8 }} />
     </View>
   )
@@ -32,22 +34,23 @@ function TypingDots() {
 function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === 'user'
   const { toggleSave, isFavourite } = useUserContent()
-  const color = colors()
-  const style = styles(color)
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
     <Animated.View
       entering={FadeInDown.duration(300).springify()}
-      style={[style.messageRow, isUser ? style.userRow : style.assistantRow]}
+      style={[styles.messageRow, isUser ? styles.userRow : styles.assistantRow]}
     >
 
-      <View style={[style.bubble, isUser ? style.userBubble : style.assistantBubble]}>
-        <Text style={[style.bubbleText, isUser ? style.userText : style.assistantText]}>
+      <View style={[styles.bubble, isUser ? styles.userBubble : styles.assistantBubble]}>
+        <Text style={[styles.bubbleText, isUser ? styles.userText : styles.assistantText]}>
           {message.content}
         </Text>
 
         {message.sources && message.sources.length > 0 && (
-          <View style={style.sourcesContainer}>
+          <View style={styles.sourcesContainer}>
             {message.sources.map((fonte: Fonte, i: number) => (
               <SourceCard
                 key={fonte.id_externo ?? i}
@@ -66,10 +69,10 @@ function MessageBubble({ message }: { message: Message }) {
         )}
 
         {message.citations && message.citations.length > 0 && (
-          <View style={style.citationsRow}>
+          <View style={styles.citationsRow}>
             {message.citations.slice(0, 3).map((url, i) => (
-              <View key={i} style={style.citationBadge}>
-                <Text style={style.citationText} numberOfLines={1}>
+              <View key={i} style={styles.citationBadge}>
+                <Text style={styles.citationText} numberOfLines={1}>
                   [{i + 1}] {new URL(url).hostname}
                 </Text>
               </View>
@@ -84,12 +87,15 @@ function MessageBubble({ message }: { message: Message }) {
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 export default function ChatScreen() {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const [drawerOpen,       setDrawerOpen]       = useState(false)
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [input, setInput] = useState('')
   const listRef = useRef<FlatList>(null)
-  const color = colors()
-  const style = styles(color)
+  // const style = styles(colors)
 
   const {
     sessions, isLoading: isLoadingSessions,
@@ -172,29 +178,29 @@ export default function ChatScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <SafeAreaView style={style.container} edges={['top']}>
+      <SafeAreaView style={styles.container} edges={['top']}>
 
         {/* Header */}
-        <View style={style.header}>
+        <View style={styles.header}>
           <TouchableOpacity
-            style={style.headerBtn}
+            style={styles.headerBtn}
             onPress={() => { Haptics.selectionAsync(); setDrawerOpen(true) }}
             activeOpacity={0.7}
           >
             <Ionicons name="menu" size={22} color="#94A3B8" />
           </TouchableOpacity>
 
-          <View style={style.headerCenter}>
-            <Text style={style.headerTitle}>LeIA</Text>
-            <Text style={style.headerSub}>Bibliotecário Inteligente</Text>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>LeIA</Text>
+            <Text style={styles.headerSub}>Bibliotecário Inteligente</Text>
           </View>
 
           {/* Espaço espelho para centralizar o título */}
-          <View style={style.headerBtn} />
+          <View style={styles.headerBtn} />
         </View>
 
         <KeyboardAvoidingView
-          style={style.flex}
+          style={styles.flex}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={0}
         >
@@ -203,15 +209,15 @@ export default function ChatScreen() {
             data={messages}
             keyExtractor={(m) => m.id}
             renderItem={({ item }) => <MessageBubble message={item} />}
-            contentContainerStyle={style.messageList}
+            contentContainerStyle={styles.messageList}
             onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
             showsVerticalScrollIndicator={false}
             ListFooterComponent={isTyping ? <TypingDots /> : null}
           />
 
-          <View style={style.inputBar}>
+          <View style={styles.inputBar}>
             <TextInput
-              style={style.textInput}
+              style={styles.textInput}
               value={input}
               onChangeText={setInput}
               placeholder="Sobre o que quer aprender?"
@@ -222,7 +228,7 @@ export default function ChatScreen() {
               blurOnSubmit={false}
             />
             <TouchableOpacity
-              style={[style.sendBtn, (!input.trim() || isTyping) && style.sendBtnDisabled]}
+              style={[styles.sendBtn, (!input.trim() || isTyping) && styles.sendBtnDisabled]}
               onPress={handleSend}
               disabled={!input.trim() || isTyping}
               activeOpacity={0.8}
@@ -235,7 +241,7 @@ export default function ChatScreen() {
 
       {/* Left-edge swipe zone (20px wide, behind drawer) */}
       <GestureDetector gesture={edgeGesture}>
-        <View style={style.edgeZone} />
+        <View style={styles.edgeZone} />
       </GestureDetector>
 
       {/* Drawer (absolute overlay, rendered last = on top) */}
@@ -256,10 +262,10 @@ export default function ChatScreen() {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = (color: any) => StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: color.background,
+    backgroundColor: theme.background,
   },
   flex: { flex: 1 },
 
@@ -270,7 +276,7 @@ const styles = (color: any) => StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.06)',
-    backgroundColor: color.background,
+    backgroundColor: theme.background,
   },
   headerBtn: {
     width: 40,
@@ -283,7 +289,7 @@ const styles = (color: any) => StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    color: color.accent,
+    color: theme.accent,
     fontSize: 20,
     fontWeight: '800',
     letterSpacing: 1,
@@ -377,12 +383,12 @@ const styles = (color: any) => StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: Platform.OS === 'ios' ? 8 : 12,
-    backgroundColor: color.background,
+    backgroundColor: theme.background,
     gap: 10,
   },
   textInput: {
     flex: 1,
-    backgroundColor: color.background,
+    backgroundColor: theme.background,
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingTop: 12,

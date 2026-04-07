@@ -5,12 +5,17 @@ import { useRouter } from 'expo-router'
 import * as Haptics from 'expo-haptics'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 
-import { colors } from '@/src/constants/colors'
+import { useTheme } from '@/src/context/ThemeContext' 
 import { usePillars } from '@/src/hooks/usePillars'
 import { PillarCard } from './components/PillarCard'
 import type { Pillar } from '@/src/types/library'
+import { useMemo } from 'react'
 
 export default function PilaresScreen() {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const router = useRouter()
   const { pillars, isLoading } = usePillars()
 
@@ -22,7 +27,7 @@ export default function PilaresScreen() {
   if (isLoading) {
     return (
       <View style={styles.loadingCenter}>
-        <ActivityIndicator color={colors.accent} />
+        <ActivityIndicator color={theme.accent} />
       </View>
     )
   }
@@ -52,12 +57,12 @@ export default function PilaresScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   loadingCenter: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
   },
   list: {
     paddingHorizontal: 16,
@@ -75,7 +80,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    color: colors.dimmed,
+    color: theme.dimmed,
     fontSize: 14,
     fontFamily: 'ClashDisplay-Medium',
   },

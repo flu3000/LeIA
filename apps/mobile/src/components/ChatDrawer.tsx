@@ -12,7 +12,6 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import * as Haptics from 'expo-haptics'
 
 import { type ChatSession } from '@/src/hooks/useChatSessions'
-import { colors } from '../constants/colors'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -346,7 +345,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   logoText: {
-    color: colors.accent,
+    color: CYAN,
     fontSize: 18,
     fontWeight: '800',
     letterSpacing: 1,

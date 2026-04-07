@@ -2,17 +2,21 @@ import {
   View, Text, SectionList, ActivityIndicator, StyleSheet,
 } from 'react-native'
 import { useNavigation, useRouter } from 'expo-router'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 
-import { colors } from '@/src/constants/colors'
+import { useTheme } from '@/src/context/ThemeContext'
 import { useCategoryDetail } from '@/src/hooks/usePillars'
 import { useSavedBooks } from '@/src/hooks/useSavedBooks'
 import { BookCard } from './components/BookCard'
 import type { Book } from '@/src/types/library'
 
 export default function CategoryDetailScreen({ categoryId }: { categoryId: string }) {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const router     = useRouter()
   const navigation = useNavigation()
 
@@ -42,7 +46,7 @@ export default function CategoryDetailScreen({ categoryId }: { categoryId: strin
   if (isLoading) {
     return (
       <View style={styles.loadingCenter}>
-        <ActivityIndicator color={colors.accent} size="large" />
+        <ActivityIndicator color={theme.accent} size="large" />
       </View>
     )
   }
@@ -91,7 +95,7 @@ export default function CategoryDetailScreen({ categoryId }: { categoryId: strin
         )}
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Ionicons name="book-outline" size={48} color={colors.dimmed} />
+            <Ionicons name="book-outline" size={48} color={theme.dimmed} />
             <Text style={styles.emptyText}>Nenhum livro nesta categoria</Text>
           </View>
         }
@@ -100,26 +104,26 @@ export default function CategoryDetailScreen({ categoryId }: { categoryId: strin
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   loadingCenter: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
   },
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
   },
   catHeader: {
     padding: 16,
     paddingBottom: 12,
     gap: 6,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: theme.border,
   },
   catName: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 20,
     fontWeight: '800',
   },
@@ -128,10 +132,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
-    backgroundColor: colors.accentDim,
+    backgroundColor: theme.accentDim,
   },
   pillarBadgeText: {
-    color: colors.accent,
+    color: theme.accent,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -150,16 +154,16 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.accent,
+    backgroundColor: theme.accent,
   },
   sectionTitle: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 14,
     fontWeight: '700',
     flex: 1,
   },
   sectionCount: {
-    color: colors.dimmed,
+    color: theme.dimmed,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -169,7 +173,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   emptyText: {
-    color: colors.dimmed,
+    color: theme.dimmed,
     fontSize: 14,
   },
 })

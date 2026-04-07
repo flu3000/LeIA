@@ -3,12 +3,12 @@ import {
   ActivityIndicator, StyleSheet,
 } from 'react-native'
 import { useNavigation } from 'expo-router'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 
-import { colors } from '@/src/constants/colors'
+import { useTheme } from '@/src/context/ThemeContext' 
 import { usePillarDetail } from '@/src/hooks/usePillars'
 import { useSavedBooks } from '@/src/hooks/useSavedBooks'
 import { BookCardSmall, BookCard } from './components/BookCard'
@@ -23,6 +23,10 @@ function CategoryCarousel({
   category: Category & { books: Book[] }
   onBook: (b: Book) => void
 }) {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   if (!category.books || category.books.length === 0) return null
 
   return (
@@ -45,6 +49,10 @@ function CategoryCarousel({
 // ── Tela ─────────────────────────────────────────────────────────────────────
 
 export default function PillarDetailScreen({ pillarId }: { pillarId: string }) {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const router     = useRouter()
   const navigation = useNavigation()
   const { detail, isLoading } = usePillarDetail(pillarId)
@@ -67,7 +75,7 @@ export default function PillarDetailScreen({ pillarId }: { pillarId: string }) {
   if (isLoading) {
     return (
       <View style={styles.loadingCenter}>
-        <ActivityIndicator color={colors.accent} size="large" />
+        <ActivityIndicator color={theme.accent} size="large" />
       </View>
     )
   }
@@ -87,8 +95,8 @@ export default function PillarDetailScreen({ pillarId }: { pillarId: string }) {
       showsVerticalScrollIndicator={false}
     >
       {/* Header do pilar */}
-      <View style={[styles.pillarHeader, { borderLeftColor: colors.accent, borderLeftWidth: 4 }]}>
-        <Ionicons name="library-outline" size={36} color={colors.accent} />
+      <View style={[styles.pillarHeader, { borderLeftColor: theme.accent, borderLeftWidth: 4 }]}>
+        <Ionicons name="library-outline" size={36} color={theme.accent} />
         <View style={styles.pillarMeta}>
           <Text style={styles.pillarName}>{detail.pillar_name}</Text>
         </View>
@@ -122,7 +130,7 @@ export default function PillarDetailScreen({ pillarId }: { pillarId: string }) {
               {cat.books && cat.books.length > 0 && (
                 <View style={styles.seeAllRow}>
                   <Text
-                    style={[styles.seeAll, { color: colors.accent }]}
+                    style={[styles.seeAll, { color: theme.accent }]}
                     onPress={() => handleCategory(cat.category_id)}
                   >
                     Ver todos em {cat.category_name} →
@@ -136,7 +144,7 @@ export default function PillarDetailScreen({ pillarId }: { pillarId: string }) {
 
       {detail.categories_with_books.length === 0 && detail.featured_books.length === 0 && (
         <View style={styles.empty}>
-          <Ionicons name="library-outline" size={48} color={colors.dimmed} />
+          <Ionicons name="library-outline" size={48} color={theme.dimmed} />
           <Text style={styles.emptyText}>Nenhum conteúdo disponível ainda</Text>
         </View>
       )}
@@ -144,20 +152,20 @@ export default function PillarDetailScreen({ pillarId }: { pillarId: string }) {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   loadingCenter: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
   },
   errorText: {
-    color: colors.muted,
+    color: theme.muted,
     fontSize: 16,
   },
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
   },
   content: {
     paddingBottom: 40,
@@ -167,10 +175,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     margin: 16,
     padding: 16,
-    backgroundColor: colors.surface,
+    backgroundColor: theme.surface,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.border,
     gap: 12,
   },
   pillarMeta: {
@@ -178,7 +186,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   pillarName: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 20,
     fontWeight: '800',
   },
@@ -193,7 +201,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: {
-    color: colors.muted,
+    color: theme.muted,
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -204,7 +212,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   carouselTitle: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 16,
     fontWeight: '700',
     marginBottom: 4,
@@ -226,7 +234,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   emptyText: {
-    color: colors.dimmed,
+    color: theme.dimmed,
     fontSize: 14,
   },
 })

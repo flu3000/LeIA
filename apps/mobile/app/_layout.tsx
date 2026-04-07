@@ -1,7 +1,7 @@
 import '../global.css'
 import 'react-native-reanimated'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Alert } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { useFonts } from 'expo-font';
@@ -13,6 +13,8 @@ import { supabase } from '@/src/lib/supabase'
 
 import { AuthProvider, useAuth } from '@/src/context/AuthContext'
 import { LoadingScreen } from '@/src/components/LoadingScreen'
+import { ThemeProvider, useTheme } from '@/src/context/ThemeContext'
+import { theme } from '@/src/constants/colors'
 
 // Mantém o splash nativo visível até o Gatekeeper dar o sinal verde
 SplashScreen.preventAutoHideAsync()
@@ -127,6 +129,8 @@ async function handleAuthUrl(url: string): Promise<void> {
 // ── Gatekeeper ───────────────────────────────────────────────────────────────
 
 function RootLayoutNav() {
+  const theme = useTheme();
+
   const { user, isLoading } = useAuth()
   const segments = useSegments()
   const router   = useRouter()
@@ -239,8 +243,8 @@ const isGated = isLoading || isProcessingLink !== false || !isReady || (!fontsLo
           name="topic/[id]"
           options={{
             headerShown:      true,
-            headerStyle:      { backgroundColor: '#131f24' },
-            headerTintColor:  '#F0EEE6',
+            headerStyle:      { backgroundColor: theme.surface },
+            headerTintColor:  theme.text,
             headerTitleStyle: { fontWeight: '700', fontSize: 17 },
             headerBackTitle:  'Voltar',
             presentation:     'card',
@@ -251,8 +255,8 @@ const isGated = isLoading || isProcessingLink !== false || !isReady || (!fontsLo
           options={{
             headerShown:      true,
             title:            'Insights',
-            headerStyle:      { backgroundColor: '#131f24' },
-            headerTintColor:  '#F0EEE6',
+            headerStyle:      { backgroundColor: theme.surface },
+            headerTintColor:  theme.text,
             headerTitleStyle: { fontWeight: '700', fontSize: 17 },
             headerBackTitle:  'Voltar',
             presentation:     'card',
@@ -263,8 +267,8 @@ const isGated = isLoading || isProcessingLink !== false || !isReady || (!fontsLo
           options={{
             headerShown:      true,
             title:            '',
-            headerStyle:      { backgroundColor: '#131f24' },
-            headerTintColor:  '#F0EEE6',
+            headerStyle:      { backgroundColor: theme.surface },
+            headerTintColor:  theme.text,
             headerTitleStyle: { fontWeight: '700', fontSize: 17 },
             headerBackTitle:  'Voltar',
             presentation:     'card',
@@ -275,8 +279,8 @@ const isGated = isLoading || isProcessingLink !== false || !isReady || (!fontsLo
           options={{
             headerShown:      true,
             title:            '',
-            headerStyle:      { backgroundColor: '#131f24' },
-            headerTintColor:  '#F0EEE6',
+            headerStyle:      { backgroundColor: theme.surface },
+            headerTintColor:  theme.text,
             headerTitleStyle: { fontWeight: '700', fontSize: 17 },
             headerBackTitle:  'Voltar',
             presentation:     'card',
@@ -287,15 +291,15 @@ const isGated = isLoading || isProcessingLink !== false || !isReady || (!fontsLo
           options={{
             headerShown:      true,
             title:            '',
-            headerStyle:      { backgroundColor: '#131f24' },
-            headerTintColor:  '#F0EEE6',
+            headerStyle:      { backgroundColor: theme.surface },
+            headerTintColor:  theme.text,
             headerTitleStyle: { fontWeight: '700', fontSize: 17 },
             headerBackTitle:  'Voltar',
             presentation:     'card',
           }}
         />
       </Stack>
-      <StatusBar style="light" />
+      <StatusBar style={user?.theme === 'light' ? 'dark' : 'light'} />
     </>
   )
 }
@@ -304,9 +308,11 @@ const isGated = isLoading || isProcessingLink !== false || !isReady || (!fontsLo
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#131f24' }}>
+    <GestureHandlerRootView style={{ flex: 1 , backgroundColor: '#001015' }}>
       <AuthProvider>
-        <RootLayoutNav />
+        <ThemeProvider>
+          <RootLayoutNav />
+        </ThemeProvider>
       </AuthProvider>
     </GestureHandlerRootView>
   )

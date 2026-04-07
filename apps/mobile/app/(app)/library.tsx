@@ -1,12 +1,12 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Reanimated, {
   useSharedValue, useAnimatedStyle, withTiming, Easing,
 } from 'react-native-reanimated'
 import * as Haptics from 'expo-haptics'
 
-import { colors } from '@/src/constants/colors'
+import { useTheme } from '@/src/context/ThemeContext'
 import AcervoScreen  from '@/src/screens/library/AcervoScreen'
 import PilaresScreen from '@/src/screens/library/PilaresScreen'
 import PessoalScreen from '@/src/screens/library/PessoalScreen'
@@ -20,9 +20,15 @@ const TABS: { key: Tab; label: string }[] = [
 ]
 
 export default function LibraryScreen() {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const [activeTab, setActiveTab] = useState<Tab>('acervo')
   const [barWidth, setBarWidth] = useState(0)
   const indicatorX = useSharedValue(0)
+
+  // const style = styles(colors)
 
   const tabWidth = barWidth > 0 ? (barWidth - 8) / TABS.length : 0
 
@@ -71,17 +77,17 @@ export default function LibraryScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
   },
   toggleBar: {
     flexDirection: 'row',
     marginHorizontal: 20,
     marginTop: 12,
     marginBottom: 14,
-    backgroundColor: colors.surface,
+    backgroundColor: theme.surface,
     borderRadius: 12,
     padding: 4,
   },
@@ -91,7 +97,7 @@ const styles = StyleSheet.create({
     bottom: 4,
     left: 4,
     borderRadius: 9,
-    backgroundColor: colors.accent,
+    backgroundColor: theme.accent,
   },
   toggleBtn: {
     flex: 1,
@@ -101,7 +107,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   toggleText: {
-    color: colors.dimmed,
+    color: theme.dimmed,
     fontSize: 14,
     fontWeight: '600',
     fontFamily: 'ClashDisplay-Medium',

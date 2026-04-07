@@ -1,7 +1,27 @@
 import { useAuth } from "@/src/context/AuthContext"
 
-/** Paleta Oxford Modern — LeIA Mobile */
-export const palette = {
+export type ThemeColors = {
+  background: string;
+  surface: string;
+  surfaceDeep: string;
+  accent: string;
+  accentOrange: string;
+  accentDim: string;
+  text: string;
+  muted: string;
+  dimmed: string;
+  danger: string;
+  success: string;
+  warning: string;
+  violet: string;
+  pomodoroFocus: string;
+  pomodoroBreak: string;
+  border: string;
+  borderStrong: string;
+  borderDim: string; // Adicionei aqui para garantir que o Light também tenha
+};
+
+export const theme: { light: ThemeColors; dark: ThemeColors } = {
   // DARK THEME
   dark: {
 
@@ -66,19 +86,16 @@ export const palette = {
     // Bordas
     border:        '#D9D5CC', // background 90% opacidade no preto
     borderStrong:  '#D4D1C8', // background 88% opacidade no preto
-
+    borderDim:         '#0D1C21', // background 95% opacidade no branco
   },
 
-} as const
-
-export function colors() {
-  const { user } = useAuth();
-  
-  // Se o tema for 'light', usa light. Caso contrário (dark ou undefined), usa dark.
-  const theme = user?.theme === 'light' ? 'light' : 'dark';
-  
-  return palette[theme];
 }
 
-export type ThemeType = keyof typeof palette;
-export type ColorPalette = typeof palette.dark;
+// export function useColors() {
+//  const { user } = useAuth();
+//  const theme = user?.theme === 'light' ? 'light' : 'dark';
+//  return palette[theme];
+//}
+
+//export type ThemeType = keyof typeof palette;
+//export type ColorPalette = typeof palette.dark;

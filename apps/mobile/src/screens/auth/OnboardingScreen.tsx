@@ -3,12 +3,12 @@ import {
   KeyboardAvoidingView, Platform, ActivityIndicator,
   StyleSheet, Switch, Alert,
 } from 'react-native'
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { useRouter } from 'expo-router'
 import * as Haptics from 'expo-haptics'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/src/context/AuthContext'
-import { colors } from '@/src/constants/colors'
+import { useTheme } from '@/src/context/ThemeContext' 
 
 const TOTAL_STEPS = 3
 
@@ -21,6 +21,10 @@ const THEME_OPTIONS: { value: ThemeOption; label: string; icon: string }[] = [
 ]
 
 export default function OnboardingScreen() {
+  const themes = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(themes), [themes]);
+
   const { updateProfile, logout } = useAuth()
   const router = useRouter()
 
@@ -103,12 +107,12 @@ export default function OnboardingScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Username *</Text>
             <View style={styles.inputRow}>
-              <Ionicons name="at-outline" size={18} color={colors.dimmed} style={styles.inputIcon} />
+              <Ionicons name="at-outline" size={18} color={themes.dimmed} style={styles.inputIcon} />
               <TextInput
                 ref={usernameInputRef}
                 style={styles.inputWithIcon}
                 placeholder="seu_username"
-                placeholderTextColor={colors.dimmed}
+                placeholderTextColor={themes.dimmed}
                 value={username}
                 onChangeText={setUsername}
                 autoCapitalize="none"
@@ -119,7 +123,7 @@ export default function OnboardingScreen() {
                 <Ionicons
                   name={usernameValid ? 'checkmark-circle' : 'close-circle'}
                   size={18}
-                  color={usernameValid ? colors.success : colors.danger}
+                  color={usernameValid ? themes.success : themes.danger}
                   style={{ marginRight: 14 }}
                 />
               )}
@@ -130,11 +134,11 @@ export default function OnboardingScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Bio</Text>
             <View style={styles.inputRow}>
-              <Ionicons name="pencil-outline" size={18} color={colors.dimmed} style={styles.inputIcon} />
+              <Ionicons name="pencil-outline" size={18} color={themes.dimmed} style={styles.inputIcon} />
               <TextInput
                 style={[styles.inputWithIcon, styles.bioInput]}
                 placeholder="Escreva algo sobre você..."
-                placeholderTextColor={colors.dimmed}
+                placeholderTextColor={themes.dimmed}
                 value={bio}
                 onChangeText={(t) => { if (t.length <= 160) setBio(t) }}
                 multiline
@@ -155,11 +159,11 @@ export default function OnboardingScreen() {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>Cidade</Text>
             <View style={styles.inputRow}>
-              <Ionicons name="location-outline" size={18} color={colors.dimmed} style={styles.inputIcon} />
+              <Ionicons name="location-outline" size={18} color={themes.dimmed} style={styles.inputIcon} />
               <TextInput
                 style={styles.inputWithIcon}
                 placeholder="São Paulo"
-                placeholderTextColor={colors.dimmed}
+                placeholderTextColor={themes.dimmed}
                 value={city}
                 onChangeText={setCity}
                 returnKeyType="next"
@@ -173,7 +177,7 @@ export default function OnboardingScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="SP"
-                placeholderTextColor={colors.dimmed}
+                placeholderTextColor={themes.dimmed}
                 value={state}
                 onChangeText={setState}
                 autoCapitalize="characters"
@@ -186,7 +190,7 @@ export default function OnboardingScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Brasil"
-                placeholderTextColor={colors.dimmed}
+                placeholderTextColor={themes.dimmed}
                 value={country}
                 onChangeText={setCountry}
                 returnKeyType="next"
@@ -202,8 +206,8 @@ export default function OnboardingScreen() {
             <Switch
               value={isPublic}
               onValueChange={setIsPublic}
-              trackColor={{ false: colors.dimmed, true: colors.accentDim }}
-              thumbColor={isPublic ? colors.accent : colors.muted}
+              trackColor={{ false: themes.dimmed, true: themes.accentDim }}
+              thumbColor={isPublic ? themes.accent : themes.muted}
             />
           </View>
         </View>
@@ -224,13 +228,13 @@ export default function OnboardingScreen() {
               <Ionicons
                 name={opt.icon as any}
                 size={22}
-                color={theme === opt.value ? colors.accent : colors.muted}
+                color={theme === opt.value ? themes.accent : themes.muted}
               />
               <Text style={[styles.themeLabel, theme === opt.value && styles.themeLabelActive]}>
                 {opt.label}
               </Text>
               {theme === opt.value && (
-                <Ionicons name="checkmark" size={18} color={colors.accent} style={{ marginLeft: 'auto' }} />
+                <Ionicons name="checkmark" size={18} color={themes.accent} style={{ marginLeft: 'auto' }} />
               )}
             </TouchableOpacity>
           ))}
@@ -252,7 +256,7 @@ export default function OnboardingScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Ionicons name="school-outline" size={36} color={colors.accent} />
+          <Ionicons name="school-outline" size={36} color={themes.accent} />
           <Text style={styles.headerTitle}>Configurar perfil</Text>
           <Text style={styles.headerSub}>Passo {step} de {TOTAL_STEPS}</Text>
         </View>
@@ -271,7 +275,7 @@ export default function OnboardingScreen() {
         <View style={styles.actions}>
           {step > 1 ? (
             <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
-              <Ionicons name="arrow-back" size={18} color={colors.muted} />
+              <Ionicons name="arrow-back" size={18} color={themes.muted} />
               <Text style={styles.backBtnText}>Voltar</Text>
             </TouchableOpacity>
           ) : (
@@ -279,8 +283,8 @@ export default function OnboardingScreen() {
               await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
               logout()
             }}>
-              <Ionicons name="log-out-outline" size={18} color={colors.dimmed} />
-              <Text style={[styles.backBtnText, { color: colors.dimmed }]}>Sair</Text>
+              <Ionicons name="log-out-outline" size={18} color={themes.dimmed} />
+              <Text style={[styles.backBtnText, { color: themes.dimmed }]}>Sair</Text>
             </TouchableOpacity>
           )}
 
@@ -308,10 +312,10 @@ export default function OnboardingScreen() {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   flex: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
   },
   scroll: {
     flexGrow: 1,
@@ -327,42 +331,42 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: '800',
-    color: colors.text,
+    color: theme.text,
     letterSpacing: 0.5,
   },
   headerSub: {
     fontSize: 13,
-    color: colors.muted,
+    color: theme.muted,
   },
   progressTrack: {
     height: 4,
-    backgroundColor: colors.border,
+    backgroundColor: theme.border,
     borderRadius: 2,
     marginBottom: 24,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: colors.accent,
+    backgroundColor: theme.accent,
     borderRadius: 2,
   },
   card: {
-    backgroundColor: colors.surface,
+    backgroundColor: theme.surface,
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.border,
     marginBottom: 20,
   },
   stepTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: colors.text,
+    color: theme.text,
     marginBottom: 4,
   },
   stepSub: {
     fontSize: 13,
-    color: colors.muted,
+    color: theme.muted,
     marginBottom: 24,
     lineHeight: 18,
   },
@@ -370,7 +374,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
-    color: colors.muted,
+    color: theme.muted,
     fontSize: 11,
     fontWeight: '600',
     marginBottom: 6,
@@ -378,22 +382,22 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    color: colors.text,
+    color: theme.text,
     fontSize: 15,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.border,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.border,
   },
   inputIcon: {
     marginLeft: 14,
@@ -403,7 +407,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 10,
     paddingVertical: 14,
-    color: colors.text,
+    color: theme.text,
     fontSize: 15,
   },
   bioInput: {
@@ -413,7 +417,7 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontSize: 11,
-    color: colors.dimmed,
+    color: theme.dimmed,
     marginTop: 4,
     marginLeft: 2,
   },
@@ -423,41 +427,41 @@ const styles = StyleSheet.create({
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.border,
     marginTop: 4,
   },
   toggleLabel: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.text,
+    color: theme.text,
     marginBottom: 2,
   },
   themeOption: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
     borderRadius: 12,
     padding: 16,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.border,
   },
   themeOptionActive: {
-    borderColor: colors.accent,
+    borderColor: theme.accent,
     backgroundColor: 'rgba(14,165,233,0.08)',
   },
   themeLabel: {
     fontSize: 15,
     fontWeight: '500',
-    color: colors.muted,
+    color: theme.muted,
   },
   themeLabelActive: {
-    color: colors.text,
+    color: theme.text,
     fontWeight: '600',
   },
   actions: {
@@ -474,14 +478,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   backBtnText: {
-    color: colors.muted,
+    color: theme.muted,
     fontSize: 15,
     fontWeight: '600',
   },
   nextBtn: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: colors.accent,
+    backgroundColor: theme.accent,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',

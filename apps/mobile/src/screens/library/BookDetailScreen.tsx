@@ -2,13 +2,13 @@ import {
   View, Text, ScrollView, Image, TouchableOpacity,
   ActivityIndicator, Linking, StyleSheet,
 } from 'react-native'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
 import { useEffect } from 'react'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 
-import { colors } from '@/src/constants/colors'
+import { useTheme } from '@/src/context/ThemeContext'
 import { useBookDetail } from '@/src/hooks/useBooks'
 import { useSavedBooks } from '@/src/hooks/useSavedBooks'
 import { EditionModal } from './components/EditionModal'
@@ -17,9 +17,9 @@ import type { Edition, Difficulty } from '@/src/types/library'
 // ── Badge de dificuldade ──────────────────────────────────────────────────────
 
 const DIFFICULTY_COLOR: Record<Difficulty, string> = {
-  Iniciante:     colors.success,
-  Intermediário: colors.warning,
-  Avançado:      colors.danger,
+  Iniciante:     useTheme().success,
+  Intermediário: useTheme().warning,
+  Avançado:      useTheme().danger,
 }
 
 interface Props {
@@ -28,6 +28,10 @@ interface Props {
 // ── Tela ─────────────────────────────────────────────────────────────────────
 
 export default function BookDetailScreen({ bookId }: Props) {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const navigation = useNavigation()
 
   const { book, isLoading } = useBookDetail(bookId)
@@ -72,7 +76,7 @@ export default function BookDetailScreen({ bookId }: Props) {
   if (isLoading) {
     return (
       <View style={styles.loadingCenter}>
-        <ActivityIndicator color={colors.accent} size="large" />
+        <ActivityIndicator color={theme.accent} size="large" />
       </View>
     )
   }
@@ -103,7 +107,7 @@ export default function BookDetailScreen({ bookId }: Props) {
               <Image source={{ uri: cover }} style={styles.cover} resizeMode="cover" />
             ) : (
               <View style={[styles.cover, styles.coverPlaceholder]}>
-                <Ionicons name="book" size={48} color={colors.dimmed} />
+                <Ionicons name="book" size={48} color={theme.dimmed} />
               </View>
             )}
             {editions.length > 1 && (
@@ -142,13 +146,13 @@ export default function BookDetailScreen({ bookId }: Props) {
                 onPress={() => editions.length > 0 && setShowEditions(true)}
                 activeOpacity={0.8}
               >
-                <Ionicons name="layers-outline" size={14} color={colors.muted} />
+                <Ionicons name="layers-outline" size={14} color={theme.muted} />
                 <Text style={styles.editionSelectorText}>
                   {selectedEdition.publisher ?? 'Edição'}
                   {selectedEdition.publish_year ? ` · ${selectedEdition.publish_year}` : ''}
                 </Text>
                 {editions.length > 1 && (
-                  <Ionicons name="chevron-down" size={14} color={colors.dimmed} />
+                  <Ionicons name="chevron-down" size={14} color={theme.dimmed} />
                 )}
               </TouchableOpacity>
             )}
@@ -165,9 +169,9 @@ export default function BookDetailScreen({ bookId }: Props) {
             <Ionicons
               name={isSaved ? 'heart' : 'heart-outline'}
               size={18}
-              color={isSaved ? colors.danger : colors.text}
+              color={isSaved ? theme.danger : theme.text}
             />
-            <Text style={[styles.actionBtnText, isSaved && { color: colors.danger }]}>
+            <Text style={[styles.actionBtnText, isSaved && { color: theme.danger }]}>
               {isSaved ? 'Salvo' : 'Salvar'}
             </Text>
           </TouchableOpacity>
@@ -258,20 +262,20 @@ export default function BookDetailScreen({ bookId }: Props) {
   )
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   loadingCenter: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
   },
   errorText: {
-    color: colors.muted,
+    color: theme.muted,
     fontSize: 16,
   },
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: theme.background,
   },
   content: {
     paddingBottom: 40,
@@ -289,7 +293,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   coverPlaceholder: {
-    backgroundColor: colors.surfaceDeep,
+    backgroundColor: theme.surfaceDeep,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -314,13 +318,13 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   heroTitle: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 19,
     fontWeight: '800',
     lineHeight: 25,
   },
   heroAuthor: {
-    color: colors.muted,
+    color: theme.muted,
     fontSize: 14,
   },
   badgeRow: {
@@ -342,10 +346,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    backgroundColor: colors.accentDim,
+    backgroundColor: theme.accentDim,
   },
   categoryBadgeText: {
-    color: colors.accent,
+    color: theme.accent,
     fontSize: 11,
     fontWeight: '600',
   },
@@ -356,14 +360,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: colors.surface,
+    backgroundColor: theme.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.border,
     alignSelf: 'flex-start',
     marginTop: 4,
   },
   editionSelectorText: {
-    color: colors.muted,
+    color: theme.muted,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -382,16 +386,16 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: colors.surface,
+    backgroundColor: theme.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.border,
   },
   actionBtnSaved: {
     backgroundColor: 'rgba(225,29,72,0.12)',
-    borderColor: colors.danger + '55',
+    borderColor: theme.danger + '55',
   },
   actionBtnText: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -416,7 +420,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionTitle: {
-    color: colors.muted,
+    color: theme.muted,
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -424,7 +428,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   descriptionText: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 14,
     lineHeight: 22,
   },
@@ -437,12 +441,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: colors.surface,
+    backgroundColor: theme.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: theme.border,
   },
   tagText: {
-    color: colors.muted,
+    color: theme.muted,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -455,15 +459,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: theme.border,
   },
   detailLabel: {
-    color: colors.dimmed,
+    color: theme.dimmed,
     fontSize: 13,
     fontWeight: '600',
   },
   detailValue: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 13,
     fontWeight: '600',
     textAlign: 'right',

@@ -2,23 +2,27 @@ import {
   View, Text, TouchableOpacity, Image, StyleSheet,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { colors } from '@/src/constants/colors'
+import { useTheme } from '@/src/context/ThemeContext' 
 import type { Book, Difficulty } from '@/src/types/library'
+import { useMemo } from 'react'
 
 // ── Badge de dificuldade ──────────────────────────────────────────────────────
 const DIFFICULTY_COLOR: Record<Difficulty, string> = {
-  Iniciante:     colors.success,
-  Intermediário: colors.warning,
-  Avançado:      colors.danger,
+  Iniciante:     useTheme().success,
+  Intermediário: useTheme().warning,
+  Avançado:      useTheme().danger,
 }
 
 function DifficultyBadge({ level }: { level: Difficulty | null }) {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   if (!level) return null
-  const color = colors()
-  const style = styles(color)
+
   return (
-    <View style={[style.badge, { backgroundColor: DIFFICULTY_COLOR[level] + '22' }]}>
-      <Text style={[style.badgeText, { color: DIFFICULTY_COLOR[level] }]}>{level}</Text>
+    <View style={[styles.badge, { backgroundColor: DIFFICULTY_COLOR[level] + '22' }]}>
+      <Text style={[styles.badgeText, { color: DIFFICULTY_COLOR[level] }]}>{level}</Text>
     </View>
   )
 }
@@ -26,8 +30,10 @@ function DifficultyBadge({ level }: { level: Difficulty | null }) {
 // ── Capa do livro ─────────────────────────────────────────────────────────────
 
 function BookCover({ url, size = 56 }: { url: string | null | undefined; size?: number }) {
-  const color = colors()
-  const style = styles(color)
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   return url ? (
     <Image
       source={{ uri: url }}
@@ -35,8 +41,8 @@ function BookCover({ url, size = 56 }: { url: string | null | undefined; size?: 
       resizeMode="cover"
     />
   ) : (
-    <View style={[style.coverPlaceholder, { width: size, height: size * 1.4 }]}>
-      <Ionicons name="book" size={size * 0.4} color={colors.dimmed} />
+    <View style={[styles.coverPlaceholder, { width: size, height: size * 1.4 }]}>
+      <Ionicons name="book" size={size * 0.4} color={theme.dimmed} />
     </View>
   )
 }
@@ -51,24 +57,26 @@ interface BookCardProps {
 }
 
 export function BookCard({ book, onPress, isSaved, onToggleSave }: BookCardProps) {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const cover        = book.main_cover?.cover_url
   const categoryName = book.categories?.category_name
   const categoryId   = book.category_id
-  const color = colors()
-  const style = styles(color)
 
   return (
-    <TouchableOpacity style={style.card} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
       <BookCover url={cover} size={56} />
-      <View style={style.info}>
-        <Text style={style.title} numberOfLines={2}>{book.title}</Text>
-        <Text style={style.author} numberOfLines={1}>{book.author}</Text>
+      <View style={styles.info}>
+        <Text style={styles.title} numberOfLines={2}>{book.title}</Text>
+        <Text style={styles.author} numberOfLines={1}>{book.author}</Text>
 
-        <View style={style.metaRow}>
+        <View style={styles.metaRow}>
           <DifficultyBadge level={book.difficulty} />
           {categoryId && (
-            <View style={style.categoryBadge}>
-              <Text style={style.categoryText} numberOfLines={1}>{categoryId}</Text>
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryText} numberOfLines={1}>{categoryId}</Text>
             </View>
           )}
         </View>
@@ -76,7 +84,7 @@ export function BookCard({ book, onPress, isSaved, onToggleSave }: BookCardProps
 
       {onToggleSave !== undefined && (
         <TouchableOpacity
-          style={style.heartBtn}
+          style={styles.heartBtn}
           onPress={onToggleSave}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           activeOpacity={0.7}
@@ -84,7 +92,7 @@ export function BookCard({ book, onPress, isSaved, onToggleSave }: BookCardProps
           <Ionicons
             name={isSaved ? 'heart' : 'heart-outline'}
             size={22}
-            color={isSaved ? colors.danger : colors.dimmed}
+            color={isSaved ? theme.danger : theme.dimmed}
           />
         </TouchableOpacity>
       )}
@@ -100,34 +108,36 @@ interface BookCardSmallProps {
 }
 
 export function BookCardSmall({ book, onPress }: BookCardSmallProps) {
+  const theme = useTheme();
+  // Memoriza os estilos para performance
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   const cover = book.book_editions?.[0]?.cover_url
-  const color = colors()
-  const style = styles(color)
 
   return (
-    <TouchableOpacity style={style.smallCard} onPress={onPress} activeOpacity={0.8}>
+    <TouchableOpacity style={styles.smallCard} onPress={onPress} activeOpacity={0.8}>
       <BookCover url={cover} size={72} />
-      <Text style={style.smallTitle} numberOfLines={2}>{book.title}</Text>
-      <Text style={style.smallAuthor} numberOfLines={1}>{book.author}</Text>
+      <Text style={styles.smallTitle} numberOfLines={2}>{book.title}</Text>
+      <Text style={styles.smallAuthor} numberOfLines={1}>{book.author}</Text>
     </TouchableOpacity>
   )
 }
 
-const styles = (color: any) => StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: color.surface,
+    backgroundColor: theme.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: color.border,
+    borderColor: theme.border,
     gap: 14,
   },
   coverPlaceholder: {
     borderRadius: 6,
-    backgroundColor: color.surfaceDeep,
+    backgroundColor: theme.surfaceDeep,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -136,13 +146,13 @@ const styles = (color: any) => StyleSheet.create({
     gap: 4,
   },
   title: {
-    color: colors.text,
+    color: theme.text,
     fontSize: 15,
     fontWeight: '700',
     lineHeight: 20,
   },
   author: {
-    color: color.muted,
+    color: theme.muted,
     fontSize: 13,
   },
   metaRow: {
@@ -164,10 +174,10 @@ const styles = (color: any) => StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    backgroundColor: color.accentDim,
+    backgroundColor: theme.accentDim,
   },
   categoryText: {
-    color: color.accent,
+    color: theme.accent,
     fontSize: 11,
     fontWeight: '600',
   },
@@ -181,14 +191,14 @@ const styles = (color: any) => StyleSheet.create({
     alignItems: 'flex-start',
   },
   smallTitle: {
-    color: color.text,
+    color: theme.text,
     fontSize: 12,
     fontWeight: '700',
     marginTop: 6,
     lineHeight: 16,
   },
   smallAuthor: {
-    color: color.muted,
+    color: theme.muted,
     fontSize: 11,
     marginTop: 2,
   },
