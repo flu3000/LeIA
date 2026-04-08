@@ -61,7 +61,7 @@ export function BookCard({ book, onPress, isSaved, onToggleSave }: BookCardProps
   // Memoriza os estilos para performance
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const cover        = book.main_cover?.cover_url
+  const cover        = book.cover_url
   const categoryName = book.categories?.category_name
   const categoryId   = book.category_id
 
@@ -112,7 +112,7 @@ export function BookCardSmall({ book, onPress }: BookCardSmallProps) {
   // Memoriza os estilos para performance
   const styles = useMemo(() => createStyles(theme), [theme]);
 
-  const cover = book.book_editions?.[0]?.cover_url
+  const cover = book.cover_url
 
   return (
     <TouchableOpacity style={styles.smallCard} onPress={onPress} activeOpacity={0.8}>

@@ -87,7 +87,7 @@ export default function AcervoScreen() {
     if (saved) {
       await unsaveBook(saved.saved_book_id)
     } else {
-      const firstEditionId = book.main_cover?.cover_url
+      const firstEditionId = book.cover_url
       if (firstEditionId) {
         await saveBook(firstEditionId)
       }

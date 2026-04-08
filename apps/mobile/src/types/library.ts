@@ -26,7 +26,7 @@ export interface Category {
 
 export type Difficulty = 'Iniciante' | 'Intermediário' | 'Avançado'
 
-export interface Book {
+/* export interface Book {
   book_id: string
   title: string
   author: string
@@ -44,11 +44,37 @@ export interface Book {
   main_cover?: {
     cover_url: string | null
   }
+} */
+
+export interface Book {
+  book_id: string;
+  title: string;
+  author: string;
+  difficulty: Difficulty | null; // Supondo que você já tenha o enum/type Difficulty
+  tags: string[] | null;
+  category_id: number | null;
+  
+  // No seu getAll, você transformou a lógica de capas nisso:
+  cover_url: string | null;
+
+  description?: string | null
+  book_editions?: Edition[]
+
+  // Se você ainda estiver trazendo as categorias via join no SELECT do backend:
+  categories?: {
+    category_id: number;
+    category_name: string;
+    pillar_id: number;
+    pillars?: {
+      pillar_id: number;
+      pillar_name: string;
+    };
+  };
 }
 
 export interface Edition {
   edition_id: string
-  book_id?: string
+  book_id: string
   publisher: string
   cover_url: string | null
   amazon_link: string
@@ -57,6 +83,9 @@ export interface Edition {
   translator: string | null
   isbn_13: string
   isbn_10: string
+  language: string | null
+  sales_rank: number | null
+  is_bes_seller: boolean | null
 }
 
 // ── Livros Salvos ─────────────────────────────────────────────────────────────

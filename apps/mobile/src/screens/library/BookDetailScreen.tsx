@@ -37,7 +37,7 @@ export default function BookDetailScreen({ bookId }: Props) {
   const { book, isLoading } = useBookDetail(bookId)
   const { getSavedByBook, getSavedByEdition, saveBook, unsaveBook } = useSavedBooks()
 
-  const editions = book?.main_cover?.cover_url ?? []
+  const editions = book?.cover_url ?? []
   const [selectedEdition, setSelectedEdition] = useState<Edition | null>(null)
   const [showEditions, setShowEditions]       = useState(false)
 
