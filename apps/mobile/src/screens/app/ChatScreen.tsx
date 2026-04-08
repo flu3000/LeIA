@@ -187,7 +187,7 @@ export default function ChatScreen() {
             onPress={() => { Haptics.selectionAsync(); setDrawerOpen(true) }}
             activeOpacity={0.7}
           >
-            <Ionicons name="menu" size={22} color="#94A3B8" />
+            <Ionicons name="menu" size={22} color={theme.muted} />
           </TouchableOpacity>
 
           <View style={styles.headerCenter}>
@@ -221,7 +221,7 @@ export default function ChatScreen() {
               value={input}
               onChangeText={setInput}
               placeholder="Sobre o que quer aprender?"
-              placeholderTextColor="#4B6070"
+              placeholderTextColor={theme.muted}
               multiline
               maxLength={600}
               returnKeyType="send"
@@ -233,7 +233,7 @@ export default function ChatScreen() {
               disabled={!input.trim() || isTyping}
               activeOpacity={0.8}
             >
-              <Ionicons name="send" size={18} color="#fff" />
+              <Ionicons name="send" size={18} color={theme.background} />
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -275,7 +275,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
+    borderBottomColor: theme.border,
     backgroundColor: theme.background,
   },
   headerBtn: {
@@ -296,7 +296,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontFamily: 'ClashDisplay-Bold',
   },
   headerSub: {
-    color: '#94A3B8',
+    color: theme.muted,
     fontSize: 10,
     marginTop: 1,
     fontFamily: 'ClashDisplay-Medium',
@@ -332,17 +332,17 @@ const createStyles = (theme: any) => StyleSheet.create({
     padding: 12,
   },
   userBubble: {
-    backgroundColor: '#0EA5E9',
+    backgroundColor: theme.accent,
     borderBottomRightRadius: 4,
   },
   assistantBubble: {
-    backgroundColor: '#1B2C33',
+    backgroundColor: theme.surfaceDeep,
     borderBottomLeftRadius: 4,
     flex: 1,
   },
   bubbleText:    { fontSize: 14, lineHeight: 20 },
-  userText:      { color: '#fff' },
-  assistantText: { color: '#F0EEE6' },
+  userText:      { color: theme.text },
+  assistantText: { color: theme.text },
   sourcesContainer: { marginTop: 10 },
   citationsRow: {
     flexDirection: 'row',
@@ -393,22 +393,22 @@ const createStyles = (theme: any) => StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 12,
-    color: '#F0EEE6',
+    color: theme.text,
     fontSize: 14,
     maxHeight: 120,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: theme.border,
   },
   sendBtn: {
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: '#0EA5E9',
+    backgroundColor: theme.accent,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
-  sendBtnDisabled: { backgroundColor: '#243640' },
+  sendBtnDisabled: { backgroundColor: theme.surfaceDeep },
 
   edgeZone: {
     position: 'absolute',

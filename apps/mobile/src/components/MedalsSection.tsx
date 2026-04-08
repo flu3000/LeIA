@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useMedals } from '@/src/hooks/useMedals'
 import { MEDALS, MEDAL_RARITY } from '@/src/data/medals'
 import type { Medal } from '@/src/data/medals'
+import { useTheme } from '@/src/context/ThemeContext'
 
 type Tab = 'destaque' | 'colecao'
 
@@ -20,6 +21,8 @@ function MedalTile({
   canFeature: boolean
   onToggle?: () => void
 }) {
+  const theme = useTheme();
+  const styles = createStyles(theme);
   const rarity = MEDAL_RARITY[medal.rarity]
   const canPress = unlocked && (featured || canFeature)
 
@@ -27,7 +30,7 @@ function MedalTile({
     <TouchableOpacity
       style={[
         styles.tile,
-        { borderColor: unlocked ? rarity.border : '#1E303A' },
+        { borderColor: unlocked ? rarity.border : theme.borderStrong },
         featured && styles.tileFeatured,
       ]}
       onPress={canPress ? onToggle : undefined}
@@ -42,7 +45,7 @@ function MedalTile({
         {unlocked ? medal.emoji : '🔒'}
       </Text>
       <Text
-        style={[styles.tileName, { color: unlocked ? '#E2E8F0' : '#334155' }]}
+        style={[styles.tileName, { color: unlocked ? '#E2E8F0' : theme.muted }]}
         numberOfLines={2}
       >
         {medal.name}
@@ -55,6 +58,9 @@ function MedalTile({
 }
 
 export default function MedalsSection() {
+  const theme = useTheme();
+  const styles = createStyles(theme);
+
   const { unlocked, featured, unlockedKeys, toggleFeatured } = useMedals()
   const [tab, setTab] = useState<Tab>('destaque')
   const featuredKeys = new Set(featured.map((m) => m.key))
@@ -88,7 +94,7 @@ export default function MedalsSection() {
         <View style={styles.grid}>
           {featured.length === 0 ? (
             <View style={styles.empty}>
-              <Ionicons name="ribbon-outline" size={32} color="#334155" />
+              <Ionicons name="ribbon-outline" size={32} color={theme.muted} />
               <Text style={styles.emptyText}>
                 Selecione até 5 medalhas na Coleção para exibir aqui.
               </Text>
@@ -136,7 +142,7 @@ export default function MedalsSection() {
 
 const TILE_SIZE = 72
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     backgroundColor: 'transparent',
     borderRadius: 16,
@@ -148,10 +154,10 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
+    borderBottomColor: theme.borderDim,
   },
   headerTitle: {
-    color: '#F0EEE6',
+    color: theme.text,
     fontSize: 15,
     fontWeight: '700',
     marginBottom: 10,
@@ -167,15 +173,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   tabActive: {
-    backgroundColor: '#243640',
+    backgroundColor: theme.surfaceDeep,
   },
   tabText: {
-    color: '#4B6070',
+    color: theme.muted,
     fontSize: 12,
     fontWeight: '600',
   },
   tabTextActive: {
-    color: '#F0EEE6',
+    color: theme.text,
   },
   grid: {
     flexDirection: 'row',
@@ -191,7 +197,7 @@ const styles = StyleSheet.create({
     minHeight: TILE_SIZE,
     borderRadius: 10,
     borderWidth: 1.5,
-    backgroundColor: '#131f24',
+    backgroundColor: theme.surfaceDeep,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 8,
@@ -199,7 +205,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   tileFeatured: {
-    backgroundColor: 'rgba(251,191,36,0.08)',
+    backgroundColor: theme.border,
   },
   tileLocked: {
     opacity: 0.5,
@@ -245,13 +251,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   emptyText: {
-    color: '#4B6070',
+    color: theme.muted,
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 18,
   },
   hint: {
-    color: '#334155',
+    color: theme.muted,
     fontSize: 10,
     textAlign: 'center',
     paddingHorizontal: 16,

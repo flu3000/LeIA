@@ -3,6 +3,8 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
+import { useTheme } from '@/src/context/ThemeContext'
+import { useMemo } from 'react'
 
 const TEAL = '#14B8A6'
 
@@ -46,6 +48,8 @@ const CLUBS = [
 // ── Club Card ─────────────────────────────────────────────────────────────────
 
 function ClubCard({ club }: { club: typeof CLUBS[0] }) {
+  const theme = useTheme()
+  const styles = useMemo(() => createStyles(theme), [theme])
   const handleJoin = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
   }
@@ -60,7 +64,7 @@ function ClubCard({ club }: { club: typeof CLUBS[0] }) {
         <Text style={styles.clubDesc} numberOfLines={2}>{club.description}</Text>
         <View style={styles.cardFooter}>
           <View style={styles.membersRow}>
-            <Ionicons name="people-outline" size={13} color="#4B6070" />
+            <Ionicons name="people-outline" size={13} color={theme.muted} />
             <Text style={styles.membersText}>{club.members} membros</Text>
           </View>
           <TouchableOpacity style={styles.joinBtn} onPress={handleJoin} activeOpacity={0.8}>
@@ -75,6 +79,9 @@ function ClubCard({ club }: { club: typeof CLUBS[0] }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function CommunitiesTab() {
+  const theme = useTheme()
+  const styles = useMemo(() => createStyles(theme), [theme])
+
   return (
     <ScrollView
       style={styles.container}
@@ -114,7 +121,7 @@ export default function CommunitiesTab() {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: { flex: 1 },
   content: {
     paddingHorizontal: 16,
@@ -123,12 +130,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   banner: {
-    backgroundColor: '#1B2C33',
+    backgroundColor: theme.surfaceDeep,
     borderRadius: 18,
     padding: 20,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: `${TEAL}33`,
+    borderColor: theme.borderStrong,
     gap: 8,
     marginBottom: 4,
   },
@@ -144,12 +151,12 @@ const styles = StyleSheet.create({
   bannerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#F0EEE6',
+    color: theme.text,
     textAlign: 'center',
   },
   bannerSubtitle: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: theme.muted,
     textAlign: 'center',
     lineHeight: 19,
     paddingHorizontal: 8,
@@ -182,13 +189,13 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   card: {
-    backgroundColor: '#1B2C33',
+    backgroundColor: theme.surfaceDeep,
     borderRadius: 14,
     padding: 16,
     flexDirection: 'row',
     gap: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: theme.borderStrong,
     alignItems: 'flex-start',
   },
   clubIcon: {

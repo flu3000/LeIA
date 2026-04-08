@@ -99,7 +99,7 @@ export default function SocialScreen() {
                 <Ionicons
                   name={tab.icon}
                   size={isActive ? 28 : 24}
-                  color={isActive ? tab.color : '#4A5568'}
+                  color={isActive ? tab.color : theme.muted}
                 />
               </View>
               <Text style={[styles.mainTabLabel, isActive && { color: tab.color }]}>
@@ -195,7 +195,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   mainTabLabel: {
     fontSize: 10,
-    color: '#4A5568',
+    color: theme.muted,
     letterSpacing: 0.2,
     fontFamily: 'ClashDisplay-Medium',
   },
@@ -213,7 +213,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   subTabBar: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
+    borderBottomColor: theme.borderDim,
     position: 'relative',
   },
   subTabBtn: {
@@ -223,7 +223,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   subTabText: {
     fontSize: 13,
-    color: '#4A5568',
+    color: theme.muted,
     fontFamily: 'ClashDisplay-Medium',
   },
   subTabTextActive: {

@@ -210,7 +210,7 @@ export default function PomodoroScreen() {
               cx={RING_SIZE / 2}
               cy={RING_SIZE / 2}
               r={RADIUS}
-              stroke="#1B2C33"
+              stroke={theme.surface}
               strokeWidth={STROKE}
               fill="none"
             />
@@ -235,7 +235,7 @@ export default function PomodoroScreen() {
               {pad(minutes)}:{pad(seconds)}
             </Text>
             <View style={styles.timerModeRow}>
-              {isFocus ? <Feather name="target" size={14} color="#94A3B8" /> : <Feather name="coffee" size={14} color="#94A3B8" />}
+              {isFocus ? <Feather name="target" size={14} color={theme.dimmed} /> : <Feather name="coffee" size={14} color={theme.dimmed} />}
               <Text style={styles.timerMode}>{isFocus ? ' Foco' : ' Pausa'}</Text>
             </View>
             {sessions > 0 && (
@@ -248,7 +248,7 @@ export default function PomodoroScreen() {
         {focusInterrupted && (
           <TouchableOpacity style={styles.warningBanner} onPress={dismissInterrupted}>
             <View style={styles.warningRow}>
-              <Feather name="alert-triangle" size={14} color="#fbbf24" />
+              <Feather name="alert-triangle" size={14} color={theme.warning} />
               <Text style={styles.warningText}> Foco interrompido — o app foi para segundo plano</Text>
             </View>
           </TouchableOpacity>
@@ -295,7 +295,7 @@ export default function PomodoroScreen() {
                 key={i}
                 style={[
                   styles.progressSegment,
-                  { backgroundColor: i < stats.sessionsToday ? accentColor : '#243640' },
+                  { backgroundColor: i < stats.sessionsToday ? theme.accent : theme.surface },
                 ]}
               />
             ))}
@@ -307,20 +307,20 @@ export default function PomodoroScreen() {
           <Text style={styles.settingsTitle}>Durações</Text>
           <DurationStepper
             label="Foco"
-            icon={<Ionicons name="timer-outline" size={14} color="#94A3B8" />}
+            icon={<Ionicons name="timer-outline" size={14} color={theme.dimmed} />}
             value={durations.focus}
             onChange={(v) => handleDurationChange('focus', v)}
             min={5}
           />
           <DurationStepper
             label="Pausa"
-            icon={<Feather name="coffee" size={14} color="#94A3B8" />}
+            icon={<Feather name="coffee" size={14} color={theme.dimmed} />}
             value={durations.break}
             onChange={(v) => handleDurationChange('break', v)}
           />
           <DurationStepper
             label="Meta diária"
-            icon={<Feather name="target" size={14} color="#94A3B8" />}
+            icon={<Feather name="target" size={14} color={theme.dimmed} />}
             value={stats.dailyGoal}
             onChange={saveDailyGoal}
             max={20}
@@ -408,7 +408,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   modeSwitcher: {
     flexDirection: 'row',
-    backgroundColor: '#1B2C33',
+    backgroundColor: theme.surface,
     borderRadius: 12,
     padding: 4,
     marginBottom: 32,
@@ -428,13 +428,13 @@ const createStyles = (theme: any) => StyleSheet.create({
     zIndex: 1,
   },
   modeTabText: {
-    color: '#94A3B8',
+    color: theme.dimmed,
     fontSize: 14,
     fontWeight: '600',
     fontFamily: 'ClashDisplay-Medium',
   },
   modeTabTextActive: {
-    color: '#fff',
+    color: theme.text,
     fontFamily: 'ClashDisplay-Bold',
   },
   ringContainer: {
@@ -462,7 +462,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     marginTop: 4,
   },
   timerMode: {
-    color: '#94A3B8',
+    color: theme.dimmed,
     fontSize: 14,
     fontFamily: 'ClashDisplay-Medium',
   },
@@ -473,12 +473,12 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontFamily: 'ClashDisplay-Bold',
   },
   warningBanner: {
-    backgroundColor: 'rgba(251,191,36,0.1)',
+    backgroundColor: theme.warning + '1F',
     borderRadius: 10,
     padding: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: 'rgba(251,191,36,0.3)',
+    borderColor: theme.warning,
   },
   warningRow: {
     flexDirection: 'row',
@@ -487,7 +487,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     justifyContent: 'center',
   },
   warningText: {
-    color: '#fbbf24',
+    color: theme.warning,
     fontSize: 13,
   },
   controls: {
@@ -501,7 +501,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#1B2C33',
+    backgroundColor: theme.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -521,7 +521,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     marginBottom: 8,
   },
   progressLabel: {
-    color: '#94A3B8',
+    color: theme.dimmed,
     fontSize: 13,
     fontFamily: 'ClashDisplay-Medium',
   },
@@ -531,7 +531,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     gap: 3,
   },
   saveStatus: {
-    color: '#94A3B8',
+    color: theme.muted,
     fontSize: 12,
     fontFamily: 'ClashDisplay-Medium',
   },
@@ -545,14 +545,12 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderRadius: 4,
   },
   settingsSection: {
-    backgroundColor: '#1B2C33',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'transparent',
+    paddingTop: 16,
+    // borderWidth: 1,
   },
   settingsTitle: {
-    color: '#F0EEE6',
+    color: theme.text,
     fontSize: 16,
     fontWeight: '700',
     marginBottom: 14,
@@ -564,7 +562,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.05)',
+    borderTopColor: theme.borderDim,
   },
   stepperLabelWrap: {
     flex: 1,
@@ -573,7 +571,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     gap: 6,
   },
   stepperLabel: {
-    color: '#94A3B8',
+    color: '#334044',
     fontSize: 14,
     fontFamily: 'ClashDisplay-Medium',
   },
@@ -586,7 +584,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: '#243640',
+    backgroundColor: theme.borderDim,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -594,7 +592,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     opacity: 0.3,
   },
   stepBtnText: {
-    color: '#F0EEE6',
+    color: theme.text,
     fontSize: 18,
     fontWeight: '700',
     fontFamily: 'ClashDisplay-Bold',
@@ -607,7 +605,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     justifyContent: 'center',
   },
   stepperInput: {
-    color: '#F0EEE6',
+    color: theme.text,
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
@@ -615,11 +613,11 @@ const createStyles = (theme: any) => StyleSheet.create({
     paddingVertical: 2,
     paddingHorizontal: 4,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.15)',
+    borderBottomColor: theme.borderStrong,
     fontFamily: 'ClashDisplay-Semibold',
   },
   stepperUnit: {
-    color: '#64748B',
+    color: theme.dimmed,
     fontSize: 13,
     fontFamily: 'ClashDisplay-Medium',
   },

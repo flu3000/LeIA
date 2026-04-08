@@ -234,7 +234,7 @@ function SettingsRow({
         {rightElement ?? (
           <>
             {value ? <Text style={styles.settingsValue}>{value}</Text> : null}
-            {onPress && !danger && <Ionicons name="chevron-forward" size={14} color="#4B6070" />}
+            {onPress && !danger && <Ionicons name="chevron-forward" size={14} color={theme.muted} />}
           </>
         )}
       </View>
@@ -637,8 +637,8 @@ export default function ProfileScreen() {
               <Switch
                 value={darkMode}
                 onValueChange={handleThemeToggle}
-                trackColor={{ false: theme.surfaceDeep, true: theme.accentDim }}
-                thumbColor={darkMode ? theme.accent : theme.muted}
+                trackColor={{ false: theme.muted, true: theme.accentDim }}
+                thumbColor={darkMode ? theme.accent : theme.accentDim}
               />
             }
           />
@@ -810,10 +810,6 @@ const createStyles = (theme: any) => StyleSheet.create({
     gap: 6,
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: theme.accent + '59',
-    backgroundColor: theme.accentDim,
   },
   editBtnText: {
     color: theme.accent,
@@ -828,7 +824,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     justifyContent: 'center',
   },
   avatarInitials: {
-    color: '#fff',
+    color: "#fff",
     fontWeight: '800',
   },
   cameraBadge: {
@@ -944,9 +940,9 @@ const createStyles = (theme: any) => StyleSheet.create({
     gap: 6,
   },
   settingsValue: {
-    color: theme.dimmed,
+    color: theme.muted,
     fontSize: 12,
-    backgroundColor: theme.surfaceDeep,
+    backgroundColor: theme.surface,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,

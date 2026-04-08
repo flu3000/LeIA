@@ -2,9 +2,10 @@ import {
   View, Text, FlatList, TextInput, TouchableOpacity,
   ActivityIndicator, StyleSheet,
 } from 'react-native'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
+import { useTheme } from '@/src/context/ThemeContext'
 
 import { useFollow, type PublicProfile } from '@/src/hooks/useFollow'
 import { useAuth } from '@/src/context/AuthContext'
@@ -36,6 +37,9 @@ function UserRow({
   isCurrentUser: boolean
   onToggleFollow: (id: string) => void
 }) {
+  const theme = useTheme()
+  const styles = useMemo(() => createStyles(theme), [theme])
+
   const medal = POSITION_STYLE[position]
 
   return (
@@ -94,6 +98,9 @@ function UserRow({
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function RankingsTab() {
+  const theme = useTheme()
+  const styles = useMemo(() => createStyles(theme), [theme])
+
   const { user } = useAuth()
   const { followingIds, toggleFollow, searchUsers, getLeaderboard } = useFollow()
 
@@ -192,7 +199,7 @@ export default function RankingsTab() {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: { flex: 1 },
   searchWrap: {
     paddingHorizontal: 16,
@@ -202,7 +209,7 @@ const styles = StyleSheet.create({
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1B2C33',
+    backgroundColor: theme.surfaceDeep,
     borderRadius: 12,
     paddingHorizontal: 14,
     borderWidth: 1,

@@ -10,6 +10,7 @@ import Reanimated, {
 } from 'react-native-reanimated'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import * as Haptics from 'expo-haptics'
+import { useTheme } from '@/src/context/ThemeContext'
 
 import { type ChatSession } from '@/src/hooks/useChatSessions'
 
@@ -84,6 +85,9 @@ function SessionItem({
   onRenameTextChange: (t: string) => void
   onRenameSubmit: () => void
 }) {
+  const theme = useTheme()
+  const styles = createStyles(theme)
+
   return (
     <TouchableOpacity
       style={[styles.sessionItem, isActive && styles.sessionItemActive]}
@@ -141,6 +145,9 @@ export default function ChatDrawer({
   onRenameSession,
   onDeleteSession,
 }: ChatDrawerProps) {
+  const theme = useTheme()
+  const styles = createStyles(theme)
+
   const [visible,     setVisible]     = useState(false)
   const [renamingId,  setRenamingId]  = useState<string | null>(null)
   const [renameText,  setRenameText]  = useState('')
@@ -296,7 +303,7 @@ export default function ChatDrawer({
                 )}
                 ListEmptyComponent={
                   <View style={styles.emptyWrap}>
-                    <Ionicons name="chatbubbles-outline" size={32} color="#2A3F4A" />
+                    <Ionicons name="chatbubbles-outline" size={32} color={theme.muted} />
                     <Text style={styles.emptyText}>Nenhuma conversa ainda.</Text>
                   </View>
                 }
@@ -311,7 +318,7 @@ export default function ChatDrawer({
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   overlay: {
     backgroundColor: '#000',
   },
@@ -321,9 +328,9 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: DRAWER_WIDTH,
-    backgroundColor: '#1A262D',
+    backgroundColor: theme.surface,
     borderRightWidth: 1,
-    borderRightColor: 'rgba(255,255,255,0.06)',
+    borderRightColor: theme.borderStrong,
     shadowColor: '#000',
     shadowOffset: { width: 6, height: 0 },
     shadowOpacity: 0.4,
@@ -337,7 +344,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: theme.borderStrong,
   },
   logoRow: {
     flexDirection: 'row',
@@ -345,7 +352,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   logoText: {
-    color: CYAN,
+    color: theme.accent,
     fontSize: 18,
     fontWeight: '800',
     letterSpacing: 1,
@@ -364,11 +371,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: CYAN + '55',
-    backgroundColor: CYAN + '0D',
+    borderColor: theme.accent + '55',
+    backgroundColor: theme.accent + '0D',
   },
   newChatText: {
-    color: CYAN,
+    color: theme.accent,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -380,7 +387,7 @@ const styles = StyleSheet.create({
   groupLabel: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#3A5060',
+    color: theme.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
     paddingHorizontal: 8,
@@ -399,7 +406,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   sessionItemActive: {
-    backgroundColor: CYAN + '12',
+    backgroundColor: theme.accent + '12',
   },
   activeBar: {
     position: 'absolute',
@@ -408,7 +415,7 @@ const styles = StyleSheet.create({
     bottom: 6,
     width: 3,
     borderRadius: 2,
-    backgroundColor: CYAN,
+    backgroundColor: theme.accent,
   },
   sessionBody: {
     flex: 1,
@@ -444,7 +451,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   emptyText: {
-    color: '#3A5060',
+    color: theme.muted,
     fontSize: 13,
   },
   logoImage: {

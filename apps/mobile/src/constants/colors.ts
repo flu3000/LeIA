@@ -2,6 +2,10 @@ import { useAuth } from "@/src/context/AuthContext"
 
 export type ThemeColors = {
   background: string;
+  bg95?: string;
+  bg90?: string;
+  bg88?: string;
+  bg80?: string;
   surface: string;
   surfaceDeep: string;
   accent: string;
@@ -27,18 +31,23 @@ export const theme: { light: ThemeColors; dark: ThemeColors } = {
 
     // Fundos
     background:        '#001015',
+    bg95:      '#0D1C21', // background 95% opacidade no branco
+    bg90:      '#1A282D', // background 90% opacidade no branco
+    bg88:      '#1F2D31', // background 88% opacidade no branco
+    bg80:      '#334044', // background 80% opacidade no branco
+
     surface:           '#0D1C21', // background 95% opacidade no branco
     surfaceDeep:       '#1A282D', // background 90% opacidade no branco
 
     // Destaque
     accent:            '#00BCF6',
-    accentOrange:      '#FF4519',
     accentDim:         '#003342', // accent 20% opacidade no background
+    accentOrange:      '#FF4519',
 
     // Texto
     text:              '#F1EDE3',
-    muted:             '#94A3B8',
-    dimmed:            '#4B6070',
+    muted:             '#606968', // text 40% opacidade no background
+    dimmed:            '#303C3E', // text 20% opacidade no background
 
     // Semânticos
     danger:            '#E11D48',
@@ -59,19 +68,24 @@ export const theme: { light: ThemeColors; dark: ThemeColors } = {
   light: {
 
     // Fundos
-    background:   '#F1EDE3', // 
+    background:   '#F1EDE3',
+    bg95: '#E5E1D8', // background 95% opacidade no preto
+    bg90: '#D9D5CC', // background 90% opacidade no preto
+    bg88: '#D4D1C8', // background 88% opacidade no preto
+    bg80: '#C1BEB6', // background 80% opacidade no preto
+
     surface:      '#E5E1D8', // background 95% opacidade no preto
     surfaceDeep:  '#D9D5CC', // background 90% opacidade no preto
   
     // Destaque
     accent:        '#0093C1',
-    accentOrange:  '#FF4519',
     accentDim:     '#C1DBDD', // accent 20% opacidade no background
+    accentOrange:  '#FF4519',
   
     // Texto
-    text:          '#EAE0C8',
-    muted:         '#94A3B8',
-    dimmed:        '#4B6070',
+    text:          '#001015',
+    muted:         '#919490', // text 40% opacidade no background
+    dimmed:        '#C1C1BA', // text 20% opacidade no background
   
     // Semânticos
     danger:        '#E11D48',
@@ -86,7 +100,7 @@ export const theme: { light: ThemeColors; dark: ThemeColors } = {
     // Bordas
     border:        '#D9D5CC', // background 90% opacidade no preto
     borderStrong:  '#D4D1C8', // background 88% opacidade no preto
-    borderDim:         '#0D1C21', // background 95% opacidade no branco
+    borderDim:     '#E5E1D8', // background 95% opacidade no preto
   },
 
 }
