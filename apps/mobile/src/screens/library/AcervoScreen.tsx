@@ -128,7 +128,7 @@ export default function AcervoScreen() {
           <Ionicons
             name="options"
             size={20}
-            color={hasActiveFilters ? '#fff' : theme.muted}
+            color={hasActiveFilters ? theme.text : theme.muted}
           />
         </TouchableOpacity>
       </View>

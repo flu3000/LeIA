@@ -23,21 +23,20 @@ const DIFFICULTY_COLOR: Record<Difficulty, string> = {
 }
 
 interface Props {
-  bookId: string;
+  id: string;
 }
 // ── Tela ─────────────────────────────────────────────────────────────────────
 
-export default function BookDetailScreen({ bookId }: Props) {
+export default function BookDetailScreen({ id }: Props) {
   const theme = useTheme();
   // Memoriza os estilos para performance
   const styles = useMemo(() => createStyles(theme), [theme]);
-
   const navigation = useNavigation()
 
-  const { book, isLoading } = useBookDetail(bookId)
-  const { getSavedByBook, getSavedByEdition, saveBook, unsaveBook } = useSavedBooks()
+  const { book, isLoading } = useBookDetail(id)
+  const { getSavedByBook, saveBook, unsaveBook } = useSavedBooks()
 
-  const editions = book?.cover_url ?? []
+  const editions = book?.all_editions ?? [];
   const [selectedEdition, setSelectedEdition] = useState<Edition | null>(null)
   const [showEditions, setShowEditions]       = useState(false)
 
@@ -53,7 +52,7 @@ export default function BookDetailScreen({ bookId }: Props) {
     if (book) navigation.setOptions({ title: book.title })
   }, [book, navigation])
 
-  const savedEntry  = getSavedByBook(bookId)
+  const savedEntry  = getSavedByBook(id)
   const isSaved     = Boolean(savedEntry)
   const cover       = selectedEdition?.cover_url
 

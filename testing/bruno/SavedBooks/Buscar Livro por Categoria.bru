@@ -1,0 +1,23 @@
+meta {
+  name: Buscar Livro por Categoria
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/books/getByCategory/:categoryId
+  body: none
+  auth: none
+}
+
+params:path {
+  categoryId: 11
+}
+
+headers {
+  Authorization: Bearer {{authToken}}
+}
+
+assert {
+  res.status: eq 200
+}

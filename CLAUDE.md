@@ -11,9 +11,10 @@ Gerenciado com **Turborepo** + **pnpm workspaces**.
 ```
 LeIA/
 ├── apps/
-│   ├── server/      # Backend (Fastify) — lógica principal + integração Perplexity
+│   ├── server/      # Chat backend (Fastify/JS) — integração Perplexity + histórico de chat
+│   ├── backend/     # Library API (Express/TS) — acervo, livros salvos, pomodoro, perfil
 │   ├── web/         # Frontend web (React + Vite + Tailwind CSS v4)
-│   └── mobile/      # App mobile (Expo/React Native) — ainda no template padrão
+│   └── mobile/      # App mobile (Expo/React Native) — totalmente implementado
 ├── packages/
 │   ├── ui/                  # Componentes React compartilhados (stub, não usado)
 │   ├── api-types/           # Tipos TypeScript compartilhados (desalinhados com implementação atual)
@@ -293,24 +294,88 @@ Gerencia tema claro/escuro com persistência dupla:
 
 ---
 
+## apps/backend
+
+API REST em **Express + TypeScript** (port 3002 em dev, AWS Lambda em prod via Serverless Framework). Serve o acervo de livros, livros salvos, pomodoro, perfil e features sociais.
+
+```
+apps/backend/src/
+├── app.ts                  # Express app factory (CORS, Helmet, rotas)
+├── index.ts                # Servidor local (port 3002)
+├── lambda.ts               # Handler AWS Lambda
+├── middleware/
+│   └── auth.ts             # requireAuth: verifica Bearer token via supabase.auth.getUser()
+├── routes/
+│   ├── books.ts            # GET /books/getAll, GET /books/getById/:id
+│   ├── savedBooks.ts       # GET/PUT/DELETE /saved-books/:userId ou :bookId
+│   ├── pomodoro.ts         # GET/PUT /pomodoro/settings, PUT /pomodoro/goal, POST /pomodoro/sessions
+│   ├── userProfile.ts      # GET/PUT /user/
+│   ├── insights.ts         # GET /insights
+│   ├── social.ts           # Social: rankings, follows, comunidades
+│   ├── medals.ts           # Conquistas
+│   ├── userContent.ts      # Favoritar fontes do chat
+│   └── book_editions.ts    # Detalhes de edições
+└── lib/
+    └── supabase.ts         # Cliente Supabase com service-role key
+```
+
+### Variáveis de ambiente necessárias (backend)
+
+| Variável | Uso |
+|---|---|
+| `SUPABASE_URL` | URL do projeto Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | Chave de serviço (acesso total, sem RLS) |
+| `PORT` | Porta do servidor (padrão: 3002) |
+
+### Autenticação
+
+Todas as rotas usam `requireAuth` como middleware: extrai o Bearer token do header, chama `supabase.auth.getUser(token)` e anexa o usuário em `req.user`. Retorna 401 se inválido.
+
+### Validação
+
+Todas as rotas de mutação usam **Zod** com `safeParse()`. Erros retornam HTTP 400 com `error.flatten()`.
+
+### Sistema de XP (POST /pomodoro/sessions)
+
+- XP por sessão = `(durationMinutes / 5) × 10`; multiplicado por `1.5` se `maintainedFocus === true`
+- Calcula novo streak (lógica ontem/hoje/outro)
+- Atualiza `user_settings` (streak, sessões hoje, última data) e `user_stats` (total_xp, sessions_count, focused_sessions)
+- Retorna `{ streak, sessionsToday, goalJustReached, xpGained }`
+
+---
+
 ## apps/mobile
 
-App em **Expo/React Native** (TypeScript). Ainda é o template padrão do Expo — sem UI do LeIA implementada.
+App em **Expo / React Native** (TypeScript). Totalmente implementado com autenticação, acervo de livros, chat, pomodoro, social e perfil.
 
 ```
 apps/mobile/
-├── app/
-│   ├── _layout.tsx
-│   ├── modal.tsx
-│   └── (tabs)/
-│       ├── _layout.tsx
-│       ├── index.tsx
-│       └── explore.tsx
-├── components/
-├── constants/
-│   └── theme.ts
-└── hooks/
+├── app/                    # Expo Router v6 (file-based)
+│   ├── _layout.tsx         # Gatekeeper: auth + deep link + fontes
+│   ├── (auth)/             # login, onboarding, forgot-password
+│   ├── (app)/              # 5 tabs: index, chat, topics, pomodoro, profile
+│   │   ├── library.tsx     # Acervo (3 tabs: Acervo, Pilares, Pessoal)
+│   │   └── social.tsx      # Rankings, comunidades
+│   ├── library/
+│   │   ├── book/[id].tsx   # Detalhe do livro (modal)
+│   │   ├── pillar/[id].tsx # Detalhe do pilar
+│   │   └── category/[id].tsx
+│   ├── topic/[id].tsx
+│   └── insights.tsx
+├── src/
+│   ├── context/            # AuthContext, ThemeContext
+│   ├── hooks/              # 12 hooks (useBooks, useSavedBooks, useChat, usePillars, etc.)
+│   ├── screens/library/    # AcervoScreen, BookDetailScreen (lógica de UI local)
+│   ├── lib/                # apiClient.ts (fetch), supabase.ts (SecureStore com chunking)
+│   ├── services/           # api.ts (axios, legado)
+│   ├── types/              # library.ts, chat.ts, auth.ts, social.ts, content.ts
+│   ├── components/         # Componentes reutilizáveis
+│   ├── constants/          # colors.ts (paleta de tema)
+│   └── data/               # Dados estáticos (levels, medals, topics)
+└── assets/                 # Fontes (ClashDisplay), imagens
 ```
+
+> Veja `apps/mobile/CLAUDE.md` para documentação completa de hooks, endpoints, tipos e padrões.
 
 ---
 
@@ -332,7 +397,8 @@ apps/mobile/
 pnpm dev
 
 # Rodar apenas um app
-pnpm turbo dev --filter=server
+pnpm turbo dev --filter=server    # Chat server (Fastify, port 3001)
+pnpm turbo dev --filter=backend   # Library API (Express, port 3002)
 pnpm turbo dev --filter=web
 pnpm turbo dev --filter=mobile
 
@@ -350,9 +416,11 @@ pnpm check-types
 
 | Item | Localização | Descrição |
 |---|---|---|
-| Mismatch coluna | `userRoutes.js` | Rota `/interagir` usa `is_favorite` mas a tabela tem `is_favourite` |
+| Mismatch coluna | `apps/server/src/routes/userRoutes.js` | Rota `/interagir` usa `is_favorite` mas a tabela tem `is_favourite` |
 | Tipos desalinhados | `packages/api-types` | `Fonte` e `RespostaBibliotecario` não refletem o schema real retornado |
-| AppContext legacy | `AppContext.tsx` | `saveCard/toggleRead/toggleFavorite` não são usados; `useUserContent` é o real |
-| Temas estáticos | `data/topics.ts` | Os 8 temas são hardcoded em vez de virem do banco |
-| Mobile não implementado | `apps/mobile` | Ainda é o template Expo sem UI do LeIA |
+| AppContext legacy | `apps/web/src/context/AppContext.tsx` | `saveCard/toggleRead/toggleFavorite` não são usados; `useUserContent` é o real |
+| Temas estáticos (web) | `apps/web/src/data/topics.ts` | Os 8 temas são hardcoded em vez de virem do banco |
 | `packages/ui` não usado | `packages/ui` | Web tem seus próprios componentes em `components/ui/` |
+| Dois clientes HTTP (mobile) | `apps/mobile/src/lib/apiClient.ts` e `src/services/api.ts` | Lógica duplicada (fetch vs axios). Migrar tudo para `apiClient.ts`. |
+| Busca de livros em JS | `apps/backend/src/routes/books.ts` | Filtragem por `search` feita em JS pós-fetch; paginação manual pós-filtro. |
+| Seleção de edição comentada | `apps/mobile/src/screens/library/BookDetailScreen.tsx` | Modal de seleção de edição parcialmente implementado. |

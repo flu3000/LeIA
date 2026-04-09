@@ -14,7 +14,7 @@ export function useSavedBooks() {
     if (!user?.id) return
     setIsSyncing(true)
     try {
-      const data = await api.get<SavedBook[]>('/library/favorites')
+      const data = await api.get<SavedBook[]>(`/saved-books/${user.id}`)
       setSavedBooks(data ?? [])
     } catch (e) {
       console.error('[useSavedBooks] fetch:', e)

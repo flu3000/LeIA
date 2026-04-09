@@ -1,0 +1,23 @@
+meta {
+  name: Listar Todos os Livros
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/saved-books/:userId
+  body: none
+  auth: bearer
+}
+
+params:path {
+  userId: 8fc7f98e-5790-4a33-a89b-f534708b21e1
+}
+
+auth:bearer {
+  token: eyJhbGciOiJFUzI1NiIsImtpZCI6IjYwYjVmZjIwLWRlODgtNDJmNC1hOTdlLThlZGUxZGQyNzk4OCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2hudHBudGNqeWJ2eXhhdndhcWprLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI4ZmM3Zjk4ZS01NzkwLTRhMzMtYTg5Yi1mNTM0NzA4YjIxZTEiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc1Njk2NzIwLCJpYXQiOjE3NzU2OTMxMjAsImVtYWlsIjoiYW50b25pb3BfcmV6ZW5kZUBpY2xvdWQuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbCI6ImFudG9uaW9wX3JlemVuZGVAaWNsb3VkLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInN1YiI6IjhmYzdmOThlLTU3OTAtNGEzMy1hODliLWY1MzQ3MDhiMjFlMSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6Im90cCIsInRpbWVzdGFtcCI6MTc3NTAwNTIzMn1dLCJzZXNzaW9uX2lkIjoiMWY5MzA1MzQtZjZkMy00OWMxLTgwYzItNTRjMjg5ZDE1ODRhIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.TmNTR6ddaxKqAgnYSAiOABLl8DY4LDz0s3rAVdBJ4N0HwSesedFhqPeIDqKfTafPbLDQUcNvG_KWJ-i4vAudKw
+}
+
+assert {
+  res.status: eq 200
+}

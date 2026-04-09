@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { requireAuth } from '../middleware/auth'
 
 const router = Router()
+router.use(requireAuth)
 
 const upsertSchema = z.object({
   saved_as: z.enum(['a ler', 'lendo', 'lido']),
@@ -12,11 +13,18 @@ const upsertSchema = z.object({
 })
 
 // GET /saved-books — all saved books for the user with book details
-router.get('/', requireAuth, async (req, res) => {
+router.get('/:userId', async (req, res) => {
+  // console.log(req);
+  const { userId } = req.params;
+  console.log('User ID do token:', userId);
+  if (!userId || userId === 'undefined') {
+    return res.status(401).json({ error: "Usuário não identificado no token." });
+  }
+
   const { data, error } = await supabase
     .from('saved_books')
-    .select('*, books(*)')
-    .eq('user_id', req.userId)
+    .select('*')
+    .eq('user_id', userId)
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -32,7 +40,7 @@ router.get('/:bookId', requireAuth, async (req, res) => {
   const { data, error } = await supabase
     .from('saved_books')
     .select('*')
-    .eq('user_id', req.userId)
+    .eq('user_id', req.params.userId)
     .eq('book_id', req.params.bookId)
     .maybeSingle()
 
@@ -53,7 +61,7 @@ router.put('/:bookId', requireAuth, async (req, res) => {
 
   const { saved_as, pages_read, notes } = parsed.data
   const payload: Record<string, unknown> = {
-    user_id: req.userId,
+    user_id: req.params.userId,
     book_id: req.params.bookId,
     saved_as,
   }
@@ -79,7 +87,7 @@ router.delete('/:bookId', requireAuth, async (req, res) => {
   const { error } = await supabase
     .from('saved_books')
     .delete()
-    .eq('user_id', req.userId)
+    .eq('user_id', req.params.userId)
     .eq('book_id', req.params.bookId)
 
   if (error) {

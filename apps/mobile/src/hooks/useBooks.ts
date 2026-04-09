@@ -117,7 +117,7 @@ export function useBookDetail(bookId: string) {
     const loadDetail = async () => {
       setIsLoading(true);
       try {
-        const response = await api.get<Book>(`/library/books/${bookId}`);
+        const response = await api.get<Book>(`/books/getById/${bookId}`);
         if (!cancelled) setBook(response);
       } catch (e) {
         console.error('[useBookDetail] Erro:', e);

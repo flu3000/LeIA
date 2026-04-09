@@ -58,7 +58,7 @@ export interface Book {
   cover_url: string | null;
 
   description?: string | null
-  book_editions?: Edition[]
+  all_editions?: Edition[]
 
   // Se você ainda estiver trazendo as categorias via join no SELECT do backend:
   categories?: {
@@ -85,7 +85,7 @@ export interface Edition {
   isbn_10: string
   language: string | null
   sales_rank: number | null
-  is_bes_seller: boolean | null
+  is_best_seller: boolean | null
 }
 
 // ── Livros Salvos ─────────────────────────────────────────────────────────────
