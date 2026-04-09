@@ -56,10 +56,13 @@ export interface Book {
   
   // No seu getAll, você transformou a lógica de capas nisso:
   cover_url: string | null;
+  main_cover?: {
+    cover_url: string | null;
+  };
 
   description?: string | null
   all_editions?: Edition[]
-
+  best_seller_edition?: string;
   // Se você ainda estiver trazendo as categorias via join no SELECT do backend:
   categories?: {
     category_id: number;
@@ -75,14 +78,14 @@ export interface Book {
 export interface Edition {
   edition_id: string
   book_id: string
-  publisher: string
+  publisher: string | null
   cover_url: string | null
-  amazon_link: string
+  amazon_link: string | null
   pages: number
-  publish_year: number | null
+  publication_year: number | null
   translator: string | null
-  isbn_13: string
-  isbn_10: string
+  isbn_13: string | null
+  isbn_10: string | null
   language: string | null
   sales_rank: number | null
   is_best_seller: boolean | null

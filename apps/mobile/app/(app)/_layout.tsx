@@ -129,6 +129,19 @@ export default function AppLayout() {
           ),
         }}
       />
+
+      <Tabs.Screen 
+        name="library/book/[id]" 
+        options={{ href: null }} 
+      />
+      <Tabs.Screen 
+        name="library/pillar/[id]" 
+        options={{ href: null }}
+      />
+      <Tabs.Screen 
+        name="library/category/[id]" 
+        options={{ href: null }}
+      />
     </Tabs>
   )
 }

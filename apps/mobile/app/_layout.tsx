@@ -262,42 +262,6 @@ const isGated = isLoading || isProcessingLink !== false || !isReady || (!fontsLo
             presentation:     'card',
           }}
         />
-        <Stack.Screen
-          name="library/book/[id]"
-          options={{
-            headerShown:      true,
-            title:            '',
-            headerStyle:      { backgroundColor: theme.surface },
-            headerTintColor:  theme.text,
-            headerTitleStyle: { fontWeight: '700', fontSize: 17 },
-            headerBackTitle:  'Voltar',
-            presentation:     'card',
-          }}
-        />
-        <Stack.Screen
-          name="library/pillar/[id]"
-          options={{
-            headerShown:      true,
-            title:            '',
-            headerStyle:      { backgroundColor: theme.surface },
-            headerTintColor:  theme.text,
-            headerTitleStyle: { fontWeight: '700', fontSize: 17 },
-            headerBackTitle:  'Voltar',
-            presentation:     'card',
-          }}
-        />
-        <Stack.Screen
-          name="library/category/[id]"
-          options={{
-            headerShown:      true,
-            title:            '',
-            headerStyle:      { backgroundColor: theme.surface },
-            headerTintColor:  theme.text,
-            headerTitleStyle: { fontWeight: '700', fontSize: 17 },
-            headerBackTitle:  'Voltar',
-            presentation:     'card',
-          }}
-        />
       </Stack>
       <StatusBar style={user?.theme === 'light' ? 'dark' : 'light'} />
     </>

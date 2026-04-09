@@ -2,68 +2,61 @@ import {
   View, Text, ScrollView, Image, TouchableOpacity,
   ActivityIndicator, Linking, StyleSheet,
 } from 'react-native'
-import { useState, useCallback, useMemo } from 'react'
-import { useLocalSearchParams, useNavigation } from 'expo-router'
-import { useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useNavigation } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 
 import { useTheme } from '@/src/context/ThemeContext'
 import { useBookDetail } from '@/src/hooks/useBooks'
 import { useSavedBooks } from '@/src/hooks/useSavedBooks'
-import { EditionModal } from './components/EditionModal'
 import type { Edition, Difficulty } from '@/src/types/library'
-
-// ── Badge de dificuldade ──────────────────────────────────────────────────────
-
-const DIFFICULTY_COLOR: Record<Difficulty, string> = {
-  Iniciante:     useTheme().success,
-  Intermediário: useTheme().warning,
-  Avançado:      useTheme().danger,
-}
 
 interface Props {
   id: string;
 }
-// ── Tela ─────────────────────────────────────────────────────────────────────
 
 export default function BookDetailScreen({ id }: Props) {
-  const theme = useTheme();
-  // Memoriza os estilos para performance
-  const styles = useMemo(() => createStyles(theme), [theme]);
+  const theme  = useTheme()
   const navigation = useNavigation()
-
+  const styles = useMemo(() => createStyles(theme), [theme])
+  console.log(id)
   const { book, isLoading } = useBookDetail(id)
   const { getSavedByBook, saveBook, unsaveBook } = useSavedBooks()
 
-  const editions = book?.all_editions ?? [];
+  const editions = useMemo(() => book?.all_editions || [], [book]);
+
   const [selectedEdition, setSelectedEdition] = useState<Edition | null>(null)
   const [showEditions, setShowEditions]       = useState(false)
 
-  // Pré-seleciona a primeira edição ao carregar
-  //useEffect(() => {
-  //  if (editions.length > 0 && !selectedEdition) {
-  //    setSelectedEdition(editions[0])
-  //  }
-  //}, [editions])
+  // Hidrata selectedEdition assim que o livro carrega.
+  // Prioriza a edição best-seller; caso contrário usa a primeira disponível.
+  useEffect(() => {
+    if (editions.length === 0) return
+    const best = editions.find(e => e.is_best_seller) ?? editions[0]
+    setSelectedEdition(best)
+  }, [book?.book_id]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Depende de book_id, não do array `editions`, para evitar loop infinito caso
+  // a referência do array mude a cada render.
 
-  // Atualiza título do header
   useEffect(() => {
     if (book) navigation.setOptions({ title: book.title })
   }, [book, navigation])
 
-  const savedEntry  = getSavedByBook(id)
-  const isSaved     = Boolean(savedEntry)
-  const cover       = selectedEdition?.cover_url
+  const savedEntry = getSavedByBook(id)
+  const isSaved    = Boolean(savedEntry)
+
+  // Capa: usa a edição selecionada; recai para o cover_url de nível superior do Book.
+  const cover = selectedEdition?.cover_url ?? book?.main_cover?.cover_url ?? null
 
   const handleToggleSave = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     if (isSaved && savedEntry) {
       await unsaveBook(savedEntry.saved_book_id)
     } else {
-      // const editionId = selectedEdition?.edition_id ?? editions[0]?.edition_id
-      // if (!editionId) return
-      // await saveBook(editionId)
+      const editionId = selectedEdition?.edition_id ?? editions[0]?.edition_id
+      if (!editionId) return
+      await saveBook(editionId)
     }
   }, [isSaved, savedEntry, selectedEdition, editions, saveBook, unsaveBook])
 
@@ -71,6 +64,7 @@ export default function BookDetailScreen({ id }: Props) {
     const amazonLink = selectedEdition?.amazon_link
     if (amazonLink) Linking.openURL(amazonLink)
   }
+
 
   if (isLoading) {
     return (
@@ -97,7 +91,6 @@ export default function BookDetailScreen({ id }: Props) {
       >
         {/* Cabeçalho: capa + título + autor */}
         <View style={styles.hero}>
-          {/* Capa clicável — abre seletor de edições */}
           <TouchableOpacity
             onPress={() => editions.length > 1 && setShowEditions(true)}
             activeOpacity={editions.length > 1 ? 0.8 : 1}
@@ -120,17 +113,12 @@ export default function BookDetailScreen({ id }: Props) {
             <Text style={styles.heroTitle}>{book.title}</Text>
             <Text style={styles.heroAuthor}>{book.author}</Text>
 
-            {/* Badges */}
             <View style={styles.badgeRow}>
-              {book.difficulty && (
-                <View style={[styles.badge, {
-                  backgroundColor: DIFFICULTY_COLOR[book.difficulty] + '22',
-                }]}>
-                  <Text style={[styles.badgeText, { color: DIFFICULTY_COLOR[book.difficulty] }]}>
+                <View style={[styles.badge, { backgroundColor: theme.success + '22' }]}>
+                  <Text style={[styles.badgeText, { color: theme.success }]}>
                     {book.difficulty}
                   </Text>
                 </View>
-              )}
               {book.categories?.category_name && (
                 <View style={styles.categoryBadge}>
                   <Text style={styles.categoryBadgeText}>{book.categories.category_name}</Text>
@@ -138,7 +126,6 @@ export default function BookDetailScreen({ id }: Props) {
               )}
             </View>
 
-            {/* Edição selecionada */}
             {selectedEdition && (
               <TouchableOpacity
                 style={styles.editionSelector}
@@ -248,15 +235,6 @@ export default function BookDetailScreen({ id }: Props) {
           </View>
         )}
       </ScrollView>
-
-      {/* Modal de edições */}
-      { /*<EditionModal
-        visible={showEditions}
-        // editions={editions}
-        selectedId={selectedEdition?.edition_id ?? null}
-        onSelect={(ed) => setSelectedEdition(ed)}
-        onClose={() => setShowEditions(false)}
-      /> */}
     </>
   )
 }
@@ -279,7 +257,6 @@ const createStyles = (theme: any) => StyleSheet.create({
   content: {
     paddingBottom: 40,
   },
-  // Hero
   hero: {
     flexDirection: 'row',
     padding: 20,
@@ -370,7 +347,6 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  // Ações
   actions: {
     flexDirection: 'row',
     paddingHorizontal: 20,
@@ -413,7 +389,6 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-  // Seções
   section: {
     paddingHorizontal: 20,
     marginBottom: 24,
