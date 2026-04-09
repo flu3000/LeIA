@@ -1,6 +1,6 @@
 import {
   View, Text, ScrollView, Image, TouchableOpacity,
-  ActivityIndicator, Linking, StyleSheet,
+  ActivityIndicator, Linking, StyleSheet, Pressable,
 } from 'react-native'
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useNavigation } from 'expo-router'
@@ -16,15 +16,89 @@ interface Props {
   id: string;
 }
 
+// ── Dropdown de edições ───────────────────────────────────────────────────────
+
+interface EditionDropdownProps {
+  editions: Edition[]
+  selectedId: string | null
+  onSelect: (ed: Edition) => void
+  onClose: () => void
+  theme: any
+  styles: ReturnType<typeof createStyles>
+}
+
+function EditionDropdown({ editions, selectedId, onSelect, onClose, theme, styles }: EditionDropdownProps) {
+  return (
+    <>
+      {/* Backdrop transparente — fecha o dropdown ao tocar fora */}
+      <Pressable style={StyleSheet.absoluteFillObject} onPress={onClose} />
+
+      <View style={styles.dropdown}>
+        {editions.map((ed, index) => {
+          const isSelected = ed.edition_id === selectedId
+          const isLast = index === editions.length - 1
+
+          return (
+            <TouchableOpacity
+              key={ed.edition_id}
+              style={[
+                styles.dropdownItem,
+                isSelected && styles.dropdownItemSelected,
+                !isLast && styles.dropdownItemBorder,
+              ]}
+              onPress={() => onSelect(ed)}
+              activeOpacity={0.75}
+            >
+              {/* Capa miniatura */}
+              {ed.cover_url ? (
+                <Image
+                  source={{ uri: ed.cover_url }}
+                  style={styles.dropdownCover}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={[styles.dropdownCover, styles.dropdownCoverPlaceholder]}>
+                  <Ionicons name="book-outline" size={16} color={theme.dimmed} />
+                </View>
+              )}
+
+              {/* Informações */}
+              <View style={styles.dropdownInfo}>
+                <Text style={[styles.dropdownPublisher, isSelected && { color: theme.accent }]} numberOfLines={1}>
+                  {ed.publisher ?? 'Editora desconhecida'}
+                  {ed.publication_year ? `  ·  ${ed.publication_year}` : ''}
+                </Text>
+                <Text style={styles.dropdownMeta} numberOfLines={1}>
+                  {ed.pages > 0 ? `${ed.pages} páginas` : ''}
+                  {ed.pages > 0 && ed.isbn_13 ? '  ·  ' : ''}
+                  {ed.isbn_13 ? `ISBN ${ed.isbn_13}` : ''}
+                  {!ed.pages && !ed.isbn_13 ? 'Sem detalhes' : ''}
+                </Text>
+              </View>
+
+              {/* Check de selecionado */}
+              {isSelected && (
+                <Ionicons name="checkmark-circle" size={18} color={theme.accent} />
+              )}
+            </TouchableOpacity>
+          )
+        })}
+      </View>
+    </>
+  )
+}
+
+// ── Tela principal ────────────────────────────────────────────────────────────
+
 export default function BookDetailScreen({ id }: Props) {
   const theme  = useTheme()
   const navigation = useNavigation()
   const styles = useMemo(() => createStyles(theme), [theme])
-  console.log(id)
+
   const { book, isLoading } = useBookDetail(id)
   const { getSavedByBook, saveBook, unsaveBook } = useSavedBooks()
 
-  const editions = useMemo(() => book?.all_editions || [], [book]);
+  const editions = useMemo(() => book?.all_editions || [], [book])
 
   const [selectedEdition, setSelectedEdition] = useState<Edition | null>(null)
   const [showEditions, setShowEditions]       = useState(false)
@@ -36,8 +110,6 @@ export default function BookDetailScreen({ id }: Props) {
     const best = editions.find(e => e.is_best_seller) ?? editions[0]
     setSelectedEdition(best)
   }, [book?.book_id]) // eslint-disable-line react-hooks/exhaustive-deps
-  // Depende de book_id, não do array `editions`, para evitar loop infinito caso
-  // a referência do array mude a cada render.
 
   useEffect(() => {
     if (book) navigation.setOptions({ title: book.title })
@@ -46,8 +118,13 @@ export default function BookDetailScreen({ id }: Props) {
   const savedEntry = getSavedByBook(id)
   const isSaved    = Boolean(savedEntry)
 
-  // Capa: usa a edição selecionada; recai para o cover_url de nível superior do Book.
   const cover = selectedEdition?.cover_url ?? book?.main_cover?.cover_url ?? null
+
+  const handleSelectEdition = useCallback((ed: Edition) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    setSelectedEdition(ed)
+    setShowEditions(false)
+  }, [])
 
   const handleToggleSave = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
@@ -64,7 +141,6 @@ export default function BookDetailScreen({ id }: Props) {
     const amazonLink = selectedEdition?.amazon_link
     if (amazonLink) Linking.openURL(amazonLink)
   }
-
 
   if (isLoading) {
     return (
@@ -83,161 +159,191 @@ export default function BookDetailScreen({ id }: Props) {
   }
 
   return (
-    <>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Cabeçalho: capa + título + autor */}
-        <View style={styles.hero}>
-          <TouchableOpacity
-            onPress={() => editions.length > 1 && setShowEditions(true)}
-            activeOpacity={editions.length > 1 ? 0.8 : 1}
-          >
-            {cover ? (
-              <Image source={{ uri: cover }} style={styles.cover} resizeMode="cover" />
-            ) : (
-              <View style={[styles.cover, styles.coverPlaceholder]}>
-                <Ionicons name="book" size={48} color={theme.dimmed} />
-              </View>
-            )}
-            {editions.length > 1 && (
-              <View style={styles.editionBadge}>
-                <Text style={styles.editionBadgeText}>{editions.length} edições</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-
-          <View style={styles.heroMeta}>
-            <Text style={styles.heroTitle}>{book.title}</Text>
-            <Text style={styles.heroAuthor}>{book.author}</Text>
-
-            <View style={styles.badgeRow}>
-                <View style={[styles.badge, { backgroundColor: theme.success + '22' }]}>
-                  <Text style={[styles.badgeText, { color: theme.success }]}>
-                    {book.difficulty}
-                  </Text>
-                </View>
-              {book.categories?.category_name && (
-                <View style={styles.categoryBadge}>
-                  <Text style={styles.categoryBadgeText}>{book.categories.category_name}</Text>
-                </View>
-              )}
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+      // Fecha o dropdown ao começar a rolar
+      onScrollBeginDrag={() => setShowEditions(false)}
+    >
+      {/* Cabeçalho: capa + título + autor */}
+      <View style={styles.hero}>
+        <TouchableOpacity
+          onPress={() => editions.length > 1 && setShowEditions(v => !v)}
+          activeOpacity={editions.length > 1 ? 0.8 : 1}
+        >
+          {cover ? (
+            <Image source={{ uri: cover }} style={styles.cover} resizeMode="cover" />
+          ) : (
+            <View style={[styles.cover, styles.coverPlaceholder]}>
+              <Ionicons name="book" size={48} color={theme.dimmed} />
             </View>
+          )}
+          {editions.length > 1 && (
+            <View style={styles.editionBadge}>
+              <Text style={styles.editionBadgeText}>{editions.length} edições</Text>
+            </View>
+          )}
+        </TouchableOpacity>
 
-            {selectedEdition && (
-              <TouchableOpacity
-                style={styles.editionSelector}
-                onPress={() => editions.length > 0 && setShowEditions(true)}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="layers-outline" size={14} color={theme.muted} />
-                <Text style={styles.editionSelectorText}>
-                  {selectedEdition.publisher ?? 'Edição'}
-                  {selectedEdition.publish_year ? ` · ${selectedEdition.publish_year}` : ''}
-                </Text>
-                {editions.length > 1 && (
-                  <Ionicons name="chevron-down" size={14} color={theme.dimmed} />
-                )}
-              </TouchableOpacity>
+        <View style={styles.heroMeta}>
+          <Text style={styles.heroTitle}>{book.title}</Text>
+          <Text style={styles.heroAuthor}>{book.author}</Text>
+
+          <View style={styles.badgeRow}>
+            <View style={[styles.badge, { backgroundColor: theme.success + '22' }]}>
+              <Text style={[styles.badgeText, { color: theme.success }]}>
+                {book.difficulty}
+              </Text>
+            </View>
+            {book.categories?.category_name && (
+              <View style={styles.categoryBadge}>
+                <Text style={styles.categoryBadgeText}>{book.categories.category_name}</Text>
+              </View>
             )}
           </View>
-        </View>
 
-        {/* Ações */}
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={[styles.actionBtn, isSaved && styles.actionBtnSaved]}
-            onPress={handleToggleSave}
-            activeOpacity={0.8}
-          >
-            <Ionicons
-              name={isSaved ? 'heart' : 'heart-outline'}
-              size={18}
-              color={isSaved ? theme.danger : theme.text}
-            />
-            <Text style={[styles.actionBtnText, isSaved && { color: theme.danger }]}>
-              {isSaved ? 'Salvo' : 'Salvar'}
-            </Text>
-          </TouchableOpacity>
-
-          {selectedEdition?.amazon_link && (
+          {/* Botão seletor de edição — só aparece se houver edições carregadas */}
+          {selectedEdition && (
             <TouchableOpacity
-              style={styles.amazonBtn}
-              onPress={handleAmazon}
-              activeOpacity={0.85}
+              style={[styles.editionSelector, showEditions && styles.editionSelectorOpen]}
+              onPress={() => setShowEditions(v => !v)}
+              activeOpacity={0.8}
             >
-              <Ionicons name="cart-outline" size={18} color="#fff" />
-              <Text style={styles.amazonBtnText}>Ver na Amazon</Text>
+              <Ionicons name="layers-outline" size={14} color={showEditions ? theme.accent : theme.muted} />
+              <Text style={[styles.editionSelectorText, showEditions && { color: theme.accent }]}>
+                {selectedEdition.publisher ?? 'Edição'}
+                {selectedEdition.publication_year ? ` · ${selectedEdition.publication_year}` : ''}
+              </Text>
+              <Ionicons
+                name={showEditions ? 'chevron-up' : 'chevron-down'}
+                size={14}
+                color={showEditions ? theme.accent : theme.dimmed}
+              />
             </TouchableOpacity>
           )}
+
+          {/* Dropdown — renderizado inline abaixo do botão para evitar
+              problemas de posicionamento absoluto dentro de ScrollView */}
+          {showEditions && editions.length > 0 && (
+            <EditionDropdown
+              editions={editions}
+              selectedId={selectedEdition?.edition_id ?? null}
+              onSelect={handleSelectEdition}
+              onClose={() => setShowEditions(false)}
+              theme={theme}
+              styles={styles}
+            />
+          )}
         </View>
+      </View>
 
-        {/* Descrição */}
-        {book.description && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Sobre o livro</Text>
-            <Text style={styles.descriptionText}>{book.description}</Text>
-          </View>
-        )}
+      {/* Ações */}
+      <View style={styles.actions}>
+        <TouchableOpacity
+          style={[styles.actionBtn, isSaved && styles.actionBtnSaved]}
+          onPress={handleToggleSave}
+          activeOpacity={0.8}
+        >
+          <Ionicons
+            name={isSaved ? 'heart' : 'heart-outline'}
+            size={18}
+            color={isSaved ? theme.danger : theme.text}
+          />
+          <Text style={[styles.actionBtnText, isSaved && { color: theme.danger }]}>
+            {isSaved ? 'Salvo' : 'Salvar'}
+          </Text>
+        </TouchableOpacity>
 
-        {/* Tags */}
-        {book.tags && book.tags.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Tags</Text>
-            <View style={styles.tagRow}>
-              {book.tags.map((tag) => (
-                <View key={tag} style={styles.tag}>
-                  <Text style={styles.tagText}>{tag}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
+        {selectedEdition?.amazon_link && (
+          <TouchableOpacity
+            style={styles.amazonBtn}
+            onPress={handleAmazon}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="cart-outline" size={18} color="#fff" />
+            <Text style={styles.amazonBtnText}>Ver na Amazon</Text>
+          </TouchableOpacity>
         )}
+      </View>
 
-        {/* Detalhes da edição selecionada */}
-        {selectedEdition && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Detalhes da edição</Text>
-            <View style={styles.detailGrid}>
-              {selectedEdition.publisher && (
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Editora</Text>
-                  <Text style={styles.detailValue}>{selectedEdition.publisher}</Text>
-                </View>
-              )}
-              {selectedEdition.publish_year && (
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Ano</Text>
-                  <Text style={styles.detailValue}>{selectedEdition.publish_year}</Text>
-                </View>
-              )}
-              {selectedEdition.pages > 0 && (
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Páginas</Text>
-                  <Text style={styles.detailValue}>{selectedEdition.pages}</Text>
-                </View>
-              )}
-              {selectedEdition.isbn_13 && (
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>ISBN-13</Text>
-                  <Text style={styles.detailValue}>{selectedEdition.isbn_13}</Text>
-                </View>
-              )}
-              {selectedEdition.translator && (
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Tradução</Text>
-                  <Text style={styles.detailValue}>{selectedEdition.translator}</Text>
-                </View>
-              )}
-            </View>
+      {/* Descrição */}
+      {book.description && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Sobre o livro</Text>
+          <Text style={styles.descriptionText}>{book.description}</Text>
+        </View>
+      )}
+
+      {/* Tags */}
+      {book.tags && book.tags.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Tags</Text>
+          <View style={styles.tagRow}>
+            {book.tags.map((tag) => (
+              <View key={tag} style={styles.tag}>
+                <Text style={styles.tagText}>{tag}</Text>
+              </View>
+            ))}
           </View>
-        )}
-      </ScrollView>
-    </>
+        </View>
+      )}
+
+      {/* Detalhes da edição selecionada */}
+      {selectedEdition && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Detalhes da edição</Text>
+          <View style={styles.detailGrid}>
+            {selectedEdition.publisher && (
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>Editora</Text>
+                <Text style={styles.detailValue}>{selectedEdition.publisher}</Text>
+              </View>
+            )}
+            {selectedEdition.publication_year && (
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>Ano</Text>
+                <Text style={styles.detailValue}>{selectedEdition.publication_year}</Text>
+              </View>
+            )}
+            {selectedEdition.pages > 0 && (
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>Páginas</Text>
+                <Text style={styles.detailValue}>{selectedEdition.pages}</Text>
+              </View>
+            )}
+            {selectedEdition.language && (
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>Idioma</Text>
+                <Text style={styles.detailValue}>{selectedEdition.language}</Text>
+              </View>
+            )}
+            {selectedEdition.isbn_13 && (
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>ISBN-13</Text>
+                <Text style={styles.detailValue}>{selectedEdition.isbn_13}</Text>
+              </View>
+            )}
+            {selectedEdition.isbn_10 && (
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>ISBN-10</Text>
+                <Text style={styles.detailValue}>{selectedEdition.isbn_10}</Text>
+              </View>
+            )}
+            {selectedEdition.translator && (
+              <View style={styles.detailItem}>
+                <Text style={styles.detailLabel}>Tradução</Text>
+                <Text style={styles.detailValue}>{selectedEdition.translator}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
+    </ScrollView>
   )
 }
+
+// ── Estilos ───────────────────────────────────────────────────────────────────
 
 const createStyles = (theme: any) => StyleSheet.create({
   loadingCenter: {
@@ -275,7 +381,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   editionBadge: {
     position: 'absolute',
-    bottom: 6,
+    bottom: 0,
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -292,6 +398,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   heroMeta: {
     flex: 1,
     gap: 6,
+    // backgroundColor: 'purple',
   },
   heroTitle: {
     color: theme.text,
@@ -329,6 +436,9 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
+
+  // ── Seletor de edição ─────────────────────────────────────────────────────
+
   editionSelector: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -337,16 +447,74 @@ const createStyles = (theme: any) => StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
     backgroundColor: theme.surface,
-    borderWidth: 1,
-    borderColor: theme.border,
     alignSelf: 'flex-start',
     marginTop: 4,
+  },
+  editionSelectorOpen: {
+    borderWidth: 0,
+    backgroundColor: theme.accentDim,
+    // Quadrado inferior quando o dropdown está aberto
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
   editionSelectorText: {
     color: theme.muted,
     fontSize: 12,
     fontWeight: '600',
   },
+
+  // ── Dropdown ──────────────────────────────────────────────────────────────
+
+  dropdown: {
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    borderTopRightRadius: 16,
+    backgroundColor: theme.surface,
+    overflow: 'hidden',
+    // elevation: 0,
+    marginTop: -6,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  dropdownItemSelected: {
+    backgroundColor: theme.accentDim,
+  },
+  dropdownItemBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: theme.border,
+  },
+  dropdownCover: {
+    width: 36,
+    height: 50,
+    borderRadius: 4,
+    flexShrink: 0,
+  },
+  dropdownCoverPlaceholder: {
+    backgroundColor: theme.surfaceDeep,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dropdownInfo: {
+    flex: 1,
+    gap: 3,
+  },
+  dropdownPublisher: {
+    color: theme.text,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  dropdownMeta: {
+    color: theme.muted,
+    fontSize: 11,
+  },
+
+  // ── Ações ─────────────────────────────────────────────────────────────────
+
   actions: {
     flexDirection: 'row',
     paddingHorizontal: 20,
@@ -389,6 +557,9 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
+
+  // ── Seções de conteúdo ────────────────────────────────────────────────────
+
   section: {
     paddingHorizontal: 20,
     marginBottom: 24,

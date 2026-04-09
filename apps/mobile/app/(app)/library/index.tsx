@@ -113,7 +113,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontFamily: 'ClashDisplay-Medium',
   },
   toggleTextActive: {
-    color: '#fff',
+    color: theme.text,
     fontFamily: 'ClashDisplay-Bold',
   },
   content: {

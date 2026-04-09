@@ -24,7 +24,9 @@ const BOOK_DETAIL_COLS =
     publication_year,
     pages,
     language,
-    cover_url
+    cover_url,
+    amazon_link,
+    translator
   ),
   main_cover:book_editions!best_seller_edition (cover_url)
 `;
