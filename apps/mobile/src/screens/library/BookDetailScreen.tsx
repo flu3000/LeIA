@@ -14,6 +14,9 @@ import type { Edition, Difficulty } from '@/src/types/library'
 
 interface Props {
   id: string;
+  /** Termo de busca que originou a navegação. Quando presente, tenta casar com
+   *  ISBN-13, ISBN-10 ou nome de editora para pré-selecionar a edição correta. */
+  matchedBy?: string;
 }
 
 // ── Dropdown de edições ───────────────────────────────────────────────────────
@@ -70,8 +73,6 @@ function EditionDropdown({ editions, selectedId, onSelect, onClose, theme, style
                 </Text>
                 <Text style={styles.dropdownMeta} numberOfLines={1}>
                   {ed.pages > 0 ? `${ed.pages} páginas` : ''}
-                  {ed.pages > 0 && ed.isbn_13 ? '  ·  ' : ''}
-                  {ed.isbn_13 ? `ISBN ${ed.isbn_13}` : ''}
                   {!ed.pages && !ed.isbn_13 ? 'Sem detalhes' : ''}
                 </Text>
               </View>
@@ -90,7 +91,7 @@ function EditionDropdown({ editions, selectedId, onSelect, onClose, theme, style
 
 // ── Tela principal ────────────────────────────────────────────────────────────
 
-export default function BookDetailScreen({ id }: Props) {
+export default function BookDetailScreen({ id, matchedBy }: Props) {
   const theme  = useTheme()
   const navigation = useNavigation()
   const styles = useMemo(() => createStyles(theme), [theme])
@@ -104,12 +105,26 @@ export default function BookDetailScreen({ id }: Props) {
   const [showEditions, setShowEditions]       = useState(false)
 
   // Hidrata selectedEdition assim que o livro carrega.
-  // Prioriza a edição best-seller; caso contrário usa a primeira disponível.
+  // Se `matchedBy` estiver presente, tenta casar o termo com ISBN-13, ISBN-10
+  // ou nome da editora para pré-selecionar a edição que originou a busca.
+  // Caso não bata (busca por título/autor), cai no fallback: best-seller ou a primeira.
   useEffect(() => {
     if (editions.length === 0) return
-    const best = editions.find(e => e.is_best_seller) ?? editions[0]
-    setSelectedEdition(best)
+
+    let matched: Edition | undefined
+
+    if (matchedBy?.trim()) {
+      const term = matchedBy.trim().toLowerCase()
+      matched = editions.find(e =>
+        e.isbn_13?.toLowerCase().includes(term) ||
+        e.isbn_10?.toLowerCase().includes(term) ||
+        e.publisher?.toLowerCase().includes(term)
+      )
+    }
+
+    setSelectedEdition(matched ?? editions.find(e => e.is_best_seller) ?? editions[0])
   }, [book?.book_id]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Depende apenas de book_id para rodar uma única vez por livro carregado.
 
   useEffect(() => {
     if (book) navigation.setOptions({ title: book.title })

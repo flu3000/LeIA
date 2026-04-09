@@ -77,9 +77,13 @@ export default function AcervoScreen() {
 
   const handlePress = useCallback(async (book: Book) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    // console.log('Clicou no livro:', book.book_id)
-    router.push(`/library/book/${book.book_id}`)
-  }, [router])
+    // Passa o termo de busca como `matchedBy` para que BookDetailScreen pré-selecione
+    // a edição correta quando a busca bateu por ISBN ou editora (não pelo título/autor).
+    const path = search.trim()
+      ? `/library/book/${book.book_id}?matchedBy=${encodeURIComponent(search.trim())}`
+      : `/library/book/${book.book_id}`
+    router.push(path as any)
+  }, [router, search])
 
   const handleToggleSave = useCallback(async (book: Book) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
