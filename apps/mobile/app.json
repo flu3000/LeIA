@@ -5,10 +5,12 @@
     "scheme": "leia-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "backgroundColor": "#001015",
+    "icon": "./assets/images/logo_definitiva.svg",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "ios": {
+      "backgroundColor": "#001015",
       "supportsTablet": true,
       "bundleIdentifier": "com.flu3000.leiaapp",
       "infoPlist": {
@@ -17,13 +19,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#001015",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
+      "backgroundColor": "#001015",
       "permissions": [
         "android.permission.RECORD_AUDIO"
       ]
@@ -41,9 +44,9 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#001015",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#001015"
           }
         }
       ],

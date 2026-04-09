@@ -46,6 +46,7 @@ export default function AppLayout() {
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
+        sceneStyle: { backgroundColor: theme.background },
         tabBarStyle: {
           backgroundColor: theme.background,
           borderTopColor:  theme.borderDim,
@@ -128,19 +129,6 @@ export default function AppLayout() {
             <TabIcon name="person" color={C.profile} size={size} focused={focused} />
           ),
         }}
-      />
-
-      <Tabs.Screen 
-        name="library/book/[id]" 
-        options={{ href: null }} 
-      />
-      <Tabs.Screen 
-        name="library/pillar/[id]" 
-        options={{ href: null }}
-      />
-      <Tabs.Screen 
-        name="library/category/[id]" 
-        options={{ href: null }}
       />
     </Tabs>
   )
