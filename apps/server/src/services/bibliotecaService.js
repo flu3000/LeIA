@@ -91,7 +91,10 @@ export const conversarComBibliotecario = async (userId, novaMensagem, historicoF
     'https://api.perplexity.ai/chat/completions',
     body,
     {
-      headers: { Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}` },
+      headers: {
+        Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+        'X-Pplx-Integration': 'leia',
+      },
     }
   );
 
